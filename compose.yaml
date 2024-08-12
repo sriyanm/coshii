@@ -1,0 +1,39 @@
+services:
+  app:
+    build:
+      context: .
+    env_file:
+      - path: ./.env
+        required: true
+      - path: ./.env.local
+        required: false
+    environment:
+      NODE_ENV: production
+    ports:
+      - 3000:3000
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:16
+    restart: always
+    user: postgres
+    volumes:
+      - coshii-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "sh -c 'pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  coshii-data:
