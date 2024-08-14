@@ -1,6 +1,8 @@
 ### Building and running your application
 
-Create an `.env.local` file with any required vars:
+TODO: Add firebase emulator container.
+
+Create an `.env.local` file with any required vars (see `.env.example`):
 
 ```dotenv
 # Password only for testing locally

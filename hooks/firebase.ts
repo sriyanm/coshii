@@ -1,0 +1,119 @@
+"use client";
+
+import { FirebaseAuthContext } from "@/components/providers/firebase-auth-provider";
+import { auth } from "@/lib/client/firebase";
+import { useMutation } from "@tanstack/react-query";
+import {
+  getAdditionalUserInfo,
+  isSignInWithEmailLink,
+  sendSignInLinkToEmail,
+  signInWithEmailLink,
+  signOut,
+  User,
+} from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { useContext } from "react";
+
+export function useFirebaseAuth() {
+  const context = useContext(FirebaseAuthContext);
+  if (context === null) {
+    throw new Error(
+      "useFirebaseAuth must be used within a FirebaseAuthProvider",
+    );
+  }
+  return context;
+}
+
+const pendingMagicLinkEmailKey = "pendingMagicLinkEmail";
+
+async function sendMagicLinkToEmail(email: string) {
+  await sendSignInLinkToEmail(auth, email, {
+    url: window.location.origin + "/signin/callback",
+    handleCodeInApp: true,
+  });
+  // Save the email locally, so you don't need to ask the user for it again if they open the link on the same device.
+  window.localStorage.setItem(pendingMagicLinkEmailKey, email);
+}
+
+export function useSendMagicLinkToEmail() {
+  return useMutation({
+    mutationKey: ["sendMagicLinkToEmail"],
+    mutationFn: (email: string) => sendMagicLinkToEmail(email),
+    retry: false,
+    onMutate: (email) => {
+      console.log("sending magic link to ", email);
+    },
+    onSuccess: () => {
+      console.log("sent magic link");
+    },
+    onError: (error) => {
+      console.error("failed to send magic link: ", error.message);
+    },
+  });
+}
+
+export type SigninWithMagicLinkResult = {
+  user: User;
+  isNewUser: boolean;
+};
+
+export async function signInWithMagicLinkEmail(
+  link: string,
+): Promise<SigninWithMagicLinkResult> {
+  if (!isSignInWithEmailLink(auth, link)) {
+    throw new Error("Magic link is invalid: " + link);
+  }
+  let email = window.localStorage.getItem(pendingMagicLinkEmailKey);
+  if (!email) {
+    throw new Error("Attempted to sign-in on a different device");
+  }
+  try {
+    let result = await signInWithEmailLink(auth, email, link);
+    let userInfo = getAdditionalUserInfo(result);
+    if (!userInfo) {
+      throw new Error("Failed to get user info");
+    }
+    return {
+      user: result.user,
+      isNewUser: userInfo.isNewUser,
+    };
+  } finally {
+    window.localStorage.removeItem(pendingMagicLinkEmailKey);
+  }
+}
+
+export function useSignInWithMagicLinkEmail() {
+  const router = useRouter();
+  return useMutation({
+    mutationKey: ["signInWithMagicLinkEmail"],
+    mutationFn: (link: string) => signInWithMagicLinkEmail(link),
+    retry: false,
+    onMutate: (link) => {
+      console.log("signing in with magic link ", link);
+    },
+    onSuccess: (data) => {
+      console.log("signed in with magic link ", data);
+      router.push("/");
+    },
+    onError: (error) => {
+      console.error("failed to sign in with magic link: ", error.message);
+    },
+  });
+}
+
+export function useSignOut() {
+  return useMutation({
+    mutationKey: ["signOut"],
+    mutationFn: () => signOut(auth),
+    retry: false,
+    onMutate: () => {
+      console.log("signing out");
+    },
+    onSuccess: () => {
+      console.log("signed out");
+    },
+    onError: (error) => {
+      console.error("failed to sign out: ", error.message);
+    },
+  });
+}

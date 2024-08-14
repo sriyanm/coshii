@@ -8,6 +8,14 @@ Use the project's node version:
 nvm use
 ```
 
+Run the firebase emulators:
+
+```bash
+firebase emulators:start --project  temporal-falcon-430320-g5
+```
+
+Create an `.env.local` file with any required vars (see `.env.example`)
+
 Run the development server:
 
 ```bash
