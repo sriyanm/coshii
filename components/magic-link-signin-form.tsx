@@ -1,40 +1,90 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useSendMagicLinkToEmail } from "@/hooks/firebase";
-import { ChangeEvent, MouseEvent, useState } from "react";
+import { AlertCircle, Check } from "lucide-react";
+import Link from "next/link";
+import { ChangeEvent, FormEvent, useState } from "react";
 
-export default function MagicLinkSigninForm() {
+export function MagicLinkSigninForm() {
   const sendMagicLinkMutation = useSendMagicLinkToEmail();
   const [email, setEmail] = useState("");
 
   const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
     setEmail(e.currentTarget.value);
   };
-  const handleSubmit = (e: MouseEvent<HTMLButtonElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     sendMagicLinkMutation.mutate(email);
   };
-
   return (
-    <form>
-      <input
-        className="text-black"
-        type="email"
-        value={email}
-        onChange={handleInput}
-        placeholder="me@example.com"
-      />
-      <button
-        type="submit"
-        disabled={sendMagicLinkMutation.isPending}
-        onClick={handleSubmit}
-      >
-        {sendMagicLinkMutation.isPending ? "Sending..." : "Send magic link"}
-      </button>
-      {sendMagicLinkMutation.isError && <div>Error sending magic link!</div>}
+    <div className="mx-auto max-w-md space-y-6">
+      <div className="space-y-2 text-center">
+        <h1 className="text-3xl font-bold">Sign in</h1>
+        <p className="text-muted-foreground">
+          Enter your email below to receive a magic link to sign in.
+        </p>
+      </div>
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="me@example.com"
+            value={email}
+            onChange={handleInput}
+            required
+          />
+        </div>
+        <Button
+          type="submit"
+          disabled={sendMagicLinkMutation.isPending}
+          className="w-full"
+        >
+          {sendMagicLinkMutation.isPending
+            ? "Sending magic link..."
+            : "Send magic link"}
+        </Button>
+      </form>
       {sendMagicLinkMutation.isSuccess && (
-        <div>Check your email for the magic link!</div>
+        <Alert>
+          <Check className="h-4 w-4" />
+          <AlertTitle>Done!</AlertTitle>
+          <AlertDescription>
+            Check your email for the link to sign in.
+          </AlertDescription>
+        </Alert>
       )}
-    </form>
+      {sendMagicLinkMutation.isError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>Failed to send the magic link!</AlertDescription>
+        </Alert>
+      )}
+      <p className="text-xs text-muted-foreground text-center">
+        By signing in, you agree to our{" "}
+        <Link
+          href="#"
+          className="underline underline-offset-2"
+          prefetch={false}
+        >
+          Terms of Service
+        </Link>
+        and{" "}
+        <Link
+          href="#"
+          className="underline underline-offset-2"
+          prefetch={false}
+        >
+          Privacy Policy
+        </Link>
+        .
+      </p>
+    </div>
   );
 }
