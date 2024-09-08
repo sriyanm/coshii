@@ -27,6 +27,12 @@ export const FirebaseAuthProvider = ({
   });
 
   useEffect(() => {
+    navigator.serviceWorker
+      .register(new URL("../../app/service-worker.ts", import.meta.url))
+      .then((registration) => console.log(registration));
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
       setState((prevState) => {
         return {
