@@ -52,7 +52,7 @@ export function MagicLinkSigninForm() {
       </form>
       {sendMagicLinkMutation.isSuccess && (
         <Alert>
-          <Check className="h-4 w-4" />
+          <Check className="size-4" />
           <AlertTitle>Done!</AlertTitle>
           <AlertDescription>
             Check your email for the link to sign in.
@@ -61,12 +61,12 @@ export function MagicLinkSigninForm() {
       )}
       {sendMagicLinkMutation.isError && (
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="size-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>Failed to send the magic link!</AlertDescription>
         </Alert>
       )}
-      <p className="text-xs text-muted-foreground text-center">
+      <p className="text-center text-xs text-muted-foreground">
         By signing in, you agree to our{" "}
         <Link
           href="#"

@@ -5,11 +5,11 @@ declare let self: ServiceWorkerGlobalScope;
 import { auth } from "@/lib/client/firebase";
 import { Auth, getIdToken } from "firebase/auth";
 
-self.addEventListener("install", async (event) => {
+self.addEventListener("install", async () => {
   console.log("Service worker installed");
 });
 
-self.addEventListener("activate", async (event) => {
+self.addEventListener("activate", async () => {
   console.log("Service worker activated");
 });
 

@@ -1,0 +1,10 @@
+node_modules/
+build/
+out/
+.firebase/
+.husky/
+.next/
+pnpm-lock.yaml
+*.log
+.prettierignore
+
