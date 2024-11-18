@@ -8,7 +8,9 @@ pnpm-lock.yaml
 *.log
 .prettierignore
 .gitignore
+.env
+.env.example
 
 # Generated directories
-dataconnect-generated/
+dataconnect/generated-sdk/
 functions/lib/

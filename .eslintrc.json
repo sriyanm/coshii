@@ -6,7 +6,7 @@
     "plugin:tailwindcss/recommended"
   ],
   "ignorePatterns": [
-    "dataconnect-generated/",
+    "dataconnect/generated-sdk/",
     "functions/lib/",
     "**/node_modules/"
   ]

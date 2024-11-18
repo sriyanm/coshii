@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@firebasegen/dataconnect':
-        specifier: file:dataconnect-generated
-        version: file:dataconnect-generated(firebase@11.0.1)
+        specifier: file:dataconnect/generated-sdk
+        version: file:dataconnect/generated-sdk(firebase@11.0.1)
       '@radix-ui/react-icons':
         specifier: ^1.3.0
         version: 1.3.1(react@18.3.1)
@@ -334,8 +334,8 @@ packages:
   '@firebase/webchannel-wrapper@1.0.2':
     resolution: {integrity: sha512-3F4iA2E+NtdMbOU0XC1cHE8q6MqpGIKRj62oGOF38S6AAx5VHR9cXmoDUSj7ejvTAT7m6jxuEeQkHeq0F+mU2w==}
 
-  '@firebasegen/dataconnect@file:dataconnect-generated':
-    resolution: {directory: dataconnect-generated, type: directory}
+  '@firebasegen/dataconnect@file:dataconnect/generated-sdk':
+    resolution: {directory: dataconnect/generated-sdk, type: directory}
     engines: {node: ' >=18.0'}
     peerDependencies:
       firebase: ^10.14.0
@@ -2525,7 +2525,7 @@ snapshots:
 
   '@firebase/webchannel-wrapper@1.0.2': {}
 
-  '@firebasegen/dataconnect@file:dataconnect-generated(firebase@11.0.1)':
+  '@firebasegen/dataconnect@file:dataconnect/generated-sdk(firebase@11.0.1)':
     dependencies:
       firebase: 11.0.1
 

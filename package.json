@@ -6,6 +6,8 @@
     "dev": "NODE_OPTIONS='--inspect' next dev",
     "build": "next build",
     "build:dataconnect-sdk": "firebase dataconnect:sdk:generate",
+    "build:functions": "cd functions && pnpm run build && cd -",
+    "emulators": "pnpm run build:functions && firebase emulators:start --project temporal-falcon-430320-g5",
     "start": "next start",
     "format": "prettier . --write",
     "lint": "next lint",
@@ -15,7 +17,7 @@
     "postinstall": "cd functions && pnpm install && cd -"
   },
   "dependencies": {
-    "@firebasegen/dataconnect": "file:dataconnect-generated",
+    "@firebasegen/dataconnect": "file:dataconnect/generated-sdk",
     "@radix-ui/react-icons": "^1.3.0",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-slot": "^1.1.0",
