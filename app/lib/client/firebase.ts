@@ -1,6 +1,6 @@
 "use client";
 
-import env from "@/lib/client/env";
+import env from "@/app/lib/client/env";
 import {
   getApps,
   initializeApp,

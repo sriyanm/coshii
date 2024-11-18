@@ -1,7 +1,7 @@
 "use client";
 
-import { FirebaseAuthContext } from "@/components/providers/firebase-auth-provider";
-import { auth } from "@/lib/client/firebase";
+import { FirebaseAuthContext } from "@/app/components/providers/firebase-auth-provider";
+import { auth } from "@/app/lib/client/firebase";
 import { useMutation } from "@tanstack/react-query";
 import {
   getAdditionalUserInfo,
@@ -63,13 +63,13 @@ export async function signInWithMagicLinkEmail(
   if (!isSignInWithEmailLink(auth, link)) {
     throw new Error("Magic link is invalid: " + link);
   }
-  let email = window.localStorage.getItem(pendingMagicLinkEmailKey);
+  const email = window.localStorage.getItem(pendingMagicLinkEmailKey);
   if (!email) {
     throw new Error("Attempted to sign-in on a different device");
   }
   try {
-    let result = await signInWithEmailLink(auth, email, link);
-    let userInfo = getAdditionalUserInfo(result);
+    const result = await signInWithEmailLink(auth, email, link);
+    const userInfo = getAdditionalUserInfo(result);
     if (!userInfo) {
       throw new Error("Failed to get user info");
     }

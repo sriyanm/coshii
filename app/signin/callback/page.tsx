@@ -1,6 +1,6 @@
 "use client";
 
-import { useSignInWithMagicLinkEmail } from "@/hooks/firebase";
+import { useSignInWithMagicLinkEmail } from "@/app/hooks/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 

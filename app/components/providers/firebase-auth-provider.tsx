@@ -1,6 +1,6 @@
 "use client";
 
-import { auth } from "@/lib/client/firebase";
+import { auth } from "@/app/lib/client/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { createContext, ReactNode, useEffect, useState } from "react";
 
@@ -28,7 +28,7 @@ export const FirebaseAuthProvider = ({
 
   useEffect(() => {
     navigator.serviceWorker
-      .register(new URL("../../app/service-worker.ts", import.meta.url))
+      .register(new URL("../../service-worker.ts", import.meta.url))
       .then((registration) => console.log(registration));
   }, []);
 

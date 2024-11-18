@@ -2,7 +2,7 @@
 export type {};
 declare let self: ServiceWorkerGlobalScope;
 
-import { auth } from "@/lib/client/firebase";
+import { auth } from "@/app/lib/client/firebase";
 import { Auth, getIdToken } from "firebase/auth";
 
 self.addEventListener("install", async () => {

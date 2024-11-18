@@ -1,12 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  eslint: {
-    ignorePatterns: [
-      "dataconnect-generated/",
-      "functions/lib/",
-      "**/node_modules/",
-    ],
-  },
-};
+const nextConfig = {};
 
 export default nextConfig;

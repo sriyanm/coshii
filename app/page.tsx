@@ -1,7 +1,7 @@
 "use client";
 
-import UserInfo from "@/components/user-info";
-import { useFirebaseAuth } from "@/hooks/firebase";
+import UserInfo from "@/app/components/user-info";
+import { useFirebaseAuth } from "@/app/hooks/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 

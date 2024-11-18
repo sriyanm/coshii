@@ -1,10 +1,10 @@
 "use client";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useSendMagicLinkToEmail } from "@/hooks/firebase";
+import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import { useSendMagicLinkToEmail } from "@/app/hooks/firebase";
 import { AlertCircle, Check } from "lucide-react";
 import Link from "next/link";
 import { ChangeEvent, FormEvent, useState } from "react";
