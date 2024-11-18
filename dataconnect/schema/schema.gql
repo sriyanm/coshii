@@ -1,0 +1,8 @@
+type User
+  @table(name: "Users", singular: "user", plural: "users", key: ["uid"]) {
+  uid: String! @default(expr: "auth.uid")
+  phoneNumber: String @unique
+  email: String @unique
+
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+}

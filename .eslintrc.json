@@ -4,5 +4,10 @@
     "next/typescript",
     "prettier",
     "plugin:tailwindcss/recommended"
+  ],
+  "ignorePatterns": [
+    "dataconnect-generated/",
+    "functions/lib/",
+    "**/node_modules/"
   ]
 }

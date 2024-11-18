@@ -7,4 +7,8 @@ out/
 pnpm-lock.yaml
 *.log
 .prettierignore
+.gitignore
 
+# Generated directories
+dataconnect-generated/
+functions/lib/

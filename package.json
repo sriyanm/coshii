@@ -5,14 +5,17 @@
   "scripts": {
     "dev": "NODE_OPTIONS='--inspect' next dev",
     "build": "next build",
+    "build:dataconnect-sdk": "firebase dataconnect:sdk:generate",
     "start": "next start",
     "format": "prettier . --write",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "prepare": "husky || true",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "npx only-allow pnpm",
+    "postinstall": "cd functions && pnpm install && cd -"
   },
   "dependencies": {
+    "@firebasegen/dataconnect": "file:dataconnect-generated",
     "@radix-ui/react-icons": "^1.3.0",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-slot": "^1.1.0",

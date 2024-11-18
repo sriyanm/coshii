@@ -1,0 +1,12 @@
+specVersion: "v1beta"
+serviceId: "coshii-data-connect"
+location: "us-west1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "coshii-db"
+      cloudSql:
+        instanceId: "coshii-dev-cloud-sql"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]
