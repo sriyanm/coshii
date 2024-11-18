@@ -16,7 +16,6 @@ nvm use
 
 ```bash
 corepack enable pnpm
-corepack use pnpm
 ```
 
 5. Install firebase tools
