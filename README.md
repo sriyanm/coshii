@@ -30,23 +30,29 @@ pnpm install -g firebase-tools@latest
 sudo apt install openjdk-21-jre-headless
 ```
 
-7. Create an `.env.local` file with any required vars (see `.env.example`)
+7. Install dependencies:
 
-8. Run the firebase emulators:
+```bash
+pnpm install
+```
+
+8. Create an `.env.local` file with any required vars (see `.env.example`)
+
+9. Run the firebase emulators:
 
 ```bash
 pnpm run emulators
 ```
 
-9. Run the development server:
+10. Run the development server:
 
 ```bash
 pnpm run dev
 ```
 
-10. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+11. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-11. You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+12. You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 ## Learn More
 
