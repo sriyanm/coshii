@@ -48,6 +48,14 @@ pnpm run dev
 
 11. You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## VSCode Extensions
+
+1. [Firebase Data Connect](https://marketplace.visualstudio.com/items?itemName=GoogleCloudTools.firebase-dataconnect-vscode)
+2. [Tailwind CSS IntelliSense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
+3. [Node Essentials](https://marketplace.visualstudio.com/items?itemName=afractal.node-essentials)
+4. [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+5. [GraphQL: Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=GraphQL.vscode-graphql-syntax)
+
 ## Learn More
 
 To learn more about Next.js and Firebase, take a look at the following resources:
