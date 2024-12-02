@@ -1,8 +1,9 @@
 "use client";
+import Link from "next/link";
 
 interface NavItem {
   label: string;
-  icon: string; // You can change this to JSX.Element if using an icon library
+  icon: string;
   link: string;
 }
 
@@ -11,43 +12,21 @@ export function NavigationBar() {
     { label: "Shop", icon: "🛍️", link: "/shop" },
     { label: "Notification", icon: "🔔", link: "/notifications" },
     { label: "New Product", icon: "➕", link: "/new-product" },
-    { label: "Fan Club", icon: "🌟", link: "/fan-club" },
+    { label: "Fan Club", icon: "🌟", link: "/fan-club" }, //prob will get taken out in MVP
     { label: "Settings", icon: "⚙️", link: "/settings" },
   ];
 
   return (
-    <nav
-      style={{
-        position: "fixed",
-        bottom: 0,
-        width: "100%",
-        backgroundColor: "#fff",
-        display: "flex",
-        justifyContent: "space-around",
-        alignItems: "center",
-        padding: "10px 0",
-        boxShadow: "0 -2px 5px rgba(0, 0, 0, 0.1)",
-        borderTop: "1px solid #ddd",
-      }}
-    >
+    <nav className="bg-white border-gray-200 sticky bottom-0 flex w-full items-center justify-around border-t py-3 shadow-md">
       {navItems.map((item) => (
-        <a
+        <Link
           key={item.label}
           href={item.link}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textDecoration: "none",
-            color: "#333",
-            fontSize: "12px",
-          }}
+          className="text-gray-600 hover:text-gray-900 flex flex-col items-center text-sm"
         >
-          <span style={{ fontSize: "20px", marginBottom: "5px" }}>
-            {item.icon}
-          </span>
+          <span className="mb-1 text-xl">{item.icon}</span>
           {item.label}
-        </a>
+        </Link>
       ))}
     </nav>
   );

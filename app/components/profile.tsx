@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import { useState } from "react";
+import Link from "next/link";
 
 // Subcomponent for Profile Header
 function ProfileHeader({
@@ -15,151 +16,87 @@ function ProfileHeader({
   description: string;
 }) {
   return (
-    <div style={{ textAlign: "center", padding: "20px" }}>
+    <div className="p-5 text-center">
       <img
         src={profilePic}
         alt="Profile"
-        style={{
-          width: "100px",
-          height: "100px",
-          borderRadius: "50%",
-          objectFit: "cover",
-          margin: "0 auto",
-        }}
+        className="rounded-full mx-auto size-24 object-cover"
       />
-      <h1 style={{ fontSize: "24px", margin: "10px 0" }}>{shopName}</h1>
-      <p style={{ fontSize: "16px", color: "#555" }}>@{username}</p>
-      <p style={{ fontSize: "14px", color: "#777", marginTop: "10px" }}>
-        {description}
-      </p>
+      <h1 className="mt-3 text-2xl font-semibold">{shopName}</h1>
+      <p className="text-gray-600">@{username}</p>
+      <p className="text-gray-500 mt-2 text-sm">{description}</p>
     </div>
   );
 }
 
-// Subcomponent for Social Links Bar
 function SocialLinksBar({
   magicPagesUrl,
   socialLinks,
 }: {
   magicPagesUrl: string;
-  socialLinks: { platform: string; url: string; iconSrc: string }[];
+  socialLinks: { platform: string; url: string; icon: JSX.Element }[]; // Added the `icon` prop to the array type
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        gap: "15px",
-        margin: "10px 0",
-      }}
-    >
-      <button
-        style={{
-          padding: "10px 20px",
-          backgroundColor: "#007BFF",
-          color: "#fff",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-        }}
-        onClick={() => (window.location.href = magicPagesUrl)}
-      >
-        Magic Pages
-      </button>
-      {socialLinks.map(({ platform, url, iconSrc }) => (
-        <a
+    <div className="my-1 flex justify-center gap-4">
+      <Link href={magicPagesUrl} passHref>
+        <button className="!bg-red-400 text-black rounded-md px-5 py-2">
+          Magic Pages
+        </button>
+      </Link>
+      {socialLinks.map(({ platform, url, icon }) => (
+        <Link
           key={platform}
           href={url}
           target="_blank"
           rel="noopener noreferrer"
           title={platform}
+          className="flex items-center"
         >
-          <img
-            src={iconSrc}
-            alt={platform}
-            style={{ width: "30px", height: "30px" }}
-          />
-        </a>
+          {icon ? (
+            <span className="flex items-center">{icon}</span> // Display the SVG icon
+          ) : (
+            <span>{platform}</span> // Fallback text if no icon is provided
+          )}
+        </Link>
       ))}
     </div>
   );
 }
 
-// Subcomponent for Shop or Activity Toggle
-function ShopOrActivityToggle({
-  activeTab,
-  onTabChange,
+function Toggle({
+  options,
+  selectedOption,
+  onOptionSelect,
+  font = "SF Pro",
+  underline = false,
 }: {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
+  options: string[];
+  selectedOption: string;
+  onOptionSelect: (option: string) => void;
+  font?: string; // Default font is sans-serif
+  underline?: boolean; // Whether the selected option should be underlined
 }) {
   return (
     <div
+      className="my-1 flex justify-start gap-4 overflow-x-auto"
       style={{
-        display: "flex",
-        justifyContent: "center",
-        gap: "20px",
-        margin: "20px 0",
+        fontFamily: font,
+        whiteSpace: "nowrap", // Prevent line breaks for horizontal scroll
+        scrollBehavior: "smooth", // Smooth scrolling
+        justifyContent: options.length <= 3 ? "center" : "flex-start", // Center if there are few options
       }}
     >
-      <button
-        style={{
-          padding: "10px 20px",
-          backgroundColor: activeTab === "Shop" ? "#007BFF" : "#f0f0f0",
-          color: activeTab === "Shop" ? "#fff" : "#000",
-          border: "1px solid #ccc",
-          borderRadius: "4px",
-          cursor: "pointer",
-        }}
-        onClick={() => onTabChange("Shop")}
-      >
-        Shop
-      </button>
-      <button
-        style={{
-          padding: "10px 20px",
-          backgroundColor: activeTab === "Activity" ? "#007BFF" : "#f0f0f0",
-          color: activeTab === "Activity" ? "#fff" : "#000",
-          border: "1px solid #ccc",
-          borderRadius: "4px",
-          cursor: "pointer",
-        }}
-        onClick={() => onTabChange("Activity")}
-      >
-        Activity
-      </button>
-    </div>
-  );
-}
-
-// Subcomponent for Categories
-function Categories({
-  selectedCategory,
-  categories,
-  onCategorySelect,
-}: {
-  selectedCategory: string;
-  categories: string[];
-  onCategorySelect: (category: string) => void;
-}) {
-  return (
-    <div style={{ textAlign: "center", margin: "20px 0" }}>
-      {categories.map((category) => (
+      {options.map((option) => (
         <button
-          key={category}
-          style={{
-            padding: "10px 15px",
-            margin: "5px",
-            backgroundColor:
-              selectedCategory === category ? "#007BFF" : "#f8f8f8",
-            color: selectedCategory === category ? "#fff" : "#000",
-            border: "1px solid #ddd",
-            borderRadius: "20px",
-            cursor: "pointer",
-          }}
-          onClick={() => onCategorySelect(category)}
+          key={option}
+          className={`rounded-md px-5 py-2 ${
+            selectedOption === option
+              ? `text-black bg-gray-200 font-bold ${underline ? "underline" : ""}`
+              : "text-gray-500 bg-gray-100"
+          }`}
+          onClick={() => onOptionSelect(option)}
         >
-          {category}
+          {option}
         </button>
       ))}
     </div>
@@ -181,24 +118,14 @@ export function Profile({
   username: string;
   description: string;
   magicPagesUrl: string;
-  socialLinks: { platform: string; url: string; iconSrc: string }[];
+  socialLinks: { platform: string; url: string; icon: JSX.Element }[]; // Added the `icon` prop to the array type
   categories: string[];
 }) {
-  const [activeTab, setActiveTab] = React.useState("Shop");
-  const [selectedCategory, setSelectedCategory] = React.useState("All");
+  const [activeTab, setActiveTab] = useState("Shop");
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   return (
-    <div
-      style={{
-        maxWidth: "500px",
-        margin: "20px auto",
-        backgroundColor: "#fff",
-        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-        borderRadius: "8px",
-        overflow: "hidden",
-        padding: "20px",
-      }}
-    >
+    <div className="bg-white mx-auto max-w-md overflow-hidden rounded-lg p-5 shadow-lg">
       <ProfileHeader
         profilePic={profilePic}
         shopName={shopName}
@@ -206,11 +133,23 @@ export function Profile({
         description={description}
       />
       <SocialLinksBar magicPagesUrl={magicPagesUrl} socialLinks={socialLinks} />
-      <ShopOrActivityToggle activeTab={activeTab} onTabChange={setActiveTab} />
-      <Categories
-        selectedCategory={selectedCategory}
-        categories={categories}
-        onCategorySelect={setSelectedCategory}
+
+      {/* Shop or Activity Toggle */}
+      <Toggle
+        options={["Shop", "Activity"]}
+        selectedOption={activeTab}
+        onOptionSelect={setActiveTab}
+        font="SF Pro"
+        underline={true}
+      />
+
+      {/* Categories Toggle */}
+      <Toggle
+        options={categories}
+        selectedOption={selectedCategory}
+        onOptionSelect={setSelectedCategory}
+        font="SF Pro"
+        underline={false}
       />
     </div>
   );
