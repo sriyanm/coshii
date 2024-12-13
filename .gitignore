@@ -41,6 +41,7 @@ dataconnect-debug.log
 firebase-debug.log
 ui-debug.log
 functions/lib/
+dataconnect/.dataconnect/
 
 # ide
 .vscode/
