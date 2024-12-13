@@ -4,57 +4,60 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 1. Install nvm from [Github](https://github.com/nvm-sh/nvm?tab=readme-ov-file#install--update-script)
 
-2. Switch to project dir
+1. Switch to project dir
 
-3. Use the project's node version:
+1. Use the project's node version:
 
-```bash
-nvm use
-```
+   ```bash
+   nvm install
+   nvm use
+   ```
 
-4. Enable and install the project's `pnpm` version
+1. Enable and install the project's `pnpm` version
 
-```bash
-corepack enable pnpm
-```
+   ```bash
+   corepack enable pnpm
+   pnpm setup
+   pnpm install
+   ```
 
-5. Install firebase tools
+1. Install firebase tools
 
-```bash
-pnpm install -g firebase-tools@latest
-```
+   ```bash
+   pnpm install -g firebase-tools@latest
+   ```
 
-6. (If necessary) Install java for firebase emulators
+1. (If necessary) Install java for firebase emulators
 
-```bash
-sudo apt install openjdk-21-jre-headless
-```
+   ```bash
+   sudo apt install openjdk-21-jre-headless
+   ```
 
-7. Create an `.env.local` file with any required vars (see `.env.example`)
+1. Create an `.env.local` file with any required vars (see `.env.example`)
 
-8. Run the firebase emulators:
+1. Run the firebase emulators:
 
-```bash
-pnpm run emulators
-```
+   ```bash
+   pnpm run emulators
+   ```
 
-9. Run the development server:
+1. Run the development server:
 
-```bash
-pnpm run dev
-```
+   ```bash
+   pnpm run dev
+   ```
 
-10. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-11. You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 ## VSCode Extensions
 
 1. [Firebase Data Connect](https://marketplace.visualstudio.com/items?itemName=GoogleCloudTools.firebase-dataconnect-vscode)
-2. [Tailwind CSS IntelliSense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
-3. [Node Essentials](https://marketplace.visualstudio.com/items?itemName=afractal.node-essentials)
-4. [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-5. [GraphQL: Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=GraphQL.vscode-graphql-syntax)
+1. [Tailwind CSS IntelliSense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
+1. [Node Essentials](https://marketplace.visualstudio.com/items?itemName=afractal.node-essentials)
+1. [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+1. [GraphQL: Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=GraphQL.vscode-graphql-syntax)
 
 ## Learn More
 
