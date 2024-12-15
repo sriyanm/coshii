@@ -30,7 +30,9 @@ export const firebaseApp =
 function getAuth(firebaseApp: FirebaseApp): Auth {
   const auth = _getAuth(firebaseApp);
   if (env.NODE_ENV !== "production") {
-    connectAuthEmulator(auth, "http://127.0.0.1:9099");
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", {
+      disableWarnings: true,
+    });
   }
   return auth;
 }
