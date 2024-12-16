@@ -1,16 +1,17 @@
 import { useState, useRef, UIEvent } from "react";
+import { SocialBar } from "./SocialBar"; // Import the SocialBar component
 
 interface ProductPageProps {
-  productImages: string[]; // Array of URLs for the product images/videos
-  caption: string; // Caption text for the product
-  shopName: string; // Shop name
-  productName: string; // Product name
-  price: string; // Price of the product
-  onAddToCart: () => void; // Handler for the add to cart button
-  onLike: () => void; // Handler for the like button
-  onComment: () => void; // Handler for the comment button
-  onShare: () => void; // Handler for the share button
-  onSearch: (query: string) => void; // Handler for the search input
+  productImages: string[];
+  caption: string;
+  shopName: string;
+  productName: string;
+  price: string;
+  onAddToCart: () => void;
+  onLike: () => void;
+  onComment: () => void;
+  onShare: () => void;
+  onSearch: (query: string) => void;
 }
 
 export function ProductPage({
@@ -64,7 +65,7 @@ export function ProductPage({
   return (
     <div className="bg-black relative h-screen w-screen">
       {/* Back Bar */}
-      <div className="bg-black absolute left-0 top-0 z-20 flex w-full items-center bg-opacity-50 p-3">
+      <div className="bg-black absolute left-0 top-0 z-20 flex w-full items-center bg-opacity-100 p-3">
         <button className="text-white">Back</button>
       </div>
 
@@ -119,26 +120,16 @@ export function ProductPage({
       </div>
 
       {/* Bottom Right Add to Cart Button & Interaction Buttons */}
-      <div className="absolute bottom-0 right-0 z-10 flex flex-col items-center space-y-3 p-5">
-        {/* Like, Comment, Share buttons */}
-        <div className="flex space-x-4">
-          <button onClick={onLike} className="text-white">
-            <i className="fas fa-heart"></i> {/* Heart icon for Like */}
-          </button>
-          <button onClick={onComment} className="text-white">
-            <i className="fas fa-comment"></i> {/* Comment icon */}
-          </button>
-          <button onClick={onShare} className="text-white">
-            <i className="fas fa-share-alt"></i> {/* Share icon */}
-          </button>
-        </div>
+      <div className="absolute bottom-0 right-0 z-10 ml-auto flex flex-col items-center space-y-3 p-5">
+        {/* Social Bar */}
+        <SocialBar onLike={onLike} onComment={onComment} onShare={onShare} />
 
         {/* Add to Cart Button */}
         <button
           onClick={onAddToCart}
           className="bg-yellow-400 text-black rounded-full px-6 py-3"
         >
-          Add to Cart
+          Cart
         </button>
       </div>
     </div>
