@@ -18,9 +18,12 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        onboarding: "rounded-full bg-white text-red-500 hover:bg-white/90",
+        onboarding: "rounded-full bg-white text-red-500 active:bg-white/90",
         onboardingSecondary:
-          "rounded-full bg-transparent text-gray-400 hover:bg-white/20",
+          "rounded-full bg-transparent text-gray-400 active:bg-white/20",
+        addProduct: "rounded-full bg-white/50 text-black active:bg-white/30",
+        addProductSecondary:
+          "rounded-full bg-transparent text-black/50 active:bg-white/10",
       },
       size: {
         default: "h-10 px-4 py-2",

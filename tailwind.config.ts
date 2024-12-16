@@ -49,30 +49,37 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      keyframes: {
+        "accordion-down": {
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
+        },
+        "accordion-up": {
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
+        },
+        "caret-blink": {
+          "0%,70%,100%": { opacity: "1" },
+          "20%,50%": { opacity: "0" },
+        },
+      },
+      animation: {
+        "caret-blink": "caret-blink 1.25s ease-out infinite",
+      },
     },
     borderRadius: {
       full: "9999px",
       lg: "var(--radius)",
       md: "calc(var(--radius) - 2px)",
       sm: "calc(var(--radius) - 4px)",
-    },
-    keyframes: {
-      "accordion-down": {
-        from: {
-          height: "0",
-        },
-        to: {
-          height: "var(--radix-accordion-content-height)",
-        },
-      },
-      "accordion-up": {
-        from: {
-          height: "var(--radix-accordion-content-height)",
-        },
-        to: {
-          height: "0",
-        },
-      },
     },
   },
   plugins: [tailwindcssAnimate],
