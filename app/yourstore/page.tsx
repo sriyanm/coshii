@@ -33,7 +33,7 @@ export default function ProfilePage() {
       const images = imageSets[i % imageSets.length]; // Alternate images
       return {
         images,
-        caption: `Product ${offset + i + 1} caption`,
+        caption: `Product ${offset + i + 1} caption. Here's more of a description of the product. You should've been clicking see more in order to see all of this. `,
         shopName: "Mike's Shop",
         name: `Product ${offset + i + 1}`,
         price: `$${(offset + i + 1) * 10}`,

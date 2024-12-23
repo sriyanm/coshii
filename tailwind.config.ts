@@ -16,6 +16,7 @@ const config: Config = {
       },
     },
     colors: {
+      white: "#ffffff", // Changed to direct color value
       border: "hsl(var(--border))",
       input: "hsl(var(--input))",
       ring: "hsl(var(--ring))",

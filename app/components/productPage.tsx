@@ -1,5 +1,6 @@
 import { useState, useRef, UIEvent } from "react";
 import { SocialBar } from "./SocialBar"; // Import the SocialBar component
+import { Caption } from "./Caption"; // Import Caption component
 
 interface ProductPageProps {
   productImages: string[];
@@ -86,7 +87,7 @@ export function ProductPage({
       </div>
 
       {/* Top Left Info */}
-      <div className="text-white absolute left-0 top-0 z-10 p-5">
+      <div className="absolute left-0 top-0 z-10 p-5 text-white">
         <p className="text-lg font-semibold">{shopName}</p>
         <p className="text-xl font-semibold">{productName}</p>
         <p className="text-lg font-semibold">{price}</p>
@@ -97,14 +98,9 @@ export function ProductPage({
         <input
           type="text"
           placeholder="Search"
-          className="bg-white text-black w-full rounded-md p-2"
+          className="text-black w-full rounded-md bg-white p-2"
           onChange={(e) => onSearch(e.target.value)}
         />
-      </div>
-
-      {/* Bottom Left Caption */}
-      <div className="text-white from-black to-transparent absolute bottom-0 left-0 z-10 bg-gradient-to-t p-5">
-        <p className="text-xl">{caption}</p>
       </div>
 
       {/* Image Navigation (Swipe/Toggle Images) */}
@@ -112,25 +108,31 @@ export function ProductPage({
         {productImages.map((_, index) => (
           <div
             key={index}
-            className={`rounded-full bg-white size-3 ${
+            className={`rounded-full size-3 bg-white ${
               currentImageIndex === index ? "bg-opacity-100" : "bg-opacity-50"
             }`}
           />
         ))}
       </div>
+      {/* Bottom Left Caption */}
+      <div className="relative">
+        {/* Bottom Left Caption */}
+        <div className="from-black to-transparent absolute bottom-0 left-0 right-1/4 z-10 bg-gradient-to-t p-5 text-white">
+          <Caption caption={caption} />
+        </div>
 
-      {/* Bottom Right Add to Cart Button & Interaction Buttons */}
-      <div className="absolute bottom-0 right-0 z-10 ml-auto flex flex-col items-center space-y-3 p-5">
         {/* Social Bar */}
-        <SocialBar onLike={onLike} onComment={onComment} onShare={onShare} />
+        <div className="absolute bottom-0 right-0 z-10 ml-auto flex flex-col items-center space-y-3 p-5">
+          <SocialBar onLike={onLike} onComment={onComment} onShare={onShare} />
 
-        {/* Add to Cart Button */}
-        <button
-          onClick={onAddToCart}
-          className="bg-yellow-400 text-black rounded-full px-6 py-3"
-        >
-          Cart
-        </button>
+          {/* Add to Cart Button */}
+          <button
+            onClick={onAddToCart}
+            className="bg-yellow-400 rounded-full px-6 py-3 text-white"
+          >
+            Cart
+          </button>
+        </div>
       </div>
     </div>
   );
