@@ -16,6 +16,8 @@ const config: Config = {
       },
     },
     colors: {
+      black: "#000000", // Ensure black exists
+
       white: "#ffffff", // Changed to direct color value
       border: "hsl(var(--border))",
       input: "hsl(var(--input))",
@@ -55,6 +57,7 @@ const config: Config = {
       lg: "var(--radius)",
       md: "calc(var(--radius) - 2px)",
       sm: "calc(var(--radius) - 4px)",
+      full: "9999px", // Ensure rounded-full exists
     },
     keyframes: {
       "accordion-down": {

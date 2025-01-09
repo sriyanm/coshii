@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 
 // Subcomponent for Profile Header
@@ -20,7 +19,7 @@ function ProfileHeader({
       <img
         src={profilePic}
         alt="Profile"
-        className="rounded-full mx-auto size-24 object-cover"
+        className="mx-auto size-24 rounded-full object-cover"
       />
       <h1 className="mt-3 text-2xl font-semibold">{shopName}</h1>
       <p className="text-gray-600">@{username}</p>
@@ -39,7 +38,7 @@ function SocialLinksBar({
   return (
     <div className="my-1 flex justify-center gap-4">
       <Link href={magicPagesUrl} passHref>
-        <button className="!bg-red-400 text-black rounded-md px-5 py-2">
+        <button className="!bg-red-400 rounded-md px-5 py-2 text-black">
           Magic Pages
         </button>
       </Link>
@@ -63,46 +62,6 @@ function SocialLinksBar({
   );
 }
 
-function Toggle({
-  options,
-  selectedOption,
-  onOptionSelect,
-  font = "SF Pro",
-  underline = false,
-}: {
-  options: string[];
-  selectedOption: string;
-  onOptionSelect: (option: string) => void;
-  font?: string; // Default font is sans-serif
-  underline?: boolean; // Whether the selected option should be underlined
-}) {
-  return (
-    <div
-      className="my-1 flex justify-start gap-4 overflow-x-auto"
-      style={{
-        fontFamily: font,
-        whiteSpace: "nowrap", // Prevent line breaks for horizontal scroll
-        scrollBehavior: "smooth", // Smooth scrolling
-        justifyContent: options.length <= 3 ? "center" : "flex-start", // Center if there are few options
-      }}
-    >
-      {options.map((option) => (
-        <button
-          key={option}
-          className={`rounded-md px-5 py-2 ${
-            selectedOption === option
-              ? `text-black bg-gray-200 font-bold ${underline ? "underline" : ""}`
-              : "text-gray-500 bg-gray-100"
-          }`}
-          onClick={() => onOptionSelect(option)}
-        >
-          {option}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 // Main Profile Component
 export function Profile({
   profilePic,
@@ -111,7 +70,6 @@ export function Profile({
   description,
   magicPagesUrl,
   socialLinks,
-  categories,
 }: {
   profilePic: string;
   shopName: string;
@@ -119,13 +77,9 @@ export function Profile({
   description: string;
   magicPagesUrl: string;
   socialLinks: { platform: string; url: string; icon: JSX.Element }[]; // Added the `icon` prop to the array type
-  categories: string[];
 }) {
-  const [activeTab, setActiveTab] = useState("Shop");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-
   return (
-    <div className="bg-white mx-auto max-w-md overflow-hidden rounded-lg p-5 shadow-lg">
+    <div className="mx-auto max-w-md overflow-hidden rounded-lg bg-white p-5 shadow-lg">
       <ProfileHeader
         profilePic={profilePic}
         shopName={shopName}
@@ -133,24 +87,6 @@ export function Profile({
         description={description}
       />
       <SocialLinksBar magicPagesUrl={magicPagesUrl} socialLinks={socialLinks} />
-
-      {/* Shop or Activity Toggle */}
-      <Toggle
-        options={["Shop", "Activity"]}
-        selectedOption={activeTab}
-        onOptionSelect={setActiveTab}
-        font="SF Pro"
-        underline={true}
-      />
-
-      {/* Categories Toggle */}
-      <Toggle
-        options={categories}
-        selectedOption={selectedCategory}
-        onOptionSelect={setSelectedCategory}
-        font="SF Pro"
-        underline={false}
-      />
     </div>
   );
 }

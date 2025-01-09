@@ -29,17 +29,17 @@ export function SocialBar({ onLike, onComment, onShare }: SocialBarProps) {
     <div className="flex flex-col space-y-4">
       {" "}
       {/* Changed to flex-col and added space-y-4 for vertical stacking */}
-      {/* Like Button */}
-      <button onClick={onLike} className="text-white">
-        <FaHeart className="mr-2 text-2xl" />
+      {/* Share Button */}
+      <button onClick={handleShareClick} className="text-white">
+        <FaShareAlt className="mr-2 text-2xl" />
       </button>
       {/* Comment Button */}
       <button onClick={handleCommentClick} className="text-white">
         <FaCommentDots className="mr-2 text-2xl" />
       </button>
-      {/* Share Button */}
-      <button onClick={handleShareClick} className="text-white">
-        <FaShareAlt className="mr-2 text-2xl" />
+      {/* Like Button */}
+      <button onClick={onLike} className="text-white">
+        <FaHeart className="mr-2 text-2xl" />
       </button>
       {/* Conditional rendering for the popup */}
       {showComments && (
