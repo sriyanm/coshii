@@ -114,7 +114,7 @@ export function ProductPage({
         </div>
 
         {/* Social Bar */}
-        <div className="relative -top-3 z-10 flex flex-col items-center space-y-4">
+        <div className="z-8 relative -top-3 flex flex-col items-center space-y-4">
           <SocialBar onLike={onLike} onComment={onComment} onShare={onShare} />
         </div>
       </div>

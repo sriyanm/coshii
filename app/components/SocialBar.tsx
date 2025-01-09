@@ -27,8 +27,6 @@ export function SocialBar({ onLike, onComment, onShare }: SocialBarProps) {
 
   return (
     <div className="flex flex-col space-y-4">
-      {" "}
-      {/* Changed to flex-col and added space-y-4 for vertical stacking */}
       {/* Share Button */}
       <button onClick={handleShareClick} className="text-white">
         <FaShareAlt className="mr-2 text-2xl" />
@@ -41,10 +39,13 @@ export function SocialBar({ onLike, onComment, onShare }: SocialBarProps) {
       <button onClick={onLike} className="text-white">
         <FaHeart className="mr-2 text-2xl" />
       </button>
+
       {/* Conditional rendering for the popup */}
       {showComments && (
-        <div className="popup-overlay">
-          <CommentsPopup onClose={handleClosePopup} productId="123" />
+        <div className="popup-overlay fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="comments-popup size-4/5 overflow-y-auto bg-white p-4 shadow-lg backdrop-blur-md">
+            <CommentsPopup onClose={handleClosePopup} productId="123" />
+          </div>
         </div>
       )}
     </div>

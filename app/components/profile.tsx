@@ -29,19 +29,12 @@ function ProfileHeader({
 }
 
 function SocialLinksBar({
-  magicPagesUrl,
   socialLinks,
 }: {
-  magicPagesUrl: string;
   socialLinks: { platform: string; url: string; icon: JSX.Element }[]; // Added the `icon` prop to the array type
 }) {
   return (
     <div className="my-1 flex justify-center gap-4">
-      <Link href={magicPagesUrl} passHref>
-        <button className="!bg-red-400 rounded-md px-5 py-2 text-black">
-          Magic Pages
-        </button>
-      </Link>
       {socialLinks.map(({ platform, url, icon }) => (
         <Link
           key={platform}
@@ -68,25 +61,23 @@ export function Profile({
   shopName,
   username,
   description,
-  magicPagesUrl,
   socialLinks,
 }: {
   profilePic: string;
   shopName: string;
   username: string;
   description: string;
-  magicPagesUrl: string;
   socialLinks: { platform: string; url: string; icon: JSX.Element }[]; // Added the `icon` prop to the array type
 }) {
   return (
-    <div className="mx-auto max-w-md overflow-hidden rounded-lg bg-white p-5 shadow-lg">
+    <div className="mx-auto max-w-md overflow-hidden rounded-lg bg-white p-5">
       <ProfileHeader
         profilePic={profilePic}
         shopName={shopName}
         username={username}
         description={description}
       />
-      <SocialLinksBar magicPagesUrl={magicPagesUrl} socialLinks={socialLinks} />
+      <SocialLinksBar socialLinks={socialLinks} />
     </div>
   );
 }

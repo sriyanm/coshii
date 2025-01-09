@@ -78,7 +78,6 @@ export default function ProfilePage() {
   const username = "basketweaver";
   const description =
     "Hey this is my basketweaving description! It'd be funny if this was left in prod";
-  const magicPagesUrl = "/magic-pages";
   const socialLinks = [
     {
       platform: "Facebook",
@@ -115,7 +114,6 @@ export default function ProfilePage() {
           shopName={shopName}
           username={username}
           description={description}
-          magicPagesUrl={magicPagesUrl}
           socialLinks={socialLinks}
         />
       </div>
@@ -167,7 +165,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Product Pages */}
-      <div className="space-y-6 pt-20">
+      <div className="space-y-6 pt-2">
         {products.map((product, index) => (
           <ProductPage
             key={index}
@@ -187,7 +185,7 @@ export default function ProfilePage() {
       <div id="load-more-trigger" className="h-4 w-full"></div>
 
       {/* Navigation Bar */}
-      <div className="fixed bottom-0 w-full">
+      <div className="fixed bottom-0 z-10 w-full">
         <NavigationBar />
       </div>
     </div>
