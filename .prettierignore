@@ -10,7 +10,9 @@ pnpm-lock.yaml
 .gitignore
 .env
 .env.example
-public
+*.svg
+public/
+
 # Generated directories
 dataconnect/generated-sdk/
 functions/lib/

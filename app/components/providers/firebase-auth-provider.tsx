@@ -1,6 +1,7 @@
 "use client";
 
-import { auth } from "@/app/lib/client/firebase";
+import { auth, getDataConnect } from "@/app/lib/client/firebase";
+import { upsertUser } from "@firebasegen/dataconnect";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { createContext, ReactNode, useEffect, useState } from "react";
 
@@ -33,7 +34,14 @@ export const FirebaseAuthProvider = ({
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+      if (authUser) {
+        const dataConnect = getDataConnect();
+        await upsertUser(dataConnect, {
+          phoneNumber: authUser.phoneNumber,
+          email: authUser.email,
+        });
+      }
       setState((prevState) => {
         return {
           ...prevState,

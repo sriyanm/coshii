@@ -19,20 +19,13 @@ export interface GetCurrentUserData {
   } & User_Key;
 }
 
-export interface UpsertUserEmailData {
+export interface UpsertUserData {
   user_upsert: User_Key;
 }
 
-export interface UpsertUserEmailVariables {
-  email: string;
-}
-
-export interface UpsertUserPhoneNumberData {
-  user_upsert: User_Key;
-}
-
-export interface UpsertUserPhoneNumberVariables {
-  phoneNumber: string;
+export interface UpsertUserVariables {
+  phoneNumber?: string | null;
+  email?: string | null;
 }
 
 export interface User_Key {
@@ -43,21 +36,12 @@ export interface User_Key {
 
 
 /* Allow users to create refs without passing in DataConnect */
-export function upsertUserPhoneNumberRef(vars: UpsertUserPhoneNumberVariables): MutationRef<UpsertUserPhoneNumberData, UpsertUserPhoneNumberVariables>;
+export function upsertUserRef(vars?: UpsertUserVariables): MutationRef<UpsertUserData, UpsertUserVariables>;
 /* Allow users to pass in custom DataConnect instances */
-export function upsertUserPhoneNumberRef(dc: DataConnect, vars: UpsertUserPhoneNumberVariables): MutationRef<UpsertUserPhoneNumberData,UpsertUserPhoneNumberVariables>;
+export function upsertUserRef(dc: DataConnect, vars?: UpsertUserVariables): MutationRef<UpsertUserData,UpsertUserVariables>;
 
-export function upsertUserPhoneNumber(vars: UpsertUserPhoneNumberVariables): MutationPromise<UpsertUserPhoneNumberData, UpsertUserPhoneNumberVariables>;
-export function upsertUserPhoneNumber(dc: DataConnect, vars: UpsertUserPhoneNumberVariables): MutationPromise<UpsertUserPhoneNumberData,UpsertUserPhoneNumberVariables>;
-
-
-/* Allow users to create refs without passing in DataConnect */
-export function upsertUserEmailRef(vars: UpsertUserEmailVariables): MutationRef<UpsertUserEmailData, UpsertUserEmailVariables>;
-/* Allow users to pass in custom DataConnect instances */
-export function upsertUserEmailRef(dc: DataConnect, vars: UpsertUserEmailVariables): MutationRef<UpsertUserEmailData,UpsertUserEmailVariables>;
-
-export function upsertUserEmail(vars: UpsertUserEmailVariables): MutationPromise<UpsertUserEmailData, UpsertUserEmailVariables>;
-export function upsertUserEmail(dc: DataConnect, vars: UpsertUserEmailVariables): MutationPromise<UpsertUserEmailData,UpsertUserEmailVariables>;
+export function upsertUser(vars?: UpsertUserVariables): MutationPromise<UpsertUserData, UpsertUserVariables>;
+export function upsertUser(dc: DataConnect, vars?: UpsertUserVariables): MutationPromise<UpsertUserData,UpsertUserVariables>;
 
 
 /* Allow users to create refs without passing in DataConnect */

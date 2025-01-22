@@ -1,6 +1,6 @@
 # Gets the current user by their auth.uid
 query GetCurrentUser @auth(level: USER) {
-  user(key: { id_expr: "auth.uid" }) {
+  user(key: { uid_expr: "auth.uid" }) {
     uid
     phoneNumber
     email

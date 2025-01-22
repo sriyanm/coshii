@@ -4,10 +4,13 @@ import { FirebaseAuthContext } from "@/app/components/providers/firebase-auth-pr
 import { auth } from "@/app/lib/client/firebase";
 import { useMutation } from "@tanstack/react-query";
 import {
+  ConfirmationResult,
   getAdditionalUserInfo,
   isSignInWithEmailLink,
+  RecaptchaVerifier,
   sendSignInLinkToEmail,
   signInWithEmailLink,
+  signInWithPhoneNumber,
   signOut,
   User,
 } from "firebase/auth";
@@ -114,6 +117,51 @@ export function useSignOut() {
     },
     onError: (error) => {
       console.error("failed to sign out: ", error.message);
+    },
+  });
+}
+
+export function useSignInWithPhoneNumber(recaptchaContainerId: string) {
+  return useMutation({
+    mutationKey: ["signInWithPhoneNumber"],
+    retry: false,
+    mutationFn: (phoneNumber: string) => {
+      return signInWithPhoneNumber(
+        auth,
+        phoneNumber,
+        new RecaptchaVerifier(auth, recaptchaContainerId, {
+          size: "invisible",
+        }),
+      );
+    },
+    onMutate: () => {
+      console.log("sending SMS sign-in code");
+    },
+    onSuccess: () => {
+      console.log("sent SMS sign-in code");
+    },
+    onError: (error) => {
+      console.error("failed to send SMS sign-in code: ", error.message);
+    },
+  });
+}
+
+export function usePhoneNumberConfirmationResult() {
+  return useMutation({
+    mutationKey: ["phoneNumberConfirmationResult"],
+    retry: false,
+    mutationFn: (params: {
+      confirmationResult: ConfirmationResult;
+      code: string;
+    }) => params.confirmationResult.confirm(params.code),
+    onMutate: () => {
+      console.log("confirming SMS sign-in code");
+    },
+    onSuccess: () => {
+      console.log("confirmed SMS sign-in code");
+    },
+    onError: (error) => {
+      console.error("failed to confirm SMS sign-in code: ", error.message);
     },
   });
 }

@@ -1,9 +1,6 @@
-# Upsert (update or insert) a user's username based on their auth.uid
-mutation UpsertUserPhoneNumber($phoneNumber: String!) @auth(level: USER) {
-  user_upsert(data: { uid_expr: "auth.uid", phoneNumber: $phoneNumber })
-}
-
-# Upsert (update or insert) a user's email based on their auth.uid
-mutation UpsertUserEmail($email: String!) @auth(level: USER) {
-  user_upsert(data: { uid_expr: "auth.uid", email: $email })
+# Upsert (update or insert) a user based on their auth.uid
+mutation UpsertUser($phoneNumber: String, $email: String) @auth(level: USER) {
+  user_upsert(
+    data: { uid_expr: "auth.uid", phoneNumber: $phoneNumber, email: $email }
+  )
 }

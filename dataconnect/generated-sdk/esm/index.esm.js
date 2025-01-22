@@ -6,29 +6,17 @@ export const connectorConfig = {
   location: 'us-west1'
 };
 
-export function upsertUserPhoneNumberRef(dcOrVars, vars) {
-  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+export function upsertUserRef(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars);
   if('_useGeneratedSdk' in dcInstance) {
     dcInstance._useGeneratedSdk();
   } else {
     console.error('Please update to the latest version of the Data Connect SDK by running `npm install firebase@dataconnect-preview`.');
   }
-  return mutationRef(dcInstance, 'UpsertUserPhoneNumber', inputVars);
+  return mutationRef(dcInstance, 'UpsertUser', inputVars);
 }
-export function upsertUserPhoneNumber(dcOrVars, vars) {
-  return executeMutation(upsertUserPhoneNumberRef(dcOrVars, vars));
-}
-export function upsertUserEmailRef(dcOrVars, vars) {
-  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
-  if('_useGeneratedSdk' in dcInstance) {
-    dcInstance._useGeneratedSdk();
-  } else {
-    console.error('Please update to the latest version of the Data Connect SDK by running `npm install firebase@dataconnect-preview`.');
-  }
-  return mutationRef(dcInstance, 'UpsertUserEmail', inputVars);
-}
-export function upsertUserEmail(dcOrVars, vars) {
-  return executeMutation(upsertUserEmailRef(dcOrVars, vars));
+export function upsertUser(dcOrVars, vars) {
+  return executeMutation(upsertUserRef(dcOrVars, vars));
 }
 export function getCurrentUserRef(dc) {
   const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);

@@ -1,19 +1,19 @@
 "use client";
 
 import env from "@/app/lib/client/env";
+import { connectorConfig } from "@firebasegen/dataconnect";
 import {
-  getApps,
-  initializeApp,
   FirebaseApp,
   FirebaseOptions,
+  getApps,
+  initializeApp,
 } from "firebase/app";
-import { connectAuthEmulator, getAuth as _getAuth, Auth } from "firebase/auth";
+import { getAuth as _getAuth, Auth, connectAuthEmulator } from "firebase/auth";
 import {
-  connectDataConnectEmulator,
   getDataConnect as _getDataConnect,
+  connectDataConnectEmulator,
   DataConnect,
 } from "firebase/data-connect";
-import { connectorConfig } from "@firebasegen/dataconnect";
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -30,7 +30,9 @@ export const firebaseApp =
 function getAuth(firebaseApp: FirebaseApp): Auth {
   const auth = _getAuth(firebaseApp);
   if (env.NODE_ENV !== "production") {
-    connectAuthEmulator(auth, "http://127.0.0.1:9099");
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", {
+      disableWarnings: true,
+    });
   }
   return auth;
 }
@@ -38,7 +40,7 @@ function getAuth(firebaseApp: FirebaseApp): Auth {
 export const auth = getAuth(firebaseApp);
 
 export function getDataConnect(): DataConnect {
-  const dataConnect = _getDataConnect(connectorConfig);
+  const dataConnect = _getDataConnect(firebaseApp, connectorConfig);
   if (env.NODE_ENV !== "production") {
     connectDataConnectEmulator(dataConnect, "127.0.0.1", 9399);
   }
