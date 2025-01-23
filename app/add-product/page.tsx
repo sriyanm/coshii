@@ -34,7 +34,7 @@ function Container({
       </div>
     </div>
   ) : (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-amber-400 p-4">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-[#FED15B] p-4">
       {children}
     </div>
   );
@@ -44,7 +44,7 @@ function TopNavigation() {
   return (
     <div className="flex flex-row items-center justify-between">
       <Button
-        className="basis-1/3 text-lg"
+        className="basis-1/3 justify-start text-lg font-bold text-[#703600]/50"
         variant="addProductSecondary"
         asChild
       >
@@ -82,7 +82,7 @@ function BottonNavigation({
       )}
       {nextPage ? (
         <Button
-          className={"text-lg"}
+          className={"bg-white text-lg font-bold"}
           variant="addProduct"
           onClick={function () {
             setPage(nextPage);
@@ -91,7 +91,11 @@ function BottonNavigation({
           Next <ArrowRight className="ml-1 size-4" />
         </Button>
       ) : (
-        <Button className="text-lg" variant="addProduct" onClick={onPost}>
+        <Button
+          className="bg-white text-lg font-bold"
+          variant="addProduct"
+          onClick={onPost}
+        >
           Post <ArrowRight className="ml-1 size-4" />
         </Button>
       )}
@@ -104,9 +108,9 @@ function PageIndicator({ page }: { page: Page }) {
     <div className="mb-4 flex space-x-2">
       {[Page.MEDIA, Page.DESCRIPTION, Page.PRICE].map((item) =>
         item == page ? (
-          <div key={item} className="h-1 grow bg-amber-100"></div>
+          <div key={item} className="h-1 grow rounded-full bg-amber-100"></div>
         ) : (
-          <div key={item} className="h-1 grow bg-black/80"></div>
+          <div key={item} className="h-1 grow rounded-full bg-black/80"></div>
         ),
       )}
     </div>
@@ -115,9 +119,9 @@ function PageIndicator({ page }: { page: Page }) {
 
 function MediaPicker() {
   return (
-    <div className="mb-auto flex h-80 flex-col items-center justify-center rounded-lg bg-black/20 px-8 text-white/90 hover:bg-black/30">
+    <div className="mx-auto mb-auto mt-5 flex h-[500px] w-80 flex-col items-center justify-center rounded-lg bg-black/20 px-8 text-white/90 hover:bg-black/30">
       <ImagePlus className="size-10" />
-      <p className="text-center text-sm">
+      <p className="text-wrap text-center text-xl">
         Add up to 60 seconds of video or photo
       </p>
     </div>
@@ -133,7 +137,7 @@ function ProductDescription() {
       />
       <Textarea
         placeholder="Write a short description or have Coshii AI write one based on the
-        photos youve uploaded..."
+        photos you've uploaded..."
         className="grow border-0 bg-transparent px-0 text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
       />
       <Button className="mb-2 h-6 text-sm" variant="addProduct">
@@ -149,7 +153,7 @@ function PriceAndShipping() {
   const [inventory, setInventory] = useState(1);
 
   return (
-    <div className="flex grow flex-col items-center justify-start">
+    <div className="mt-32 flex grow flex-col items-center justify-start">
       <MoneyInput
         className="text-8xl"
         values={price}
