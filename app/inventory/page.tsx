@@ -8,13 +8,14 @@ import { OrderCard } from "../components/order-card";
 import { ProductDetailsView } from "../components/product-details-view";
 import { OrderDetailsView } from "../components/order-details-view";
 import type { Product, Order, NavigationItem } from "../types";
+import Link from "next/link";
 
 const navigation: NavigationItem[] = [
-  { name: "Shop", icon: Store, href: "#" },
-  { name: "Search", icon: Search, href: "#" },
-  { name: "New Product", icon: PlusSquare, href: "#" },
-  { name: "Backrooms", icon: Shirt, href: "#" },
-  { name: "Settings", icon: Settings, href: "#" },
+  { name: "Shop", icon: Store, href: "/" },
+  { name: "Search", icon: Search, href: "/search" },
+  { name: "New Product", icon: PlusSquare, href: "/add-product" },
+  { name: "Backrooms", icon: Shirt, href: "/inventory" },
+  { name: "Settings", icon: Settings, href: "/settings" },
 ];
 
 // Sample data
@@ -124,9 +125,7 @@ export default function Home() {
   const [view, setView] = useState<View>("backrooms");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [currentTab, setCurrentTab] = useState<
-    "Shop" | "Search" | "New Product" | "Backrooms" | "Settings"
-  >("Backrooms");
+  const [currentTab] = useState("Backrooms");
 
   const listedProducts = products.filter((p) => p.isListed);
   const unlistedProducts = products.filter((p) => !p.isListed);
@@ -258,18 +257,16 @@ export default function Home() {
 
       <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
         {navigation.map((item) => (
-          <button
+          <Link
             key={item.name}
-            onClick={() => setCurrentTab(item.name as "Backrooms")}
+            href={item.href}
             className={`flex flex-col items-center justify-center gap-1 ${
-              currentTab === item.name
-                ? "text-primary"
-                : "text-muted-foreground"
+              currentTab === item.name ? "text-black" : "text-black/50"
             }`}
           >
             <item.icon /*className="h-6 w-6"*/ />
             <span className="text-xs">{item.name}</span>
-          </button>
+          </Link>
         ))}
       </nav>
     </div>
