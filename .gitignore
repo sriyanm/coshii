@@ -46,3 +46,8 @@ dataconnect/.dataconnect/
 # ide
 .vscode/
 .idea/
+
+#gabe local assets :)
+app/public/tempImages/*
+public/tempImages/*
+*.mp4

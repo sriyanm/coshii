@@ -6,6 +6,8 @@ import { Profile } from "@/app/components/profile";
 import { ProductPage } from "../components/productPage";
 import { SiFacebook, SiX, SiInstagram } from "@icons-pack/react-simple-icons";
 import { MdAddShoppingCart } from "react-icons/md";
+import { CiBellOn } from "react-icons/ci";
+import Link from "next/link";
 
 interface Product {
   images: string[];
@@ -20,17 +22,45 @@ export default function ProfilePage() {
   const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
-
+  // const [sellerView, setSellerView] = useState(true); // Replace with actual seller role check
+  const sellerView = true;
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // const [cart, setCart] = useState<any[]>([]); // State to manage cart items
+
+  // const handleAddToCart = (product: any) => {
+  //   setCart((prevCart) => [...prevCart, product]);
+  //   console.log("Added to cart", product);
+  // };
 
   const fetchProducts = async (offset: number) => {
     setIsFetching(true);
     const imageSets = [
-      ["/tempImages/bowl1.jpg", "/tempImages/bowl2.jpg"],
-      ["/tempImages/camera1.jpg", "/tempImages/camera2.jpeg"],
-      ["/tempImages/guitar.jpg", "/tempImages/guitar2.jpg"],
-      ["/tempImages/lego2.jpg", "/tempImages/lego3.jpg"],
-      ["/tempImages/coconut.jpg", "/tempImages/basket.jpeg"],
+      [
+        "/tempImages/bowl1.jpg",
+        "/tempImages/bowl2.jpg",
+        "/tempImages/dawn.mp4",
+      ],
+      [
+        "/tempImages/camera1.jpg",
+        "/tempImages/camera2.jpeg",
+        "/tempImages/dawn.mp4",
+      ],
+      [
+        "/tempImages/guitar.jpg",
+        "/tempImages/guitar2.jpg",
+        "/tempImages/dawn.mp4",
+      ],
+      [
+        "/tempImages/lego2.jpg",
+        "/tempImages/lego3.jpg",
+        "/tempImages/dawn.mp4",
+      ],
+      [
+        "/tempImages/coconut.jpg",
+        "/tempImages/basket.jpeg",
+        "/tempImages/dawn.mp4",
+      ],
     ];
 
     const newProducts = Array.from({ length: 5 }, (_, i) => {
@@ -106,7 +136,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="bg-gray-50 flex min-h-screen flex-col items-center">
+    <div className="flex min-h-screen flex-col items-center font-sans">
       {/* Profile Section */}
       <div className="w-full max-w-md p-4">
         <Profile
@@ -115,6 +145,7 @@ export default function ProfilePage() {
           username={username}
           description={description}
           socialLinks={socialLinks}
+          sellerView={sellerView}
         />
       </div>
 
@@ -124,41 +155,43 @@ export default function ProfilePage() {
         <div className="flex w-full flex-col">
           {/* Shop Name Above the First Toggle */}
           <div className="px-4 py-0.5 text-center text-sm font-medium">
-            {" "}
-            {/* Reduced padding */}
             {shopName}
           </div>
 
           {/* Shop/Activity Toggle and Shopping Cart in the Same Row */}
           <div className="flex w-full items-center px-4 py-0.5">
-            {" "}
-            {/* Reduced padding */}
-            {/* Shop/Activity Toggle (centered in the row) */}
+            {/* Shop/Activity Toggle */}
             <div className="flex grow justify-center">
               <Toggle
-                options={["Shop", "Activity"]} // Pass "Shop" and "Activity" to the first Toggle
+                options={["Shop", "Activity"]}
                 selectedOption={activeTab}
                 onOptionSelect={setActiveTab}
                 font="SF Pro"
                 underline={true}
               />
             </div>
-            {/* Shopping Cart Icon (aligned to the right edge) */}
-            <div className="ml-auto shrink-0">
-              <MdAddShoppingCart />
+            <div className="ml-auto flex shrink-0 items-center">
+              {/* Shopping Cart Icon */}
+              <Link href="/checkout" title="Cart Button">
+                <MdAddShoppingCart className="text-xl" />
+              </Link>
+              {/* Bell Icon (visible only for sellers) */}
+              {sellerView && (
+                <CiBellOn className="ml-4 text-xl" title="Notifications" />
+              )}
             </div>
           </div>
 
           {/* Categories Toggle */}
           <div className="shrink-0 px-4 py-0.5">
-            {" "}
-            {/* Reduced padding */}
             <Toggle
-              options={categories} // Pass other categories to the second Toggle
+              options={categories}
               selectedOption={selectedCategory}
               onOptionSelect={setSelectedCategory}
               font="SF Pro"
               underline={false}
+              borderBox={true}
+              selectedColor="orange"
             />
           </div>
         </div>
@@ -169,11 +202,11 @@ export default function ProfilePage() {
         {products.map((product, index) => (
           <ProductPage
             key={index}
-            productImages={product.images}
+            media={product.images}
             caption={product.caption}
             productName={product.name}
             price={product.price}
-            onAddToCart={() => console.log("Added to cart")}
+            onAddToCart={() => console.log("Added to cart!")}
             onLike={() => console.log("Liked")}
             onComment={() => console.log("Commented")}
             onShare={() => console.log("Shared")}
@@ -184,10 +217,34 @@ export default function ProfilePage() {
       {/* Intersection Observer Trigger */}
       <div id="load-more-trigger" className="h-4 w-full"></div>
 
-      {/* Navigation Bar */}
-      <div className="fixed bottom-0 z-10 w-full">
-        <NavigationBar />
-      </div>
+      {/* Conditionally render the NavigationBar */}
+      {sellerView && (
+        <div className="fixed bottom-0 z-10 w-full">
+          <NavigationBar />
+        </div>
+      )}
     </div>
   );
 }
+
+/*
+
+Notes: 
+If you're the seller:
+ - Extra Pencil for editing
+- Notifications in the top right
+
+
+Top Down View:
+- Profile Component:
+  - Top Right Button
+    - Seller: Notificatoin
+    - Buyer: Cart
+  - Next to Name Button:
+    - Seller: Edit Profile
+- Nav Bar:
+  - Seller: Has it
+  - Buyer: Nope
+
+
+*/

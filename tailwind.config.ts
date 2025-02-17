@@ -9,6 +9,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Inter", "sans-serif"], // Add Inter as the default sans font
+      },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
@@ -17,6 +20,7 @@ const config: Config = {
       colors: {
         black: "#000000", // Ensure black exists
         white: "#ffffff", // Changed to direct color value
+        orange: "#FFA500", // Add orange color
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

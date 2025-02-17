@@ -1,9 +1,9 @@
 import { useState, useRef, UIEvent } from "react";
-import { SocialBar } from "./SocialBar"; // Import the SocialBar component
-import { Caption } from "./Caption"; // Import Caption component
+import { SocialBar } from "./SocialBar"; // Import SocialBar
+import { Caption } from "./Caption"; // Import Caption
 
 interface ProductPageProps {
-  productImages: string[];
+  media: string[]; // Supports both images (.jpg, .png) and videos (.mp4)
   caption: string;
   productName: string;
   price: string;
@@ -14,7 +14,7 @@ interface ProductPageProps {
 }
 
 export function ProductPage({
-  productImages,
+  media,
   caption,
   productName,
   price,
@@ -23,11 +23,13 @@ export function ProductPage({
   onComment,
   onShare,
 }: ProductPageProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [scrolling, setScrolling] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [playing, setPlaying] = useState(true);
 
-  // Use a ref to directly access the scroll container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Handle scrolling images
   const handleScroll = (event: UIEvent<HTMLDivElement>) => {
@@ -35,16 +37,12 @@ export function ProductPage({
 
     const scrollLeft = event.currentTarget.scrollLeft;
     const imageWidth = event.currentTarget.clientWidth;
-
-    // Calculate the closest image index based on the scroll position
     const newIndex = Math.round(scrollLeft / imageWidth);
 
-    // Only update if the index has changed
-    if (newIndex !== currentImageIndex) {
+    if (newIndex !== currentIndex) {
       setScrolling(true);
-      setCurrentImageIndex(newIndex);
+      setCurrentIndex(newIndex);
 
-      // Scroll to the nearest image with smooth behavior
       requestAnimationFrame(() => {
         scrollContainerRef.current?.scrollTo({
           left: newIndex * imageWidth,
@@ -52,48 +50,91 @@ export function ProductPage({
         });
       });
 
-      // Allow scrolling again after smooth scroll is finished
-      setTimeout(() => {
-        setScrolling(false);
-      }, 300); // Adjust timeout to match the smooth scroll duration
+      setTimeout(() => setScrolling(false), 300);
+    }
+  };
+
+  // Toggle Mute
+  const toggleMute = () => {
+    setMuted(!muted);
+    if (videoRef.current) {
+      videoRef.current.muted = !muted;
+    }
+  };
+
+  // Toggle Play/Pause when clicking the screen
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (playing) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setPlaying(!playing);
     }
   };
 
   return (
     <div className="relative h-[70vh] w-[95vw] bg-white">
-      {/* Media (scrollable images/videos) */}
+      {/* Media Scrollable Container */}
       <div
         ref={scrollContainerRef}
         className="size-full overflow-x-auto scroll-smooth whitespace-nowrap rounded-lg"
         onScroll={handleScroll}
       >
-        {productImages.map((image, index) => (
-          <img
-            key={index}
-            src={image}
-            alt={`${productName} - image ${index + 1}`}
-            className="inline-block size-full rounded-lg object-cover"
-          />
-        ))}
+        {media.map((item, index) =>
+          item.endsWith(".mp4") ? (
+            <div key={index} className="relative inline-block size-full">
+              <video
+                ref={index === currentIndex ? videoRef : null}
+                src={item}
+                autoPlay
+                loop
+                muted={muted}
+                playsInline
+                className="inline-block size-full rounded-lg object-cover"
+                onClick={togglePlayPause}
+              />
+              {/* Play/Pause Indicator */}
+              <div
+                className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+                  playing ? "opacity-0" : "opacity-100"
+                }`}
+              >
+                {playing ? null : (
+                  <div className="flex size-16 items-center justify-center rounded-full bg-black bg-opacity-50">
+                    <span className="text-4xl text-white">
+                      {playing ? "▶" : "❚❚"}
+                    </span>
+                  </div>
+                )}
+              </div>
+              {/* Mute Button */}
+              <button
+                onClick={toggleMute}
+                className="absolute bottom-5 right-5 rounded-full bg-black bg-opacity-50 p-2 text-white"
+              >
+                {muted ? "🔇" : "🔊"}
+              </button>
+            </div>
+          ) : (
+            <img
+              key={index}
+              src={item}
+              alt={`${productName} - media ${index + 1}`}
+              className="inline-block size-full rounded-lg object-cover"
+            />
+          ),
+        )}
       </div>
 
       {/* Image Navigation Dots (Top Center) */}
-      <div className="z-9 absolute left-1/2 top-4 flex -translate-x-1/2 space-x-2">
-        {productImages.map((_, index) => (
+      <div className="absolute left-1/2 top-4 flex -translate-x-1/2 space-x-2">
+        {media.map((_, index) => (
           <div
             key={index}
-            className={`size-1.5 rounded-full bg-white ${currentImageIndex === index ? "bg-opacity-100" : "bg-opacity-50"}`}
-          />
-        ))}
-      </div>
-
-      {/* Image Navigation (Swipe/Toggle Images) */}
-      <div className="sticky bottom-4 left-1/2 z-10 flex -translate-x-1/2 space-x-2">
-        {productImages.map((_, index) => (
-          <div
-            key={index}
-            className={`size-3 rounded-full bg-white ${
-              currentImageIndex === index ? "bg-opacity-100" : "bg-opacity-50"
+            className={`size-1.5 rounded-full bg-white ${
+              currentIndex === index ? "bg-opacity-100" : "bg-opacity-50"
             }`}
           />
         ))}

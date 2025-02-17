@@ -16,7 +16,7 @@ export function Caption({ caption }: { caption: string }) {
         {caption}
       </p>
       {caption.length > 100 && (
-        <button onClick={toggleCaption} className="text-blue-500 text-xs">
+        <button onClick={toggleCaption} className="text-500 text-xs">
           {isExpanded ? "View less" : "View more"}
         </button>
       )}

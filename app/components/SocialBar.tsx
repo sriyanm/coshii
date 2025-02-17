@@ -1,43 +1,69 @@
 import { useState } from "react";
 import { CommentsPopup } from "./Comments";
-import { FaHeart, FaShareAlt, FaCommentDots } from "react-icons/fa";
+import { FaHeart, FaRegHeart } from "react-icons/fa"; // Import like icons
+import { MdIosShare, MdOutlineModeComment } from "react-icons/md"; // Import share and comment icons
 
 interface SocialBarProps {
-  onLike: () => void;
-  onComment: () => void;
-  onShare: () => void;
+  onLike: () => void; // Callback for when the Like button is clicked
+  onComment: () => void; // Callback for when the Comment button is clicked
+  onShare: () => void; // Callback for when the Share button is clicked
 }
 
 export function SocialBar({ onLike, onComment, onShare }: SocialBarProps) {
-  const [showComments, setShowComments] = useState(false);
+  const [liked, setLiked] = useState(false); // State to track like status
+  const [showComments, setShowComments] = useState(false); // State to toggle comment popup
 
+  // Handle Like button click
+  const handleLikeClick = () => {
+    setLiked((prevLiked) => !prevLiked); // Toggle like state
+    onLike(); // Trigger the passed onLike handler
+  };
+
+  // Handle Comment button click
   const handleCommentClick = () => {
     setShowComments(true); // Show the comments popup
     onComment(); // Trigger the passed onComment handler
   };
 
+  // Handle closing the Comments popup
   const handleClosePopup = () => {
     setShowComments(false); // Close the comments popup
   };
 
+  // Handle Share button click
   const handleShareClick = () => {
-    onShare(); // Trigger the passed onShare handler (for now, just log)
+    onShare(); // Trigger the passed onShare handler
     console.log("Share button clicked"); // Placeholder for share functionality
   };
 
   return (
     <div className="flex flex-col space-y-4">
       {/* Share Button */}
-      <button onClick={handleShareClick} className="text-white">
-        <FaShareAlt className="mr-2 text-2xl" />
+      <button onClick={handleShareClick} className="text-white" title="Share">
+        <MdIosShare className="mr-2 text-2xl" />
       </button>
+
       {/* Comment Button */}
-      <button onClick={handleCommentClick} className="text-white">
-        <FaCommentDots className="mr-2 text-2xl" />
+      <button
+        onClick={handleCommentClick}
+        className="text-white"
+        title="Comment"
+      >
+        <MdOutlineModeComment className="mr-2 text-2xl" />
       </button>
+
       {/* Like Button */}
-      <button onClick={onLike} className="text-white">
-        <FaHeart className="mr-2 text-2xl" />
+      <button
+        className="text-white"
+        onClick={handleLikeClick}
+        title={liked ? "Unlike" : "Like"}
+        aria-label={liked ? "Unlike" : "Like"}
+      >
+        {liked ? (
+          <FaHeart className="size-6" />
+        ) : (
+          <FaRegHeart className="size-6" />
+        )}
       </button>
 
       {/* Conditional rendering for the popup */}

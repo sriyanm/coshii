@@ -4,6 +4,8 @@ interface ToggleProps {
   onOptionSelect: (option: string) => void;
   font?: string;
   underline?: boolean;
+  borderBox?: boolean; // New prop for border box
+  selectedColor?: string; // New prop for selected color
 }
 
 export function Toggle({
@@ -12,10 +14,12 @@ export function Toggle({
   onOptionSelect,
   font = "SF Pro",
   underline = false,
+  borderBox = false,
+  selectedColor = "black", // Default selected color
 }: ToggleProps) {
   return (
     <div
-      className="flex justify-start gap-4 overflow-x-auto"
+      className={`flex justify-start gap-4 overflow-x-auto`} // Apply border if borderBox is true
       style={{
         fontFamily: font,
         whiteSpace: "nowrap", // Prevent line breaks for horizontal scroll
@@ -26,11 +30,17 @@ export function Toggle({
       {options.map((option) => (
         <button
           key={option}
-          className={`rounded-md px-5 transition-colors duration-200 ease-in-out ${
+          className={`rounded-[6px] px-5 transition-colors duration-200 ease-in-out ${borderBox ? "border" : ""} ${
             selectedOption === option
-              ? `bg-gray-200 font-bold text-black ${underline ? "underline" : ""}`
-              : "text-gray-500 bg-gray-100"
+              ? `text- font-bold${selectedColor} ${underline ? "underline" : ""}` // Apply selectedColor
+              : "text-gray-500"
           }`}
+          style={{
+            borderColor:
+              borderBox && selectedOption === option
+                ? selectedColor
+                : undefined,
+          }}
           onClick={() => onOptionSelect(option)}
         >
           {option}
