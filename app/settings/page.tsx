@@ -53,22 +53,24 @@ export default function SettingsPage() {
       <h1 className="mx-3 text-2xl font-bold">Settings</h1>
 
       {/* Plan Card */}
-      <div className="mx-3 rounded-md bg-black p-6 text-white">
-        <p className="mb-2">Your Plan</p>
-        <div className="mb-4 flex items-center gap-2">
-          <h2 className="text-4xl font-bold">Free Plan</h2>
-          <Clock className="size-6" />
+      {userProfile.plan === "Free" && (
+        <div className="mx-3 rounded-md bg-black p-6 text-white">
+          <p className="mb-2">Your Plan</p>
+          <div className="mb-4 flex items-center gap-2">
+            <h2 className="text-4xl font-bold">Free Plan</h2>
+            <Clock className="size-6" />
+          </div>
+          <p className="text-sm">
+            Upgrade now to unlock Coshii&apos;s full set of shop tools!
+          </p>
+          <ul className="text-xs text-gray-300">
+            <li>• Connect with Stripe Payments</li>
+            <li>• Fulfill orders all within Coshii</li>
+            <li>• Track frequent buyers and build your fanclub</li>
+            <li>• Access Coshii&apos;s A.I. video editor</li>
+          </ul>
         </div>
-        <p className="text-sm">
-          Upgrade now to unlock Coshii&apos;s full set of shop tools!
-        </p>
-        <ul className="text-xs text-gray-300">
-          <li>• Connect with Stripe Payments</li>
-          <li>• Fulfill orders all within Coshii</li>
-          <li>• Track frequent buyers and build your fanclub</li>
-          <li>• Access Coshii&apos;s A.I. video editor</li>
-        </ul>
-      </div>
+      )}
 
       {/* Menu Items */}
       <div className="mx-3 space-y-2">
