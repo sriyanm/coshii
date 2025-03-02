@@ -49,7 +49,16 @@ export function ProductDetailsView({
           <Link
             href={{
               pathname: "/add-product",
-              query: { page: 1, step: "Update" },
+              query: {
+                page: 1,
+                step: "Update",
+                name: product.name,
+                desc: product.description,
+                price: product.price,
+                stock: product.stock,
+                image: product.image,
+                cancel: "/inventory",
+              },
             }}
           >
             <Button
