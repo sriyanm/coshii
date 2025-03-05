@@ -5,17 +5,8 @@ import type React from "react";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Store,
-  SearchIcon,
-  PlusSquare,
-  Shirt,
-  Settings,
-  ChevronLeft,
-  Instagram,
-  Facebook,
-} from "lucide-react";
-import { Button } from "../components/ui/button";
+import { Store, SearchIcon, PlusSquare, Shirt, Settings } from "lucide-react";
+// import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 
 // Types
@@ -94,15 +85,15 @@ export default function SearchPage() {
     setCurrentView("profile");
   };
 
-  const handleBack = () => {
-    setCurrentView("search");
-    setSelectedShop(null);
-  };
+  // const handleBack = () => {
+  //   setCurrentView("search");
+  //   setSelectedShop(null);
+  // };
 
-  const toggleFollow = (shop: Shop) => {
-    // In a real app, this would make an API call
-    console.log(`${shop.isFollowing ? "Unfollowed" : "Followed"} ${shop.name}`);
-  };
+  // const toggleFollow = (shop: Shop) => {
+  //   // In a real app, this would make an API call
+  //   console.log(`${shop.isFollowing ? "Unfollowed" : "Followed"} ${shop.name}`);
+  // };
 
   const renderSearchView = () => (
     <div className="space-y-6">
@@ -147,74 +138,7 @@ export default function SearchPage() {
   const renderProfileView = () => {
     if (!selectedShop) return null;
 
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-2">
-          <button onClick={handleBack} className="-ml-2 p-2">
-            <ChevronLeft className="size-6" />
-          </button>
-        </div>
-
-        <div className="text-center">
-          <Image
-            src={selectedShop.avatar || "/placeholder.svg"}
-            alt={selectedShop.name}
-            width={100}
-            height={100}
-            className="mx-auto mb-4 rounded-full"
-          />
-          <h1 className="mb-1 text-2xl font-bold">{selectedShop.name}</h1>
-          <p className="mb-4 text-gray-500">{selectedShop.username}</p>
-          <p className="mb-4">Welcome to my shop!</p>
-
-          {selectedShop.isFollowing ? (
-            <button
-              onClick={() => toggleFollow(selectedShop)}
-              className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-4 py-2"
-            >
-              <span className="sr-only">Following</span>👤
-            </button>
-          ) : (
-            <Button
-              onClick={() => toggleFollow(selectedShop)}
-              className="rounded-full bg-[#FED15B] px-8 text-black hover:bg-[#FED15B]/90"
-            >
-              Follow
-            </Button>
-          )}
-
-          <div className="mt-4 flex justify-center gap-4">
-            <button className="p-2">
-              <Instagram className="size-6" />
-            </button>
-            <button className="p-2">
-              <Facebook className="size-6" />
-            </button>
-          </div>
-
-          <div className="mt-4 flex justify-center gap-4 border-b">
-            <button className="border-b-2 border-black px-4 py-2 font-bold">
-              Shop
-            </button>
-            <button className="px-4 py-2 text-gray-500">Activity</button>
-          </div>
-
-          <div className="-mx-4 flex gap-2 overflow-x-auto p-4">
-            <button className="rounded-full bg-[#FED15B] px-4 py-1 text-sm font-medium">
-              All
-            </button>
-            {["Reposts", "Cups", "Ashtrays", "Bowls"].map((category) => (
-              <button
-                key={category}
-                className="whitespace-nowrap rounded-full bg-gray-100 px-4 py-1 text-sm font-medium"
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <div className="space-y-6">{selectedShop.name + " here!"}</div>;
   };
 
   return (
