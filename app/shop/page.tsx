@@ -1,3 +1,5 @@
+// this is the notifications page, not the actual shop page
+
 "use client";
 
 import { useState } from "react";
