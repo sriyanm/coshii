@@ -8,6 +8,8 @@ import { ArrowLeft, ArrowRight, ImagePlus, Wand } from "lucide-react";
 import Link from "next/link";
 import { Dispatch, JSX, ReactNode, SetStateAction, useState } from "react";
 import { Input } from "../components/ui/input";
+import { db, auth } from "@/app/lib/client/firebase";
+import { collection, addDoc } from "firebase/firestore";
 
 enum Page {
   MEDIA = 1,
@@ -124,17 +126,30 @@ function MediaPicker() {
   );
 }
 
-function ProductDescription() {
+function ProductDescription({
+  name,
+  setName,
+  description,
+  setDescription,
+}: {
+  name: string;
+  setName: (value: string) => void;
+  description: string;
+  setDescription: (value: string) => void;
+}) {
   return (
     <div className="flex grow flex-col items-start justify-start">
       <Input
         placeholder="Item Name"
         className="border-0 bg-transparent px-0 text-xl font-bold text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
       />
       <Textarea
-        placeholder="Write a short description or have Coshii AI write one based on the
-        photos youve uploaded..."
+        placeholder="Write a short description or have Coshii AI write one based on the photos you've uploaded..."
         className="grow border-0 bg-transparent px-0 text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
       />
       <Button className="mb-2 h-6 text-sm" variant="addProduct">
         Write with AI <Wand />
@@ -143,11 +158,21 @@ function ProductDescription() {
   );
 }
 
-function PriceAndShipping() {
-  const [price, setPrice] = useState<MoneyInputValues | null>(null);
-  const [shipping, setShipping] = useState<MoneyInputValues | null>(null);
-  const [inventory, setInventory] = useState(1);
-
+function PriceAndShipping({
+  price,
+  setPrice,
+  shipping,
+  setShipping,
+  inventory,
+  setInventory,
+}: {
+  price: MoneyInputValues | null;
+  setPrice: (value: MoneyInputValues | null) => void;
+  shipping: MoneyInputValues | null;
+  setShipping: (value: MoneyInputValues | null) => void;
+  inventory: number;
+  setInventory: (value: number) => void;
+}) {
   return (
     <div className="flex grow flex-col items-center justify-start">
       <MoneyInput
@@ -178,6 +203,52 @@ function PriceAndShipping() {
 
 export default function AddProductPage() {
   const [page, setPage] = useState(Page.MEDIA);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState<MoneyInputValues | null>(null);
+  const [shipping, setShipping] = useState<MoneyInputValues | null>(null);
+  const [inventory, setInventory] = useState(1);
+
+  const postProduct = async () => {
+    console.log("Raw price value:", price);
+    console.log("Price type:", typeof price);
+    console.log("Price value type:", typeof price?.value);
+
+    if (!price) {
+      console.error("Price is required");
+      return;
+    }
+
+    try {
+      const priceInCents = Math.round(Number(price?.value || 0) * 100);
+      console.log("Price in cents:", priceInCents);
+      console.log("Attempting to create product:", {
+        name,
+        description,
+        price: priceInCents,
+        inventory,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: auth.currentUser?.uid,
+      });
+
+      const docRef = await addDoc(collection(db, "products"), {
+        name,
+        description,
+        price: priceInCents,
+        inventory,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: auth.currentUser?.uid,
+      });
+
+      console.log("Product created successfully with ID:", docRef.id);
+      // TODO: Add success notification and redirect
+    } catch (error) {
+      console.error("Failed to create product:", error);
+      // TODO: Add error notification
+    }
+  };
 
   let content: JSX.Element;
   let nextPage: Page | null = null;
@@ -190,11 +261,27 @@ export default function AddProductPage() {
     previousPage = Page.MEDIA;
     nextPage = Page.PRICE;
     backgroundImage = `url(/ajay-product.png)`;
-    content = <ProductDescription />;
+    content = (
+      <ProductDescription
+        name={name}
+        setName={setName}
+        description={description}
+        setDescription={setDescription}
+      />
+    );
   } else if (page == Page.PRICE) {
     previousPage = Page.DESCRIPTION;
     backgroundImage = `url(/ajay-product.png)`;
-    content = <PriceAndShipping />;
+    content = (
+      <PriceAndShipping
+        price={price}
+        setPrice={setPrice}
+        shipping={shipping}
+        setShipping={setShipping}
+        inventory={inventory}
+        setInventory={setInventory}
+      />
+    );
   } else {
     throw Error("Unknown page");
   }
@@ -208,9 +295,7 @@ export default function AddProductPage() {
         previousPage={previousPage}
         nextPage={nextPage}
         setPage={setPage}
-        onPost={function () {
-          console.log("post!");
-        }}
+        onPost={postProduct}
       />
     </Container>
   );

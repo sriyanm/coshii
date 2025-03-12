@@ -1,4 +1,4 @@
-const { getDataConnect, queryRef, executeQuery, mutationRef, executeMutation, validateArgs } = require('firebase/data-connect');
+const { queryRef, executeQuery, mutationRef, executeMutation, validateArgs } = require('firebase/data-connect');
 
 const connectorConfig = {
   connector: 'default',
@@ -7,31 +7,27 @@ const connectorConfig = {
 };
 exports.connectorConfig = connectorConfig;
 
-function upsertUserRef(dcOrVars, vars) {
+exports.upsertUserRef = function upsertUserRef(dcOrVars, vars) {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars);
-  if('_useGeneratedSdk' in dcInstance) {
-    dcInstance._useGeneratedSdk();
-  } else {
-    console.error('Please update to the latest version of the Data Connect SDK by running `npm install firebase@dataconnect-preview`.');
-  }
+  dcInstance._useGeneratedSdk();
   return mutationRef(dcInstance, 'UpsertUser', inputVars);
 }
-exports.upsertUserRef = upsertUserRef;
 exports.upsertUser = function upsertUser(dcOrVars, vars) {
   return executeMutation(upsertUserRef(dcOrVars, vars));
 };
-
-function getCurrentUserRef(dc) {
+exports.upsertProductRef = function upsertProductRef(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'upsertProduct', inputVars);
+}
+exports.upsertProduct = function upsertProduct(dcOrVars, vars) {
+  return executeMutation(upsertProductRef(dcOrVars, vars));
+};
+exports.getCurrentUserRef = function getCurrentUserRef(dc) {
   const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
-  if('_useGeneratedSdk' in dcInstance) {
-    dcInstance._useGeneratedSdk();
-  } else {
-    console.error('Please update to the latest version of the Data Connect SDK by running `npm install firebase@dataconnect-preview`.');
-  }
+  dcInstance._useGeneratedSdk();
   return queryRef(dcInstance, 'GetCurrentUser');
 }
-exports.getCurrentUserRef = getCurrentUserRef;
 exports.getCurrentUser = function getCurrentUser(dc) {
   return executeQuery(getCurrentUserRef(dc));
 };
-

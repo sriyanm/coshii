@@ -4,3 +4,21 @@ mutation UpsertUser($phoneNumber: String, $email: String) @auth(level: USER) {
     data: { uid_expr: "auth.uid", phoneNumber: $phoneNumber, email: $email }
   )
 }
+
+mutation upsertProduct(
+  $name: String!
+  $description: String
+  $price: Float!
+  $inventory: Int!
+) @auth(level: USER) {
+  product_upsert(
+    data: {
+      id_expr: "uuidV4()"
+      userId_expr: "auth.uid"
+      name: $name
+      description: $description
+      price: $price
+      inventory: $inventory
+    }
+  )
+}
