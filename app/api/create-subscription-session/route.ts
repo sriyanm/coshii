@@ -1,52 +1,42 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-// Define the type for the cart item
-interface CartItem {
-  name: string;
-  price: number;
-  quantity: number;
-}
-
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY as string);
 
 export async function POST(req: Request) {
   try {
     // Parse the request body
-    const { cartItems }: { cartItems: CartItem[] } = await req.json();
+    const { email } = await req.json();
 
     // Get previous page
     const referer =
       req.headers.get("referer") || process.env.NEXT_PUBLIC_BASE_URL;
 
-    // Convert cart items to Stripe line items
-    const lineItems = cartItems.map((item) => ({
-      price_data: {
-        currency: "usd",
-        product_data: { name: item.name },
-        unit_amount: Math.round(item.price * 100), // Convert price to cents
-      },
-      quantity: item.quantity,
-    }));
-
     // Create a Stripe checkout session
     const session = await stripe.checkout.sessions.create({
+      // ui_mode: "embedded",
       payment_method_types: ["card"],
-      line_items: lineItems,
-      payment_intent_data: {
-        application_fee_amount: 0,
-        transfer_data: {
-          destination: "acct_1R1Yp7E2rsuqp9lw",
+      line_items: [
+        {
+          // price: "price_1QwnGEE4sAURr3tnLFKauzDP", // Subscription price ID TODO: change
+          price: "price_1R1YUqE4sAURr3tn7fFhEd2j",
+          quantity: 1,
         },
-      },
-      mode: "payment",
+      ],
+      mode: "subscription",
+      customer_email: email,
       automatic_tax: { enabled: false }, //TODO: change this to true (setup stripe tax)
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
       cancel_url: referer,
+      // return_url: `${req.headers.get('origin')}/return?session_id={CHECKOUT_SESION_ID}`,
     });
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({
+      id: session.id,
+      client_secret: session.client_secret,
+      url: session.url,
+    });
   } catch (error) {
     // Type the error as an unknown type and cast it to an Error
     if (error instanceof Error) {

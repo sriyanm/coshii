@@ -1,14 +1,11 @@
 import { ConnectorConfig, DataConnect, QueryRef, QueryPromise, MutationRef, MutationPromise } from 'firebase/data-connect';
+
 export const connectorConfig: ConnectorConfig;
 
 export type TimestampString = string;
-
 export type UUIDString = string;
-
 export type Int64String = string;
-
 export type DateString = string;
-
 
 
 export interface GetCurrentUserData {
@@ -34,21 +31,20 @@ export interface User_Key {
 }
 
 
-
 /* Allow users to create refs without passing in DataConnect */
-export function upsertUserRef(vars?: UpsertUserVariables): MutationRef<UpsertUserData, UpsertUserVariables>;
+export function upsertUserRef(vars?: UpsertUserVariables): (MutationRef<UpsertUserData, UpsertUserVariables> & { __angular?: false });
 /* Allow users to pass in custom DataConnect instances */
-export function upsertUserRef(dc: DataConnect, vars?: UpsertUserVariables): MutationRef<UpsertUserData,UpsertUserVariables>;
+export function upsertUserRef(dc: DataConnect, vars?: UpsertUserVariables): (MutationRef<UpsertUserData, UpsertUserVariables> & { __angular?: false });
 
 export function upsertUser(vars?: UpsertUserVariables): MutationPromise<UpsertUserData, UpsertUserVariables>;
-export function upsertUser(dc: DataConnect, vars?: UpsertUserVariables): MutationPromise<UpsertUserData,UpsertUserVariables>;
+export function upsertUser(dc: DataConnect, vars?: UpsertUserVariables): MutationPromise<UpsertUserData, UpsertUserVariables>;
 
 
 /* Allow users to create refs without passing in DataConnect */
-export function getCurrentUserRef(): QueryRef<GetCurrentUserData, undefined>;/* Allow users to pass in custom DataConnect instances */
-export function getCurrentUserRef(dc: DataConnect): QueryRef<GetCurrentUserData,undefined>;
+export function getCurrentUserRef(): (QueryRef<GetCurrentUserData, undefined> & { __angular?: false });
+/* Allow users to pass in custom DataConnect instances */
+export function getCurrentUserRef(dc: DataConnect): (QueryRef<GetCurrentUserData, undefined> & { __angular?: false });
 
 export function getCurrentUser(): QueryPromise<GetCurrentUserData, undefined>;
-export function getCurrentUser(dc: DataConnect): QueryPromise<GetCurrentUserData,undefined>;
-
+export function getCurrentUser(dc: DataConnect): QueryPromise<GetCurrentUserData, undefined>;
 
