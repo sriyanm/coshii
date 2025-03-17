@@ -131,7 +131,6 @@ export default function Home() {
   const unlistedProducts = products.filter((p) => !p.isListed);
   const activeOrders = orders.filter((o) => o.status === "active");
   const archivedOrders = orders.filter((o) => o.status === "archived");
-  const purchases = orders.filter((o) => o.status === "completed");
 
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
@@ -226,20 +225,6 @@ export default function Home() {
                   <h2 className="mb-2 text-lg font-semibold">Archive</h2>
                   <div className="divide-y rounded-lg border">
                     {archivedOrders.map((order) => (
-                      <div
-                        key={order.id}
-                        onClick={() => handleOrderClick(order)}
-                      >
-                        <OrderCard order={order} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h2 className="mb-2 text-lg font-semibold">Your Purchases</h2>
-                  <div className="divide-y rounded-lg border">
-                    {purchases.map((order) => (
                       <div
                         key={order.id}
                         onClick={() => handleOrderClick(order)}
