@@ -121,6 +121,8 @@ const orders: Order[] = [
 
 type View = "backrooms" | "transactions" | "productDetails" | "orderDetails";
 
+const userPlan = "paid";
+
 export default function Home() {
   const [view, setView] = useState<View>("backrooms");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -167,12 +169,14 @@ export default function Home() {
               >
                 Backrooms
               </button>
-              <button
-                className={`text-xl ${view === "transactions" ? "font-bold" : "text-muted-foreground"}`}
-                onClick={() => setView("transactions")}
-              >
-                Transactions
-              </button>
+              {userPlan === "paid" && (
+                <button
+                  className={`text-xl ${view === "transactions" ? "font-bold" : "text-muted-foreground"}`}
+                  onClick={() => setView("transactions")}
+                >
+                  Transactions
+                </button>
+              )}
             </div>
 
             {view === "backrooms" ? (

@@ -18,7 +18,7 @@ export function ProductDetailsView({
   product,
   onBack,
 }: ProductDetailsViewProps) {
-  const [isListed, setIsListed] = useState(true);
+  const [isListed, setIsListed] = useState(product.isListed || false);
   const [stock, setStock] = useState(product.stock || 0);
 
   return (

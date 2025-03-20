@@ -46,3 +46,4 @@ dataconnect/.dataconnect/
 # ide
 .vscode/
 .idea/
+sendgrid.env

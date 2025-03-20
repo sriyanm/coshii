@@ -15,9 +15,12 @@ interface Shop {
   name: string;
   username: string;
   avatar: string;
-  bio?: string;
   isFollowing?: boolean;
+  isFollower?: boolean;
 }
+
+// TODO: display followers
+// implement what happens when typing in search bar
 
 interface NavigationItem {
   name: string;
@@ -26,13 +29,14 @@ interface NavigationItem {
 }
 
 // Sample data
-const followingShops: Shop[] = [
+const shops: Shop[] = [
   {
     id: "1",
     name: "Elizabeth's Shop",
     username: "@elizabee2024",
     avatar: "/placeholder.svg",
     isFollowing: true,
+    isFollower: true,
   },
   {
     id: "2",
@@ -40,6 +44,7 @@ const followingShops: Shop[] = [
     username: "@melissacormicceramics",
     avatar: "/placeholder.svg",
     isFollowing: true,
+    isFollower: true,
   },
   {
     id: "3",
@@ -47,6 +52,7 @@ const followingShops: Shop[] = [
     username: "@popshoes",
     avatar: "/placeholder.svg",
     isFollowing: true,
+    isFollower: true,
   },
   {
     id: "4",
@@ -54,6 +60,7 @@ const followingShops: Shop[] = [
     username: "@handrolls",
     avatar: "/placeholder.svg",
     isFollowing: true,
+    isFollower: false,
   },
   {
     id: "5",
@@ -61,6 +68,39 @@ const followingShops: Shop[] = [
     username: "@millibooth",
     avatar: "/placeholder.svg",
     isFollowing: true,
+    isFollower: false,
+  },
+  {
+    id: "6",
+    name: "sriyan",
+    username: "@sriyan",
+    avatar: "/placeholder.svg",
+    isFollowing: false,
+    isFollower: false,
+  },
+  {
+    id: "7",
+    name: "ajay",
+    username: "@ajay",
+    avatar: "/placeholder.svg",
+    isFollowing: false,
+    isFollower: false,
+  },
+  {
+    id: "8",
+    name: "srikar",
+    username: "@srikar",
+    avatar: "/placeholder.svg",
+    isFollowing: false,
+    isFollower: false,
+  },
+  {
+    id: "9",
+    name: "priyanshu",
+    username: "@priyanshu",
+    avatar: "/placeholder.svg",
+    isFollowing: false,
+    isFollower: false,
   },
 ];
 
@@ -111,7 +151,7 @@ export default function SearchPage() {
       <div>
         <h2 className="mb-4 text-xl font-bold">Following</h2>
         <div className="space-y-4">
-          {followingShops.map((shop) => (
+          {shops.map((shop) => (
             <button
               key={shop.id}
               className="flex w-full items-center gap-3 text-left"
