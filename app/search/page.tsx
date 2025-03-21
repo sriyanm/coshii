@@ -19,8 +19,7 @@ interface Shop {
   isFollower?: boolean;
 }
 
-// TODO: display followers
-// implement what happens when typing in search bar
+// display all the shops based on search query real time
 
 interface NavigationItem {
   name: string;
@@ -151,25 +150,53 @@ export default function SearchPage() {
       <div>
         <h2 className="mb-4 text-xl font-bold">Following</h2>
         <div className="space-y-4">
-          {shops.map((shop) => (
-            <button
-              key={shop.id}
-              className="flex w-full items-center gap-3 text-left"
-              onClick={() => handleShopClick(shop)}
-            >
-              <Image
-                src={shop.avatar || "/placeholder.svg"}
-                alt={shop.name}
-                width={48}
-                height={48}
-                className="rounded-full"
-              />
-              <div>
-                <h3 className="font-medium">{shop.name}</h3>
-                <p className="text-sm text-gray-500">{shop.username}</p>
-              </div>
-            </button>
-          ))}
+          {shops.map(
+            (shop) =>
+              shop.isFollowing && (
+                <button
+                  key={shop.id}
+                  className="flex w-full items-center gap-3 text-left"
+                  onClick={() => handleShopClick(shop)}
+                >
+                  <Image
+                    src={shop.avatar || "/placeholder.svg"}
+                    alt={shop.name}
+                    width={48}
+                    height={48}
+                    className="rounded-full"
+                  />
+                  <div>
+                    <h3 className="font-medium">{shop.name}</h3>
+                    <p className="text-sm text-gray-500">{shop.username}</p>
+                  </div>
+                </button>
+              ),
+          )}
+        </div>
+        <h2 className="mb-4 text-xl font-bold">Followers</h2>
+        <div className="space-y-4">
+          {shops.map(
+            (shop) =>
+              shop.isFollower && (
+                <button
+                  key={shop.id}
+                  className="flex w-full items-center gap-3 text-left"
+                  onClick={() => handleShopClick(shop)}
+                >
+                  <Image
+                    src={shop.avatar || "/placeholder.svg"}
+                    alt={shop.name}
+                    width={48}
+                    height={48}
+                    className="rounded-full"
+                  />
+                  <div>
+                    <h3 className="font-medium">{shop.name}</h3>
+                    <p className="text-sm text-gray-500">{shop.username}</p>
+                  </div>
+                </button>
+              ),
+          )}
         </div>
       </div>
     </div>
@@ -179,6 +206,7 @@ export default function SearchPage() {
     if (!selectedShop) return null;
 
     return <div className="space-y-6">{selectedShop.name + " here!"}</div>;
+    // TODO: window.location.href = "/" + selectedShop.username.slice(1);
   };
 
   return (
