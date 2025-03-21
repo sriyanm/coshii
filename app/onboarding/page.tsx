@@ -20,6 +20,8 @@ import {
   usePhoneNumberConfirmationResult,
   useSignInWithPhoneNumber,
 } from "../hooks/firebase";
+import { db, auth } from "@/app/lib/client/firebase";
+import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 
 enum Page {
   INTRO = 1,
@@ -58,6 +60,7 @@ export default function OnboardingPage() {
       setOtp,
       signInMutation,
       confirmationResultMutation,
+      shopName,
     );
   } else if (page == Page.FINISH) {
     return OnboardingFinishPage();
@@ -98,6 +101,30 @@ function OnboardingDetailsPage(
       return "Error! Try again";
     } else {
       return "Continue";
+    }
+  };
+
+  const handleContinue = async () => {
+    try {
+      // Update the phone number in users collection first
+      if (auth.currentUser) {
+        const userDocRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userDocRef, {
+          phoneNumber: phoneNumber,
+        });
+      }
+      // Development bypass for SMS verification
+      console.log("SMS Handler Called with phone number:", phoneNumber);
+      setPage(Page.OTP);
+
+      // Comment out the actual SMS verification for now
+      /*
+      signInMutation.mutate(phoneNumber, {
+        onSuccess: () => setPage(Page.OTP)
+      });
+      */
+    } catch (error) {
+      console.error("Error updating phone number:", error);
     }
   };
 
@@ -148,11 +175,7 @@ function OnboardingDetailsPage(
         id="recaptcha-element"
         className="mt-auto px-8 py-6 text-lg"
         variant="onboarding"
-        onClick={function () {
-          signInMutation.mutate(phoneNumber, {
-            onSuccess: () => setPage(Page.OTP),
-          });
-        }}
+        onClick={handleContinue}
         disabled={
           signInMutation.isPending ||
           !shopName ||
@@ -177,6 +200,7 @@ function OnboardingPhoneOtpPage(
     ConfirmationResultMutationParams,
     void
   >,
+  shopName: string,
 ) {
   const getButtonText = () => {
     if (confirmationResultMutation.isPending) {
@@ -185,6 +209,27 @@ function OnboardingPhoneOtpPage(
       return "Error! Try again";
     }
     return "Continue";
+  };
+
+  const createShopAndContinue = async () => {
+    try {
+      if (auth.currentUser) {
+        const shopRef = collection(db, "shops");
+        await addDoc(shopRef, {
+          creatorId: auth.currentUser.uid,
+          shopName: shopName,
+          createdAt: new Date(),
+        });
+        console.log("Shop created successfully");
+      } else {
+        console.error("No authenticated user found when creating shop");
+      }
+      setPage(Page.FINISH);
+    } catch (error) {
+      console.error("Error creating shop:", error);
+      // Still continue to finish page even if shop creation fails
+      setPage(Page.FINISH);
+    }
   };
 
   return (
@@ -211,21 +256,32 @@ function OnboardingPhoneOtpPage(
         <Button
           className="px-8 py-6 text-lg"
           variant="onboarding"
-          onClick={function () {
+          onClick={async function () {
+            // Development bypass
+            console.log("OTP Verification bypassed. Code entered:", otp);
+            await createShopAndContinue();
+
+            /* Production code - commented out for development
             if (!signInMutation.isSuccess) {
               throw Error("SMS sign-in code was not sent");
             }
             confirmationResultMutation.mutate(
               { confirmationResult: signInMutation.data, code: otp },
               {
-                onSuccess: () => setPage(Page.FINISH),
+                onSuccess: async () => {
+                  await createShopAndContinue();
+                }
               },
             );
+            */
           }}
           disabled={
-            otp.length != 6 ||
+            otp.length != 6
+            /* Production checks - commented out for development
+            ||
             !signInMutation.isSuccess ||
             confirmationResultMutation.isPending
+            */
           }
         >
           {getButtonText()}
