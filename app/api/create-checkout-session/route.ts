@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 // Define the type for the cart item
-interface CartItem {
+type Cart = {
+  images: string[];
+  caption: string;
+  shopName: string;
   name: string;
   price: number;
   quantity: number;
-}
+  sellerId: string;
+};
 
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY as string);
@@ -14,7 +18,8 @@ const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY as string);
 export async function POST(req: Request) {
   try {
     // Parse the request body
-    const { cartItems }: { cartItems: CartItem[] } = await req.json();
+    const { cartItems, sellerId }: { cartItems: Cart[]; sellerId: string } =
+      await req.json();
 
     // Get previous page
     const referer =
@@ -37,7 +42,7 @@ export async function POST(req: Request) {
       payment_intent_data: {
         application_fee_amount: 0,
         transfer_data: {
-          destination: "acct_1R1Yp7E2rsuqp9lw",
+          destination: sellerId,
         },
       },
       mode: "payment",

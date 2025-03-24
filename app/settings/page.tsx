@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,6 +14,17 @@ import {
 import Link from "next/link";
 import { Switch } from "../components/ui/switch";
 import type { NavigationItem } from "../types";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  EmbeddedCheckoutProvider,
+  EmbeddedCheckout,
+} from "@stripe/react-stripe-js";
+import { useCallback, useRef, useState } from "react";
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string,
+);
+// const stripePromise = loadStripe(process.env.TEST_STRIPE_PUBLIC_KEY as string);
 
 const navigation: NavigationItem[] = [
   { name: "Shop", icon: Store, href: "/shop" },
@@ -34,12 +44,14 @@ type View =
   | "editShopName";
 
 // This would normally come from your auth/user context
+// TODO: this is all hardcoded
 const userProfile = {
   name: "Ajay Gokhale",
   phone: "2487035531",
   email: "ajaygokhale1@gmail.com",
   shopName: "GOKHS STUDIO",
   plan: "Free",
+  subscriptionId: "sub_1R1YZCE4sAURr3tnXkmv4yQl",
 };
 
 export default function SettingsPage() {
@@ -207,53 +219,190 @@ export default function SettingsPage() {
     </div>
   );
 
-  const renderSubscriptionView = () => (
-    <div className="space-y-4">
-      <div className="mx-3">
-        <h1 className="text-2xl font-bold">Settings</h1>
-      </div>
-      <div className="mx-3 flex items-center gap-2">
-        <button onClick={() => setCurrentView("main")} className="-ml-2 p-2">
-          <ChevronLeft className="size-6" />
-        </button>
-        <h1 className="text-xl font-bold">COSHII SUBSCRIPTION PLAN</h1>
-      </div>
+  const SellerOnboardingButton = () => {
+    const handleOnboarding = async () => {
+      try {
+        const response = await fetch("/api/create-account-link", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-      <div className="mx-3 space-y-4">
-        <div
-          className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "Free" ? "relative border-8 border-black" : ""}`}
-        >
-          <h3 className="mb-2 text-lg font-bold">FREE PLAN</h3>
-          <ul className="space-y-1">
-            <li>- list products for sale easily</li>
-            <li>- interact with other sellers</li>
-            <li>-</li>
-          </ul>
-          {userProfile.plan === "Free" && (
-            <div className="absolute right-6 top-6">
-              <Check className="size-16 text-[#C6A052]" />
-            </div>
-          )}
+        if (!response.ok) throw new Error("Failed to create onboarding link");
+
+        const { url } = await response.json();
+
+        window.location.href = url;
+      } catch (error) {
+        console.error("Error during seller onboarding:", error);
+      }
+    };
+
+    return (
+      <button
+        onClick={handleOnboarding}
+        className="w-full rounded-lg bg-blue-500 px-4 py-2 text-white"
+      >
+        Onboard as a Seller
+      </button>
+    );
+  };
+
+  const [showCheckout, setShowCheckout] = useState(false);
+  const modalRef = useRef<HTMLDialogElement>(null);
+  const fetchClientSecret = useCallback(() => {
+    return fetch("/api/embedded-checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        // priceId: "price_1QwnGEE4sAURr3tnLFKauzDP",
+        priceId: "price_1R635GE4sAURr3tnakAkDpFP", //test
+        quantity: 1,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => data.client_secret);
+  }, []);
+
+  const renderSubscriptionView = () => {
+    const handleCancelSubscription = async () => {
+      if (!userProfile.subscriptionId) {
+        alert("No active subscription found!");
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/cancel-subscription", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ subscriptionId: userProfile.subscriptionId }),
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          alert("Subscription canceled successfully!");
+        } else {
+          alert("Error canceling subscription: " + result.error);
+        }
+      } catch (error) {
+        console.error("Error canceling subscription:", error);
+        alert("An error occurred while canceling the subscription.");
+      }
+    };
+
+    const options = { fetchClientSecret };
+
+    const handleCheckoutClick = () => {
+      fetchClientSecret();
+      setShowCheckout(true);
+      modalRef.current?.showModal();
+    };
+
+    const handleCloseModal = () => {
+      setShowCheckout(false);
+      modalRef.current?.close();
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="mx-3">
+          <h1 className="text-2xl font-bold">Settings</h1>
+        </div>
+        <div className="mx-3 flex items-center gap-2">
+          <button onClick={() => setCurrentView("main")} className="-ml-2 p-2">
+            <ChevronLeft className="size-6" />
+          </button>
+          <h1 className="text-xl font-bold">COSHII SUBSCRIPTION PLAN</h1>
         </div>
 
-        <div
-          className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "Paid" ? "relative border-8 border-black" : ""}`}
-        >
-          <h3 className="mb-2 text-lg font-bold">COSHII PRO ($9.99 / Month)</h3>
-          <p className="mb-2">All the benefits of the free plan plus:</p>
-          <ul className="space-y-1">
-            <li>- enable full checkout experience for customers</li>
-            <li>- keep track of sold inventory from backroom</li>
-          </ul>
+        <div className="mx-3 space-y-4">
+          <div
+            className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "Free" ? "relative border-8 border-black" : ""}`}
+          >
+            <h3 className="mb-2 text-lg font-bold">FREE PLAN</h3>
+            <ul className="space-y-1">
+              <li>- list products for sale easily</li>
+              <li>- interact with other sellers</li>
+              <li>-</li>
+            </ul>
+            {userProfile.plan === "Free" && (
+              <div className="absolute right-6 top-6">
+                <Check className="size-16 text-[#C6A052]" />
+              </div>
+            )}
+          </div>
+
+          <button
+            className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "Paid" ? "relative border-8 border-black" : ""}`}
+            onClick={handleCheckoutClick} // On click, show the modal
+          >
+            <h3 className="mb-2 text-lg font-bold">
+              COSHII PRO ($9.99 / Month)
+            </h3>
+            <p className="mb-2">All the benefits of the free plan plus:</p>
+            <ul className="space-y-1">
+              <li>- enable full checkout experience for customers</li>
+              <li>- keep track of sold inventory from backroom</li>
+            </ul>
+            {userProfile.plan === "Paid" && (
+              <div className="absolute right-6 top-6">
+                <Check className="size-16 text-[#C6A052]" />
+              </div>
+            )}
+          </button>
+
           {userProfile.plan === "Paid" && (
-            <div className="absolute right-6 top-6">
-              <Check className="size-16 text-[#C6A052]" />
+            <div className="mt-8">
+              <SellerOnboardingButton />
+            </div>
+          )}
+
+          {userProfile.plan === "Paid" && (
+            <div>
+              <button
+                onClick={handleCancelSubscription}
+                className="w-full rounded-lg bg-red-100 px-4 py-2 text-red-600"
+              >
+                Cancel Subscription
+              </button>
             </div>
           )}
         </div>
+
+        {/* Modal */}
+        <dialog
+          ref={modalRef}
+          className="modal size-full max-h-[80vh] max-w-[80vw] rounded-lg"
+        >
+          <div className="modal-box size-full max-h-[80vh] max-w-[80vw] rounded-lg p-6">
+            <h3 className="text-lg font-bold">Embedded Checkout</h3>
+            <div className="py-4">
+              {showCheckout && (
+                <EmbeddedCheckoutProvider
+                  stripe={stripePromise}
+                  options={options}
+                >
+                  <EmbeddedCheckout />
+                </EmbeddedCheckoutProvider>
+              )}
+            </div>
+            <div className="modal-action">
+              <form method="dialog">
+                <button className="btn" onClick={handleCloseModal}>
+                  Close
+                </button>
+              </form>
+            </div>
+          </div>
+        </dialog>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderEditView = (field: string, value: string) => (
     <div className="space-y-4">

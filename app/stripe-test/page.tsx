@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 // import { loadStripe } from '@stripe/stripe-js';
-import EmbeddedCheckoutButton from "../components/EmbeddedCheckoutButton";
+// import EmbeddedCheckoutButton from "../components/EmbeddedCheckoutButton";
 
 //TODO: switch from test back to actual stripe mode
 //    change promise keys in all api files
@@ -82,9 +82,9 @@ const CheckoutPage = () => {
         <CoshiiPremiumButton />
       </div>
 
-      <div className="mt-8">
+      {/* <div className="mt-8">
         <EmbeddedCheckoutButton />
-      </div>
+      </div> */}
 
       <div className="mt-8">
         <SellerOnboardingButton />

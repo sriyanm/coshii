@@ -14,7 +14,9 @@ interface Product {
   caption: string;
   shopName: string;
   name: string;
-  price: string;
+  price: number;
+  quantity: number;
+  sellerId: string;
 }
 
 export default function ProfilePage() {
@@ -25,13 +27,30 @@ export default function ProfilePage() {
   // const [sellerView, setSellerView] = useState(true); // Replace with actual seller role check
   const sellerView = true;
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const [cart, setCart] = useState<Product[]>([]); // State to manage cart items
+  const [itemCount, setCount] = useState<number>(0);
 
-  // const [cart, setCart] = useState<any[]>([]); // State to manage cart items
+  const handleAddToCart = (product: Product) => {
+    const existingProductIndex = cart.findIndex(
+      (item) => item.name === product.name,
+    );
+    let updatedCart;
+    if (existingProductIndex >= 0) {
+      // Product already exists in the cart, so update the quantity
+      updatedCart = [...cart];
+      updatedCart[existingProductIndex].quantity += 1;
+    } else {
+      // Product doesn't exist in the cart, add it with quantity 1
+      updatedCart = [...cart, { ...product, quantity: 1 }];
+    }
 
-  // const handleAddToCart = (product: any) => {
-  //   setCart((prevCart) => [...prevCart, product]);
-  //   console.log("Added to cart", product);
-  // };
+    setCount(itemCount + 1);
+    setCart(updatedCart);
+    sessionStorage.setItem("cart", JSON.stringify(updatedCart));
+    sessionStorage.setItem("sellerId", "acct_1R1Yp7E2rsuqp9lw"); //TODO: this is hardcoded
+    console.log("Added to cart", updatedCart);
+    console.log("Account Id: ", "acct_1R1Yp7E2rsuqp9lw"); //TODO: this is hardcoded
+  };
 
   const fetchProducts = async (offset: number) => {
     setIsFetching(true);
@@ -63,6 +82,7 @@ export default function ProfilePage() {
       ],
     ];
 
+    //TODO: this is all hardcoded
     const newProducts = Array.from({ length: 5 }, (_, i) => {
       const images = imageSets[i % imageSets.length];
       return {
@@ -70,7 +90,9 @@ export default function ProfilePage() {
         caption: `Product ${offset + i + 1} caption. Here's more of a description of the product. You should've been clicking see more in order to see all of this.`,
         shopName: "Mike's Shop",
         name: `Product ${offset + i + 1}`,
-        price: `$${(offset + i + 1) * 10}`,
+        price: (offset + i + 1) * 10 + 0.99,
+        quantity: 1,
+        sellerId: "acct_1R1Yp7E2rsuqp9lw",
       };
     });
 
@@ -172,9 +194,19 @@ export default function ProfilePage() {
             </div>
             <div className="ml-auto flex shrink-0 items-center">
               {/* Shopping Cart Icon */}
-              <Link href="/checkout" title="Cart Button">
-                <MdAddShoppingCart className="text-xl" />
+              <Link
+                href={{ pathname: "/checkout" }}
+                title="Cart Button"
+                className="relative"
+              >
+                <MdAddShoppingCart className="text-2xl" />
+                {itemCount > 0 && (
+                  <span className="absolute -right-2 -top-3 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                    {itemCount}
+                  </span>
+                )}
               </Link>
+
               {/* Bell Icon (visible only for sellers) */}
               {sellerView && (
                 <CiBellOn className="ml-4 text-xl" title="Notifications" />
@@ -205,8 +237,8 @@ export default function ProfilePage() {
             media={product.images}
             caption={product.caption}
             productName={product.name}
-            price={product.price}
-            onAddToCart={() => console.log("Added to cart!")}
+            price={`\$${product.price}`}
+            onAddToCart={() => handleAddToCart(product)}
             onLike={() => console.log("Liked")}
             onComment={() => console.log("Commented")}
             onShare={() => console.log("Shared")}

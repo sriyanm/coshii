@@ -1,25 +1,42 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+type Cart = {
+  images: string[];
+  caption: string;
+  shopName: string;
+  name: string;
+  price: number;
+  quantity: number;
+  sellerId: string;
+};
 
 export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
 
-  const cartItems = [
-    {
-      name: "Cloth Basket",
-      price: 29.99,
-      quantity: 2,
-      image: "/tempImages/basket.jpeg",
-    },
-    {
-      name: "Rubber Duck",
-      price: 49.99,
-      quantity: 1,
-      image: "/tempImages/coconut.jpg",
-    },
-  ];
+  // Explicitly define state type
+  const [cart, setCart] = useState<Cart[]>([]);
+  const [sellerId, setSellerId] = useState<string>("");
 
-  const subtotal = cartItems.reduce(
+  useEffect(() => {
+    // Retrieve cart data from sessionStorage
+    const storedCart = sessionStorage.getItem("cart");
+    console.log("hi cart");
+    if (storedCart) {
+      setCart(JSON.parse(storedCart));
+      console.log(cart);
+    }
+
+    // Retrieve seller's stripe account id
+    const storedId = sessionStorage.getItem("sellerId");
+    console.log("hi id");
+    if (storedId) {
+      setSellerId(storedId);
+      console.log(storedId);
+    }
+  }, []);
+
+  const subtotal = cart.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0,
   );
@@ -33,9 +50,10 @@ export default function CheckoutPage() {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cartItems }),
+        body: JSON.stringify({ cartItems: cart, sellerId: sellerId }),
       });
 
+      console.log("Done with checkout api request");
       if (!response.ok) throw new Error("Failed to create checkout session");
 
       const { url } = await response.json();
@@ -50,13 +68,13 @@ export default function CheckoutPage() {
     <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 p-4">
       <h1 className="mb-6 self-start text-2xl font-bold">Your Cart</h1>
       <div className="flex w-full flex-col items-center gap-4">
-        {cartItems.map((item, index) => (
+        {cart.map((item, index) => (
           <div
             key={index}
             className="flex w-full max-w-2xl justify-between rounded-lg bg-white p-4 shadow"
           >
             <img
-              src={item.image}
+              src={item.images[0]}
               alt={item.name}
               className="rounded size-16 object-cover"
             />
