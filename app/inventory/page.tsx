@@ -136,6 +136,29 @@ export default function InventoryPage() {
   const [user, setUser] = useState<User | null>(null);
   const auth = getAuth();
 
+  // Use a constant array for orders instead of state
+  const orders: Order[] = [
+    {
+      id: "1",
+      customerName: "Kevin Barnes",
+      items: [
+        {
+          product: {
+            id: "1",
+            name: "Grey Plate",
+            price: 30,
+            image: "/placeholder.svg",
+          },
+          quantity: 2,
+        },
+      ],
+      date: "2023-12-23",
+      status: "active",
+      address: "123 Main St\nApt 4B\nNew York, NY 10001",
+    },
+    // ... other orders
+  ];
+
   const listedProducts = products.filter((p) => p.isListed);
   const unlistedProducts = products.filter((p) => !p.isListed);
   const activeOrders = orders.filter((o) => o.status === "active");
