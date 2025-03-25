@@ -46,6 +46,7 @@ dataconnect/.dataconnect/
 # ide
 .vscode/
 .idea/
+sendgrid.env
 
 #gabe local assets :)
 app/public/tempImages/*
