@@ -43,6 +43,9 @@ export const FirebaseAuthProvider = ({
             phoneNumber: authUser.phoneNumber,
             email: authUser.email,
             updatedAt: new Date(),
+            plan: "free",
+            followers: [],
+            following: [],
           },
           { merge: true },
         );

@@ -214,19 +214,28 @@ function OnboardingPhoneOtpPage(
   const createShopAndContinue = async () => {
     try {
       if (auth.currentUser) {
+        // Create shop document
         const shopRef = collection(db, "shops");
         await addDoc(shopRef, {
           creatorId: auth.currentUser.uid,
           shopName: shopName,
           createdAt: new Date(),
         });
-        console.log("Shop created successfully");
+
+        // Update user document with shop name
+        const userDocRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userDocRef, {
+          shopName: shopName,
+        });
+
+        console.log("Shop created and user updated successfully");
+        setPage(Page.FINISH);
       } else {
         console.error("No authenticated user found when creating shop");
+        setPage(Page.FINISH);
       }
-      setPage(Page.FINISH);
     } catch (error) {
-      console.error("Error creating shop:", error);
+      console.error("Error creating shop or updating user:", error);
       // Still continue to finish page even if shop creation fails
       setPage(Page.FINISH);
     }
