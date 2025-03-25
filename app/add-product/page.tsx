@@ -453,6 +453,7 @@ export default function AddProductPage() {
         description,
         price,
         inventory,
+        isListed: true,
         createdBy: auth.currentUser.uid,
         createdAt: new Date(),
         updatedAt: new Date(),
