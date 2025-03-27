@@ -9,6 +9,7 @@ import { Store, SearchIcon, PlusSquare, Shirt, Settings } from "lucide-react";
 // import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { collection, query, getDocs } from "firebase/firestore";
+import Fuse from "fuse.js";
 import { db } from "@/app/lib/client/firebase";
 
 // Types
@@ -174,24 +175,28 @@ export default function SearchPage() {
       const querySnapshot = await getDocs(q);
       console.log("Total docs found:", querySnapshot.size);
 
-      const results: UserSearchResult[] = [];
+      const users: UserSearchResult[] = [];
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         console.log("Document data:", data);
 
-        // Check if shopName exists and contains our search term (case insensitive)
-        if (
-          data.shopName &&
-          data.shopName.toLowerCase().includes(searchTerm.toLowerCase())
-        ) {
-          results.push({
+        // Check if shopName exists and contains search term (case insensitive)
+        if (data.shopName) {
+          users.push({
             id: doc.id,
             email: data.email || "",
             shopName: data.shopName || "",
           });
         }
       });
+
+      const fuse = new Fuse(users, {
+        keys: ["shopName", "email"],
+        threshold: 0.3, // Adjust for strictness
+      });
+
+      const results = fuse.search(searchQuery).map((result) => result.item);
 
       console.log("Filtered results:", results.length);
       setSearchResults(results);
