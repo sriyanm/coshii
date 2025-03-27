@@ -1,16 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-
-// Define the type for the cart item
-type Cart = {
-  images: string[];
-  caption: string;
-  shopName: string;
-  name: string;
-  price: number;
-  quantity: number;
-  sellerId: string;
-};
+import { CartItem } from "../../types/index";
 
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY as string);
@@ -18,7 +8,7 @@ const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY as string);
 export async function POST(req: Request) {
   try {
     // Parse the request body
-    const { cartItems, sellerId }: { cartItems: Cart[]; sellerId: string } =
+    const { cartItems, sellerId }: { cartItems: CartItem[]; sellerId: string } =
       await req.json();
 
     // Get previous page

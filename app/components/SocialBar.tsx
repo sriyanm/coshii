@@ -7,9 +7,15 @@ interface SocialBarProps {
   onLike: () => void; // Callback for when the Like button is clicked
   onComment: () => void; // Callback for when the Comment button is clicked
   onShare: () => void; // Callback for when the Share button is clicked
+  buyerView: boolean;
 }
 
-export function SocialBar({ onLike, onComment, onShare }: SocialBarProps) {
+export function SocialBar({
+  onLike,
+  onComment,
+  onShare,
+  buyerView,
+}: SocialBarProps) {
   const [liked, setLiked] = useState(false); // State to track like status
   const [showComments, setShowComments] = useState(false); // State to toggle comment popup
 
@@ -56,6 +62,7 @@ export function SocialBar({ onLike, onComment, onShare }: SocialBarProps) {
       <button
         className="text-white"
         onClick={handleLikeClick}
+        disabled={buyerView}
         title={liked ? "Unlike" : "Like"}
         aria-label={liked ? "Unlike" : "Like"}
       >
@@ -70,7 +77,11 @@ export function SocialBar({ onLike, onComment, onShare }: SocialBarProps) {
       {showComments && (
         <div className="popup-overlay fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50">
           <div className="comments-popup size-4/5 overflow-y-auto bg-white p-4 shadow-lg backdrop-blur-md">
-            <CommentsPopup onClose={handleClosePopup} productId="123" />
+            <CommentsPopup
+              onClose={handleClosePopup}
+              productId="123"
+              buyerView={buyerView}
+            />
           </div>
         </div>
       )}

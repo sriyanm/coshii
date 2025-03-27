@@ -91,11 +91,11 @@ export default function ShopPage() {
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
       case "like":
-        return <Heart className="size-4 fill-orange-500 text-orange-500" />;
+        return <Heart className="fill-orange-500 text-orange-500 size-4" />;
       case "comment":
-        return <MessageSquare className="size-4 text-orange-500" />;
+        return <MessageSquare className="text-orange-500 size-4" />;
       case "follow":
-        return <UserPlus className="size-4 text-orange-500" />;
+        return <UserPlus className="text-orange-500 size-4" />;
       default:
         return <div className="size-4" />;
     }
@@ -146,9 +146,9 @@ export default function ShopPage() {
       <div className="flex-1">
         <div className="mt-4 flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold">Notifications</h1>
-          <button>
+          <Link href="/yourstore">
             <X className="size-6" />
-          </button>
+          </Link>
         </div>
 
         <div className="divide-y">

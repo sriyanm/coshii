@@ -4,33 +4,68 @@ import { Toggle } from "@/app/components/Toggle";
 import { NavigationBar } from "@/app/components/navbar";
 import { Profile } from "@/app/components/profile";
 import { ProductPage } from "../components/productPage";
-import { SiFacebook, SiX, SiInstagram } from "@icons-pack/react-simple-icons";
 import { MdAddShoppingCart } from "react-icons/md";
 import { CiBellOn } from "react-icons/ci";
 import Link from "next/link";
-
-interface Product {
-  images: string[];
-  caption: string;
-  shopName: string;
-  name: string;
-  price: number;
-  quantity: number;
-  sellerId: string;
-}
+// import { TimestampString } from "@firebasegen/dataconnect";
+// import { StringValidation } from "zod";
+import { Product, Shop, CartItem } from "../types/index";
+// import { CartItem } from "../components/CartItem";
 
 export default function ProfilePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
-  // const [sellerView, setSellerView] = useState(true); // Replace with actual seller role check
-  const sellerView = true;
+  const sellerView = true; // TODO: Replace with actual seller role check (true iff the shop belongs to the currently signed in user)
+  const buyerView = true; // TODO: Replace with actual buyer role check (true iff the currently signed in user does not have any shop)
+  const [showPopup, setShowPopup] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
-  const [cart, setCart] = useState<Product[]>([]); // State to manage cart items
+  const [cart, setCart] = useState<CartItem[]>([]); // State to manage cart items
   const [itemCount, setCount] = useState<number>(0);
+  const [shopData, setShopData] = useState<Shop>({
+    //TODO: this is hardcoded
+    createdAt: "",
+    creatorId: "",
+    creatorName: "",
+    profilePic: "/tempImages/basketWeaver.jpg",
+    shopName: "Mike's Shop",
+    username: "basketweaver",
+    email: "Mike@gmail.com",
+    description:
+      "Hey this is my basketweaving description! It'd be funny if this was left in prod",
+    socialLinks: [
+      { platform: "Facebook", url: "https://facebook.com", username: "Mike H" },
+      { platform: "Twitter", url: "https://twitter.com", username: "Mike H" },
+      {
+        platform: "Instagram",
+        url: "https://instagram.com",
+        username: "Mike H",
+      },
+    ],
+    categories: [
+      "All",
+      "Reposts",
+      "Cups",
+      "Ashtrays",
+      "Sculptures",
+      "Scroll Past This",
+    ],
+    isPremium: true,
+  });
+
+  const handleShopUpdate = (updatedShopData: Shop) => {
+    //TODO: should also update backend
+    setShopData(updatedShopData);
+  };
 
   const handleAddToCart = (product: Product) => {
+    if (sellerView) {
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 3000); // Hide after 3 seconds
+      return;
+    }
+
     const existingProductIndex = cart.findIndex(
       (item) => item.name === product.name,
     );
@@ -41,7 +76,16 @@ export default function ProfilePage() {
       updatedCart[existingProductIndex].quantity += 1;
     } else {
       // Product doesn't exist in the cart, add it with quantity 1
-      updatedCart = [...cart, { ...product, quantity: 1 }];
+      const newItem: CartItem = {
+        productId: product.id, // From Product
+        image: product.images[0],
+        description: product.description || "",
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        sellerId: product.sellerId,
+      };
+      updatedCart = [...cart, newItem];
     }
 
     setCount(itemCount + 1);
@@ -53,6 +97,7 @@ export default function ProfilePage() {
   };
 
   const fetchProducts = async (offset: number) => {
+    //TODO: this is all hardcoded
     setIsFetching(true);
     const imageSets = [
       [
@@ -82,16 +127,18 @@ export default function ProfilePage() {
       ],
     ];
 
-    //TODO: this is all hardcoded
     const newProducts = Array.from({ length: 5 }, (_, i) => {
       const images = imageSets[i % imageSets.length];
+
+      // Create the new product object
       return {
-        images,
-        caption: `Product ${offset + i + 1} caption. Here's more of a description of the product. You should've been clicking see more in order to see all of this.`,
+        id: `product_${offset + i + 1}`, // Create a unique product ID
+        images: images,
+        description: `Product ${offset + i + 1} caption. Here's more of a description of the product. You should've been clicking see more in order to see all of this.`,
         shopName: "Mike's Shop",
         name: `Product ${offset + i + 1}`,
         price: (offset + i + 1) * 10 + 0.99,
-        quantity: 1,
+        tags: ["tag1", "tag2"], // Example tags
         sellerId: "acct_1R1Yp7E2rsuqp9lw",
       };
     });
@@ -125,49 +172,14 @@ export default function ProfilePage() {
     fetchProducts(0); // Initial data fetch
   }, []);
 
-  const profilePic = "/tempImages/basketWeaver.jpg";
-  const shopName = "Mike's Shop";
-  const username = "basketweaver";
-  const description =
-    "Hey this is my basketweaving description! It'd be funny if this was left in prod";
-  const socialLinks = [
-    {
-      platform: "Facebook",
-      url: "https://facebook.com",
-      icon: <SiFacebook size={30} />,
-    },
-    {
-      platform: "Twitter",
-      url: "https://twitter.com",
-      icon: <SiX size={30} />,
-    },
-    {
-      platform: "Instagram",
-      url: "https://instagram.com",
-      icon: <SiInstagram size={30} />,
-    },
-  ];
-
-  const categories = [
-    "All",
-    "Reposts",
-    "Cups",
-    "Ashtrays",
-    "Sculptures",
-    "Scroll Past This",
-  ];
-
   return (
     <div className="flex min-h-screen flex-col items-center font-sans">
       {/* Profile Section */}
       <div className="w-full max-w-md p-4">
         <Profile
-          profilePic={profilePic}
-          shopName={shopName}
-          username={username}
-          description={description}
-          socialLinks={socialLinks}
+          shopData={shopData}
           sellerView={sellerView}
+          onShopUpdate={handleShopUpdate}
         />
       </div>
 
@@ -177,7 +189,7 @@ export default function ProfilePage() {
         <div className="flex w-full flex-col">
           {/* Shop Name Above the First Toggle */}
           <div className="px-4 py-0.5 text-center text-sm font-medium">
-            {shopName}
+            {shopData.shopName}
           </div>
 
           {/* Shop/Activity Toggle and Shopping Cart in the Same Row */}
@@ -192,7 +204,7 @@ export default function ProfilePage() {
                 underline={true}
               />
             </div>
-            <div className="ml-auto flex shrink-0 items-center">
+            <div className="ml-auto flex shrink-0 items-end justify-end">
               {/* Shopping Cart Icon */}
               <Link
                 href={{ pathname: "/checkout" }}
@@ -209,7 +221,13 @@ export default function ProfilePage() {
 
               {/* Bell Icon (visible only for sellers) */}
               {sellerView && (
-                <CiBellOn className="ml-4 text-xl" title="Notifications" />
+                <Link href="/shop">
+                  <CiBellOn
+                    className="ml-4 text-2xl"
+                    title="Notifications"
+                    style={{ strokeWidth: "0.6" }}
+                  />
+                </Link>
               )}
             </div>
           </div>
@@ -217,7 +235,7 @@ export default function ProfilePage() {
           {/* Categories Toggle */}
           <div className="shrink-0 px-4 py-0.5">
             <Toggle
-              options={categories}
+              options={shopData.categories}
               selectedOption={selectedCategory}
               onOptionSelect={setSelectedCategory}
               font="SF Pro"
@@ -235,16 +253,25 @@ export default function ProfilePage() {
           <ProductPage
             key={index}
             media={product.images}
-            caption={product.caption}
+            caption={product.description || ""}
             productName={product.name}
             price={`\$${product.price}`}
             onAddToCart={() => handleAddToCart(product)}
-            onLike={() => console.log("Liked")}
-            onComment={() => console.log("Commented")}
-            onShare={() => console.log("Shared")}
+            onLike={() => console.log("Liked")} //TODO: store in backend
+            onComment={() => console.log("Commented")} //TODO: store in backend (see components/comments.tsx)
+            onShare={() => console.log("Shared")} //TODO: do something
+            buyerView={buyerView}
+            isPremium={shopData.isPremium}
           />
         ))}
       </div>
+
+      {/* Pop-up Message if adding own product to cart */}
+      {showPopup && (
+        <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-white p-4 shadow-lg">
+          <p>Sorry, you cant add your own products to your cart</p>
+        </div>
+      )}
 
       {/* Intersection Observer Trigger */}
       <div id="load-more-trigger" className="h-4 w-full"></div>

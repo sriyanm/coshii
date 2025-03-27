@@ -1,21 +1,12 @@
 "use client";
 import React, { useState, useEffect } from "react";
-
-type Cart = {
-  images: string[];
-  caption: string;
-  shopName: string;
-  name: string;
-  price: number;
-  quantity: number;
-  sellerId: string;
-};
+import { CartItem } from "../types/index";
 
 export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
 
   // Explicitly define state type
-  const [cart, setCart] = useState<Cart[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [sellerId, setSellerId] = useState<string>("");
 
   useEffect(() => {
@@ -71,16 +62,24 @@ export default function CheckoutPage() {
         {cart.map((item, index) => (
           <div
             key={index}
-            className="flex w-full max-w-2xl justify-between rounded-lg bg-white p-4 shadow"
+            className="flex w-full max-w-2xl items-center gap-4 rounded-lg bg-white p-4 shadow"
           >
-            <img
-              src={item.images[0]}
-              alt={item.name}
-              className="rounded size-16 object-cover"
-            />
-            <div className="ml-4 flex flex-col">
-              <span className="font-semibold">{item.name}</span>
-              <span className="text-gray-600">
+            {/* Left Side: Image + Caption */}
+            <div className="flex items-center gap-2">
+              <img
+                src={item.image}
+                alt={item.name}
+                className="rounded size-16 object-cover"
+              />
+              <span className="italic text-gray-500">{item.description}</span>
+            </div>
+
+            {/* Right Side: Name + Price */}
+            <div className="ml-4 flex grow flex-col items-start">
+              <span className="whitespace-nowrap font-semibold">
+                {item.name}
+              </span>
+              <span className="whitespace-nowrap text-gray-600">
                 ${item.price.toFixed(2)} x {item.quantity}
               </span>
             </div>

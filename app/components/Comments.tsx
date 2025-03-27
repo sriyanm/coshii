@@ -12,9 +12,10 @@ interface Comment {
 interface CommentsPopupProps {
   onClose: () => void;
   productId: string;
+  buyerView: boolean;
 }
 
-// Mock API functions
+// Mock API functions <-- TODO: fetch from backend (note product id is passed from socialbar.tsx)
 const fetchComments = async (productId: string): Promise<Comment[]> => {
   return new Promise((resolve) =>
     setTimeout(() => {
@@ -36,6 +37,7 @@ const fetchComments = async (productId: string): Promise<Comment[]> => {
   );
 };
 
+//TODO: add to backend
 const postComment = async (
   productId: string,
   commentText: string,
@@ -66,7 +68,11 @@ const postComment = async (
   );
 };
 
-export function CommentsPopup({ onClose, productId }: CommentsPopupProps) {
+export function CommentsPopup({
+  onClose,
+  productId,
+  buyerView,
+}: CommentsPopupProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -103,7 +109,7 @@ export function CommentsPopup({ onClose, productId }: CommentsPopupProps) {
   };
 
   return (
-    <div className="comments-popup bg-white fixed inset-x-0 bottom-0 h-4/5 overflow-y-auto bg-opacity-100 p-4 shadow-lg backdrop-blur-md">
+    <div className="comments-popup fixed inset-x-0 bottom-0 h-4/5 overflow-y-auto bg-white bg-opacity-100 p-4 shadow-lg backdrop-blur-md">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">Comments</h2>
         <button onClick={onClose} className="text-gray-500">
@@ -116,10 +122,10 @@ export function CommentsPopup({ onClose, productId }: CommentsPopupProps) {
       ) : (
         <ul className="mt-4 space-y-4">
           {comments.map((comment, index) => (
-            <li key={index} className="border-gray-200 border-b pb-2">
+            <li key={index} className="border-b border-gray-200 pb-2">
               <p className="font-semibold">{comment.owner}</p>
-              <p className="text-gray-600 text-sm">{comment.text}</p>
-              <p className="text-gray-400 text-xs">
+              <p className="text-sm text-gray-600">{comment.text}</p>
+              <p className="text-xs text-gray-400">
                 {new Date(comment.timestamp).toLocaleString()}
               </p>
             </li>
@@ -127,22 +133,24 @@ export function CommentsPopup({ onClose, productId }: CommentsPopupProps) {
         </ul>
       )}
 
-      <div className="mt-4 flex items-center">
-        <input
-          type="text"
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment"
-          className="border-gray-300 flex-1 rounded-lg border p-2"
-        />
-        <button
-          onClick={handleAddComment}
-          disabled={loading}
-          className="bg-blue-500 text-white disabled:bg-gray-300 ml-2 rounded-lg px-4 py-2"
-        >
-          Post
-        </button>
-      </div>
+      {!buyerView && (
+        <div className="mt-4 flex items-center">
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a comment"
+            className="flex-1 rounded-lg border border-gray-300 p-2"
+          />
+          <button
+            onClick={handleAddComment}
+            disabled={loading}
+            className="ml-2 rounded-lg bg-blue-500 px-4 py-2 text-white disabled:bg-gray-300"
+          >
+            Post
+          </button>
+        </div>
+      )}
     </div>
   );
 }

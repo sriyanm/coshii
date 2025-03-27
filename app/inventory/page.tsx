@@ -24,43 +24,58 @@ const products: Product[] = [
     id: "1",
     name: "Charm Necklace",
     price: 31,
-    image: "/placeholder.svg",
+    images: ["/placeholder.svg"],
     description:
       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
     stock: 4,
     isListed: true,
+    tags: [],
+    shopName: "",
+    sellerId: "",
   },
   {
     id: "2",
     name: "Vase Necklace",
     price: 18,
-    image: "/placeholder.svg",
+    images: ["/placeholder.svg"],
     description:
       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
     stock: 4,
     isListed: true,
+    tags: [],
+    shopName: "",
+    sellerId: "",
   },
   {
     id: "3",
     name: "Custom Candle",
     price: 60,
-    image: "/placeholder.svg",
+    images: ["/placeholder.svg"],
     description:
       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
     stock: 4,
     isListed: false,
+    tags: [],
+    shopName: "",
+    sellerId: "",
   },
   {
     id: "4",
     name: "Ashtrays",
     price: 79,
-    image: "/placeholder.svg",
+    images: ["/placeholder.svg"],
     description:
       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
     stock: 4,
     isListed: false,
+    tags: [],
+    shopName: "",
+    sellerId: "",
   },
 ];
+
+//TODO: update this either fetch from backend or use context
+const isPremium = true;
 
 const orders: Order[] = [
   {
@@ -72,7 +87,8 @@ const orders: Order[] = [
           id: "1",
           name: "Grey Plate",
           price: 30,
-          image: "/placeholder.svg",
+          images: ["/placeholder.svg"],
+          sellerId: "",
         },
         quantity: 2,
       },
@@ -90,7 +106,8 @@ const orders: Order[] = [
           id: "1",
           name: "Grey Plate",
           price: 30,
-          image: "/placeholder.svg",
+          images: ["/placeholder.svg"],
+          sellerId: "",
         },
         quantity: 2,
       },
@@ -108,7 +125,8 @@ const orders: Order[] = [
           id: "1",
           name: "Grey Plate",
           price: 30,
-          image: "/placeholder.svg",
+          images: ["/placeholder.svg"],
+          sellerId: "",
         },
         quantity: 2,
       },
@@ -168,12 +186,15 @@ export default function Home() {
               >
                 Backrooms
               </button>
-              <button
-                className={`text-xl ${view === "transactions" ? "font-bold" : "text-muted-foreground"}`}
-                onClick={() => setView("transactions")}
-              >
-                Transactions
-              </button>
+
+              {isPremium && (
+                <button
+                  className={`text-xl ${view === "transactions" ? "font-bold" : "text-muted-foreground"}`}
+                  onClick={() => setView("transactions")}
+                >
+                  Transactions
+                </button>
+              )}
             </div>
 
             {view === "backrooms" ? (

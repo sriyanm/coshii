@@ -11,6 +11,8 @@ interface ProductPageProps {
   onLike: () => void;
   onComment: () => void;
   onShare: () => void;
+  buyerView: boolean;
+  isPremium: boolean;
 }
 
 export function ProductPage({
@@ -22,6 +24,8 @@ export function ProductPage({
   onLike,
   onComment,
   onShare,
+  buyerView,
+  isPremium,
 }: ProductPageProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [scrolling, setScrolling] = useState(false);
@@ -72,6 +76,11 @@ export function ProductPage({
       }
       setPlaying(!playing);
     }
+  };
+
+  // DM creator if no premium access
+  const onDMCreator = () => {
+    console.log("Should DM Creator");
   };
 
   return (
@@ -146,17 +155,33 @@ export function ProductPage({
           <p className="text-md mb-0 font-bold">{productName}</p>
           <p className="text-md -mt-1 mb-1 font-semibold">{price}</p>
           <Caption caption={caption} />
-          <button
-            onClick={onAddToCart}
-            className="mt-2 rounded-full bg-white px-6 py-2 text-black"
-          >
-            Add to Cart
-          </button>
+          {!isPremium && (
+            <button
+              onClick={onDMCreator}
+              className="mt-2 rounded-full bg-white px-6 py-2 text-black"
+            >
+              DM Creator
+            </button>
+          )}
+
+          {isPremium && (
+            <button
+              onClick={onAddToCart}
+              className="mt-2 rounded-full bg-white px-6 py-2 text-black"
+            >
+              Add to Cart
+            </button>
+          )}
         </div>
 
         {/* Social Bar */}
         <div className="z-8 relative -top-3 flex flex-col items-center space-y-4">
-          <SocialBar onLike={onLike} onComment={onComment} onShare={onShare} />
+          <SocialBar
+            onLike={onLike}
+            onComment={onComment}
+            onShare={onShare}
+            buyerView={buyerView}
+          />
         </div>
       </div>
     </div>

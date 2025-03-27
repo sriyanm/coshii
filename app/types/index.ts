@@ -4,10 +4,41 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  image: string;
+  images: string[];
   description?: string;
   stock?: number;
   isListed?: boolean;
+  tags?: string[];
+  shopName?: string;
+  sellerId: string;
+}
+
+export interface Shop {
+  createdAt: string;
+  creatorId: string;
+  creatorName: string;
+  shopName: string;
+  username: string;
+  email: string;
+  description: string;
+  profilePic: string;
+  socialLinks: {
+    platform: string;
+    url: string;
+    username: string;
+  }[];
+  categories: string[];
+  isPremium: boolean;
+}
+
+export interface CartItem {
+  productId: string;
+  image: string;
+  description: string;
+  name: string;
+  price: number;
+  quantity: number;
+  sellerId: string;
 }
 
 export interface Order {
