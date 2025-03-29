@@ -29,6 +29,8 @@ export interface Shop {
   }[];
   categories: string[];
   isPremium: boolean;
+  subscriptionId?: string; //id for this user's subscription to coshii premium
+  sellerId?: string; //id for stripe connect account
 }
 
 export interface CartItem {

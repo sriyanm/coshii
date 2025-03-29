@@ -17,7 +17,7 @@ export default function ProfilePage() {
   const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
-  const sellerView = true; // TODO: Replace with actual seller role check (true iff the shop belongs to the currently signed in user)
+  const sellerView = false; // TODO: Replace with actual seller role check (true iff the shop belongs to the currently signed in user)
   const buyerView = true; // TODO: Replace with actual buyer role check (true iff the currently signed in user does not have any shop)
   const [showPopup, setShowPopup] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);

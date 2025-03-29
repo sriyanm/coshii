@@ -21,10 +21,10 @@ import {
 } from "@stripe/react-stripe-js";
 import { useCallback, useRef, useState } from "react";
 
+// const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string,
+  process.env.NEXT_PUBLIC_TEST_STRIPE_PUBLISHABLE_KEY as string,
 );
-// const stripePromise = loadStripe(process.env.TEST_STRIPE_PUBLIC_KEY as string);
 
 const navigation: NavigationItem[] = [
   { name: "Shop", icon: Store, href: "/shop" },
@@ -50,8 +50,8 @@ const userProfile = {
   phone: "2487035531",
   email: "ajaygokhale1@gmail.com",
   shopName: "GOKHS STUDIO",
-  plan: "Free",
-  subscriptionId: "sub_1R1YZCE4sAURr3tnXkmv4yQl",
+  plan: "Paid",
+  subscriptionId: "sub_1R1YZCE4sAURr3tnXkmv4yQl", // Need so we can render cancel subscription button
 };
 
 export default function SettingsPage() {
@@ -259,7 +259,8 @@ export default function SettingsPage() {
       },
       body: JSON.stringify({
         // priceId: "price_1QwnGEE4sAURr3tnLFKauzDP",
-        priceId: "price_1R635GE4sAURr3tnakAkDpFP", //test
+        // priceId: "price_1R635GE4sAURr3tnakAkDpFP", // $0
+        priceId: "price_1R1YUqE4sAURr3tn7fFhEd2j", // test mode
         quantity: 1,
       }),
     })

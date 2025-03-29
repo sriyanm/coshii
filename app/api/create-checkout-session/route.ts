@@ -36,6 +36,9 @@ export async function POST(req: Request) {
         },
       },
       mode: "payment",
+      shipping_address_collection: {
+        allowed_countries: ["US", "CA"], // Customize allowed countries
+      },
       automatic_tax: { enabled: false }, //TODO: change this to true (setup stripe tax)
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
       cancel_url: referer,
