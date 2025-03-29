@@ -1,8 +1,8 @@
 "use client";
 
-import { auth, getDataConnect } from "@/app/lib/client/firebase";
-import { upsertUser } from "@firebasegen/dataconnect";
+import { auth, db } from "@/app/lib/client/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { createContext, ReactNode, useEffect, useState } from "react";
 
 type FirebaseAuthState = {
@@ -36,19 +36,25 @@ export const FirebaseAuthProvider = ({
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
-        const dataConnect = getDataConnect();
-        await upsertUser(dataConnect, {
-          phoneNumber: authUser.phoneNumber,
-          email: authUser.email,
-        });
+        // Update user document in Firestore
+        await setDoc(
+          doc(db, "users", authUser.uid),
+          {
+            phoneNumber: authUser.phoneNumber,
+            email: authUser.email,
+            updatedAt: new Date(),
+            plan: "free",
+            followers: [],
+            following: [],
+          },
+          { merge: true },
+        );
       }
-      setState((prevState) => {
-        return {
-          ...prevState,
-          isLoading: false,
-          user: authUser,
-        };
-      });
+      setState((prevState) => ({
+        ...prevState,
+        isLoading: false,
+        user: authUser,
+      }));
     });
     return () => unsubscribe();
   }, []);

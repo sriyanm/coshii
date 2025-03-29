@@ -1,6 +1,5 @@
 import { queryRef, executeQuery, mutationRef, executeMutation, validateArgs } from 'firebase/data-connect';
 
-
 export const connectorConfig = {
   connector: 'default',
   service: 'coshii-data-connect',
@@ -17,6 +16,16 @@ export function upsertUser(dcOrVars, vars) {
   return executeMutation(upsertUserRef(dcOrVars, vars));
 }
 
+export function upsertProductRef(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'upsertProduct', inputVars);
+}
+
+export function upsertProduct(dcOrVars, vars) {
+  return executeMutation(upsertProductRef(dcOrVars, vars));
+}
+
 export function getCurrentUserRef(dc) {
   const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
   dcInstance._useGeneratedSdk();
@@ -26,3 +35,4 @@ export function getCurrentUserRef(dc) {
 export function getCurrentUser(dc) {
   return executeQuery(getCurrentUserRef(dc));
 }
+

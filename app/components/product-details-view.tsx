@@ -8,6 +8,8 @@ import { Button } from "./ui/button";
 import type { Product } from "../types";
 import InventoryInput from "./inventory-input";
 import Link from "next/link";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/app/lib/client/firebase";
 
 interface ProductDetailsViewProps {
   product: Product;
@@ -18,8 +20,38 @@ export function ProductDetailsView({
   product,
   onBack,
 }: ProductDetailsViewProps) {
-  const [isListed, setIsListed] = useState(true);
+  const [isListed, setIsListed] = useState(product.isListed || false);
   const [stock, setStock] = useState(product.stock || 0);
+
+  const updateProduct = async (updates: Partial<Product>) => {
+    try {
+      const productRef = doc(db, "products", product.id);
+      await updateDoc(productRef, {
+        ...updates,
+        updatedAt: new Date(),
+      });
+    } catch (error) {
+      console.error("Error updating product:", error);
+    }
+  };
+
+  const handleIsListedChange = async (newValue: boolean) => {
+    try {
+      const productRef = doc(db, "products", product.id);
+      await updateDoc(productRef, {
+        isListed: newValue,
+        updatedAt: new Date(),
+      });
+      setIsListed(newValue);
+    } catch (error) {
+      console.error("Error updating product listed status:", error);
+    }
+  };
+
+  const handleStockChange = async (newValue: number) => {
+    setStock(newValue);
+    await updateProduct({ stock: newValue });
+  };
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-white">
@@ -28,8 +60,11 @@ export function ProductDetailsView({
           <ChevronLeft className="size-6" />
         </button>
         <div className="mt-5 flex items-center justify-end gap-2">
-          <span className="text-sm">Unlisted</span>
-          <Switch checked={isListed} onCheckedChange={setIsListed} />
+          <span className="text-sm">{!isListed ? "Listed" : "Unlisted"}</span>
+          <Switch
+            checked={!isListed}
+            onCheckedChange={(newValue) => handleIsListedChange(!newValue)}
+          />
         </div>
         <Image
           src={product.image || "/ajay-product.png"}
@@ -86,7 +121,7 @@ export function ProductDetailsView({
             prefix={"Stock: "}
             inventory={stock}
             suffix={" left"}
-            onInventoryChange={setStock}
+            onInventoryChange={handleStockChange}
           />
         </div>
       </div>

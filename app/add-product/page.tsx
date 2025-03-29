@@ -6,11 +6,20 @@ import { Button } from "@/app/components/ui/button";
 import { Textarea } from "@/app/components/ui/textarea";
 import { ArrowLeft, ArrowRight, ImagePlus, Wand, Plus } from "lucide-react";
 import Link from "next/link";
-import { Dispatch, JSX, ReactNode, SetStateAction, useState } from "react";
+import {
+  Dispatch,
+  JSX,
+  ReactNode,
+  SetStateAction,
+  useState,
+  useEffect,
+} from "react";
 import { Input } from "../components/ui/input";
 import { useSearchParams } from "next/navigation";
 import { Facebook, Share2 } from "lucide-react";
 import Image from "next/image";
+import { collection, addDoc } from "firebase/firestore";
+import { db, auth } from "@/app/lib/client/firebase";
 
 enum Page {
   MEDIA = 1,
@@ -172,14 +181,21 @@ function MediaPicker() {
   );
 }
 
-function ProductDescription() {
+interface ProductDescriptionProps {
+  name: string;
+  setName: (name: string) => void;
+  description: string;
+  setDescription: (description: string) => void;
+}
+
+function ProductDescription({
+  name,
+  setName,
+  description,
+  setDescription,
+}: ProductDescriptionProps) {
   const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  const searchParams = useSearchParams();
-  const productName = searchParams.get("name") || "Item Name";
-  const productDescription =
-    searchParams.get("desc") ||
-    "Write a short description or have Coshii AI write one based on the photos you've uploaded...";
 
   const toggleTag = (tag: Tag) => {
     setSelectedTags((prev) =>
@@ -195,8 +211,10 @@ function ProductDescription() {
       <div className="mt-0 flex w-full max-w-[calc(100%-2rem)] items-center gap-4">
         {/* 'Item Name' input field */}
         <Input
-          placeholder={productName}
+          placeholder={name}
           className="border-0 bg-transparent px-0 text-xl font-bold text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
 
         {/* 'Tags' button, only show when the dropdown is closed */}
@@ -274,8 +292,10 @@ function ProductDescription() {
 
       {/* Textarea for description */}
       <Textarea
-        placeholder={productDescription}
+        placeholder={description}
         className="grow border-0 bg-transparent px-0 text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
       />
 
       {/* AI suggestion button */}
@@ -286,19 +306,38 @@ function ProductDescription() {
   );
 }
 
-function PriceAndShipping() {
-  const [price, setPrice] = useState<MoneyInputValues | null>(null);
+interface PriceAndShippingProps {
+  price: number;
+  setPrice: (price: number) => void;
+  inventory: number;
+  setInventory: (inventory: number) => void;
+}
+
+function PriceAndShipping({
+  price,
+  setPrice,
+  inventory,
+  setInventory,
+}: PriceAndShippingProps) {
   const [shipping, setShipping] = useState<MoneyInputValues | null>(null);
-  // const searchParams = useSearchParams();
-  // const stock = searchParams.get("stock") || 1;
-  const [inventory, setInventory] = useState(1);
+  const [priceInput, setPriceInput] = useState<MoneyInputValues | null>({
+    value: price.toString(),
+    formatted: price.toLocaleString(),
+    float: price,
+  });
+
+  useEffect(() => {
+    if (priceInput?.float !== undefined && priceInput.float !== null) {
+      setPrice(priceInput.float);
+    }
+  }, [priceInput?.float, setPrice]);
 
   return (
     <div className="mt-32 flex grow flex-col items-center justify-start">
       <MoneyInput
         className="text-8xl"
-        values={price}
-        onValuesChange={setPrice}
+        values={priceInput}
+        onValuesChange={setPriceInput}
       />
       <div className="flex flex-row gap-2">
         <div className="flex flex-col items-center justify-start gap-2">
@@ -396,6 +435,36 @@ export default function AddProductPage() {
   const initialPage = Number(searchParams.get("page")) || Page.MEDIA;
 
   const [page, setPage] = useState(initialPage);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState<number>(0);
+  const [inventory, setInventory] = useState<number>(1);
+
+  const handlePost = async () => {
+    try {
+      if (!auth.currentUser) {
+        console.error("No authenticated user found!");
+        return;
+      }
+
+      const productRef = collection(db, "products");
+      await addDoc(productRef, {
+        name,
+        description,
+        price,
+        inventory,
+        isListed: true,
+        createdBy: auth.currentUser.uid,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      console.log("Product created successfully");
+      setPage(Page.SUCCESS);
+    } catch (error) {
+      console.error("Error creating product:", error);
+    }
+  };
 
   let content: JSX.Element;
   let nextPage: Page | null = null;
@@ -408,12 +477,26 @@ export default function AddProductPage() {
     previousPage = Page.MEDIA;
     nextPage = Page.PRICE;
     backgroundImage = `url(/ajay-product.png)`;
-    content = <ProductDescription />;
+    content = (
+      <ProductDescription
+        name={name}
+        setName={setName}
+        description={description}
+        setDescription={setDescription}
+      />
+    );
   } else if (page == Page.PRICE) {
     previousPage = Page.DESCRIPTION;
     nextPage = Page.SUCCESS;
     backgroundImage = `url(/ajay-product.png)`;
-    content = <PriceAndShipping />;
+    content = (
+      <PriceAndShipping
+        price={price}
+        setPrice={setPrice}
+        inventory={inventory}
+        setInventory={setInventory}
+      />
+    );
   } else if (page == Page.SUCCESS) {
     previousPage = Page.PRICE;
     content = <SuccessPage />;
@@ -430,9 +513,7 @@ export default function AddProductPage() {
         previousPage={previousPage}
         nextPage={nextPage}
         setPage={setPage}
-        onPost={function () {
-          console.log("posted!");
-        }}
+        onPost={handlePost}
       />
     </Container>
   );

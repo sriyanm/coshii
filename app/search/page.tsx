@@ -2,22 +2,27 @@
 
 import type React from "react";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
+// import Image from "next/image";
 import Link from "next/link";
 import { Store, SearchIcon, PlusSquare, Shirt, Settings } from "lucide-react";
 // import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { collection, query, getDocs } from "firebase/firestore";
+import Fuse from "fuse.js";
+import { db } from "@/app/lib/client/firebase";
 
 // Types
-interface Shop {
-  id: string;
-  name: string;
-  username: string;
-  avatar: string;
-  bio?: string;
-  isFollowing?: boolean;
-}
+// interface Shop {
+//   id: string;
+//   name: string;
+//   username: string;
+//   avatar: string;
+//   isFollowing?: boolean;
+//   isFollower?: boolean;
+// }
+
+// display all the shops based on search query real time
 
 interface NavigationItem {
   name: string;
@@ -26,43 +31,80 @@ interface NavigationItem {
 }
 
 // Sample data
-const followingShops: Shop[] = [
-  {
-    id: "1",
-    name: "Elizabeth's Shop",
-    username: "@elizabee2024",
-    avatar: "/placeholder.svg",
-    isFollowing: true,
-  },
-  {
-    id: "2",
-    name: "Melissa Ceramics",
-    username: "@melissacormicceramics",
-    avatar: "/placeholder.svg",
-    isFollowing: true,
-  },
-  {
-    id: "3",
-    name: "PopShoes",
-    username: "@popshoes",
-    avatar: "/placeholder.svg",
-    isFollowing: true,
-  },
-  {
-    id: "4",
-    name: "Mark's Handrolls",
-    username: "@handrolls",
-    avatar: "/placeholder.svg",
-    isFollowing: true,
-  },
-  {
-    id: "5",
-    name: "millibooth",
-    username: "@millibooth",
-    avatar: "/placeholder.svg",
-    isFollowing: true,
-  },
-];
+// const shops: Shop[] = [
+//   {
+//     id: "1",
+//     name: "Elizabeth's Shop",
+//     username: "@elizabee2024",
+//     avatar: "/placeholder.svg",
+//     isFollowing: true,
+//     isFollower: true,
+//   },
+//   {
+//     id: "2",
+//     name: "Melissa Ceramics",
+//     username: "@melissacormicceramics",
+//     avatar: "/placeholder.svg",
+//     isFollowing: true,
+//     isFollower: true,
+//   },
+//   {
+//     id: "3",
+//     name: "PopShoes",
+//     username: "@popshoes",
+//     avatar: "/placeholder.svg",
+//     isFollowing: true,
+//     isFollower: true,
+//   },
+//   {
+//     id: "4",
+//     name: "Mark's Handrolls",
+//     username: "@handrolls",
+//     avatar: "/placeholder.svg",
+//     isFollowing: true,
+//     isFollower: false,
+//   },
+//   {
+//     id: "5",
+//     name: "millibooth",
+//     username: "@millibooth",
+//     avatar: "/placeholder.svg",
+//     isFollowing: true,
+//     isFollower: false,
+//   },
+//   {
+//     id: "6",
+//     name: "sriyan",
+//     username: "@sriyan",
+//     avatar: "/placeholder.svg",
+//     isFollowing: false,
+//     isFollower: false,
+//   },
+//   {
+//     id: "7",
+//     name: "ajay",
+//     username: "@ajay",
+//     avatar: "/placeholder.svg",
+//     isFollowing: false,
+//     isFollower: false,
+//   },
+//   {
+//     id: "8",
+//     name: "srikar",
+//     username: "@srikar",
+//     avatar: "/placeholder.svg",
+//     isFollowing: false,
+//     isFollower: false,
+//   },
+//   {
+//     id: "9",
+//     name: "priyanshu",
+//     username: "@priyanshu",
+//     avatar: "/placeholder.svg",
+//     isFollowing: false,
+//     isFollower: false,
+//   },
+// ];
 
 const navigation: NavigationItem[] = [
   { name: "Shop", icon: Store, href: "/shop" },
@@ -74,26 +116,96 @@ const navigation: NavigationItem[] = [
 
 type View = "search" | "profile";
 
+// Update the UserSearchResult type to include id and all needed fields
+type UserSearchResult = {
+  id: string;
+  email: string;
+  shopName: string | null;
+  // You can add other fields as needed
+};
+
 export default function SearchPage() {
   const [currentView, setCurrentView] = useState<View>("search");
-  const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(
+    null,
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [currentTab] = useState("Search");
+  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleShopClick = (shop: Shop) => {
-    setSelectedShop(shop);
+  // Add this effect to handle debounced search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      handleSearch(searchQuery);
+    }, 300); // Wait 300ms after user stops typing before searching
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  // Update to handle clicking on a search result
+  const handleUserClick = (user: UserSearchResult) => {
+    setSelectedUser(user);
     setCurrentView("profile");
   };
 
-  // const handleBack = () => {
-  //   setCurrentView("search");
-  //   setSelectedShop(null);
-  // };
+  const handleBack = () => {
+    setCurrentView("search");
+    setSelectedUser(null);
+  };
 
-  // const toggleFollow = (shop: Shop) => {
-  //   // In a real app, this would make an API call
-  //   console.log(`${shop.isFollowing ? "Unfollowed" : "Followed"} ${shop.name}`);
-  // };
+  const handleSearch = async (searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const usersRef = collection(db, "users");
+
+      // Use the search term as is, without converting to lowercase
+      const searchTerm = searchQuery;
+
+      console.log("Searching for:", searchTerm);
+
+      // Try a more permissive query first
+      const q = query(usersRef);
+
+      const querySnapshot = await getDocs(q);
+      console.log("Total docs found:", querySnapshot.size);
+
+      const users: UserSearchResult[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        console.log("Document data:", data);
+
+        // Check if shopName exists and contains search term (case insensitive)
+        if (data.shopName) {
+          users.push({
+            id: doc.id,
+            email: data.email || "",
+            shopName: data.shopName || "",
+          });
+        }
+      });
+
+      const fuse = new Fuse(users, {
+        keys: ["shopName", "email"],
+        threshold: 0.3, // Adjust for strictness
+      });
+
+      const results = fuse.search(searchQuery).map((result) => result.item);
+
+      console.log("Filtered results:", results.length);
+      setSearchResults(results);
+    } catch (error) {
+      console.error("Error searching users:", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const renderSearchView = () => (
     <div className="space-y-6">
@@ -108,37 +220,55 @@ export default function SearchPage() {
         />
       </div>
 
-      <div>
-        <h2 className="mb-4 text-xl font-bold">Following</h2>
-        <div className="space-y-4">
-          {followingShops.map((shop) => (
-            <button
-              key={shop.id}
-              className="flex w-full items-center gap-3 text-left"
-              onClick={() => handleShopClick(shop)}
-            >
-              <Image
-                src={shop.avatar || "/placeholder.svg"}
-                alt={shop.name}
-                width={48}
-                height={48}
-                className="rounded-full"
-              />
-              <div>
-                <h3 className="font-medium">{shop.name}</h3>
-                <p className="text-sm text-gray-500">{shop.username}</p>
-              </div>
-            </button>
-          ))}
+      {isSearching ? (
+        <div className="flex justify-center p-4">
+          <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
         </div>
-      </div>
+      ) : (
+        <div className="divide-y">
+          {searchResults.map((user) => (
+            <div
+              key={user.id}
+              className="cursor-pointer p-4 hover:bg-gray-50"
+              onClick={() => handleUserClick(user)}
+            >
+              <div className="font-medium">
+                {user.shopName || "No shop name"}
+              </div>
+              <div className="text-sm text-gray-500">{user.email}</div>
+            </div>
+          ))}
+          {searchResults.length === 0 && searchQuery && (
+            <div className="p-4 text-center text-gray-500">
+              No users found matching your search
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
   const renderProfileView = () => {
-    if (!selectedShop) return null;
+    if (!selectedUser) return null;
 
-    return <div className="space-y-6">{selectedShop.name + " here!"}</div>;
+    return (
+      <div className="space-y-6">
+        <button
+          onClick={handleBack}
+          className="mb-4 flex items-center text-sm font-medium text-gray-600"
+        >
+          ← Back to search
+        </button>
+
+        <div className="rounded-lg bg-white p-6 shadow">
+          <h2 className="mb-2 text-xl font-bold">
+            {selectedUser.shopName || "Shop"}
+          </h2>
+          <p className="text-gray-600">{selectedUser.email}</p>
+          {/* Add more user details here as needed */}
+        </div>
+      </div>
+    );
   };
 
   return (

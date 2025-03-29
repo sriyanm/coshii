@@ -6,3 +6,18 @@ type User
 
   createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
 }
+
+type Product
+  @table(
+    name: "Products"
+    singular: "product"
+    plural: "products"
+    key: ["id"]
+  ) {
+  id: String! @default(expr: "uuidV4()")
+  userId: String! @col(name: "user_id")
+  name: String!
+  description: String
+  price: Float!
+  inventory: Int!
+}

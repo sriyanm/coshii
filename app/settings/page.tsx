@@ -19,7 +19,10 @@ import {
   EmbeddedCheckoutProvider,
   EmbeddedCheckout,
 } from "@stripe/react-stripe-js";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { db, auth } from "@/app/lib/client/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
 
 // const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 const stripePromise = loadStripe(
@@ -43,29 +46,66 @@ type View =
   | "editEmail"
   | "editShopName";
 
-// This would normally come from your auth/user context
-// TODO: this is all hardcoded
-const userProfile = {
-  name: "Ajay Gokhale",
-  phone: "2487035531",
-  email: "ajaygokhale1@gmail.com",
-  shopName: "GOKHS STUDIO",
-  plan: "Paid",
-  subscriptionId: "sub_1R1YZCE4sAURr3tnXkmv4yQl", // Need so we can render cancel subscription button
-};
+interface UserProfile {
+  name?: string;
+  phoneNumber?: string;
+  email: string;
+  shopName?: string;
+  plan: "free" | "paid";
+  updatedAt?: Date;
+  subscriptionId?: string;
+}
 
 export default function SettingsPage() {
   const [currentTab] = useState("Settings");
   const [currentView, setCurrentView] = useState<View>("main");
+  const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    email: "",
+    plan: "free",
+  });
+  const [isLoading, setIsLoading] = useState(true);
   const [binarySetting, setBinarySetting] = useState(false);
   const [choiceOption, setChoiceOption] = useState("Option 1");
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      if (user) {
+        // Fetch user profile from Firestore
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setUserProfile(userDoc.data() as UserProfile);
+        }
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const updateUserProfile = async (updates: Partial<UserProfile>) => {
+    if (!user) return;
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        ...updates,
+        updatedAt: new Date(),
+      });
+      setUserProfile((prev) => ({ ...prev, ...updates }));
+      setCurrentView("profile"); // Go back to profile view after update
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
 
   const renderMainView = () => (
     <div className="space-y-4">
       <h1 className="mx-3 text-2xl font-bold">Settings</h1>
 
       {/* Plan Card */}
-      {userProfile.plan === "Free" && (
+      {userProfile.plan === "free" && (
         <div className="mx-3 rounded-md bg-black p-6 text-white">
           <p className="mb-2">Your Plan</p>
           <div className="mb-4 flex items-center gap-2">
@@ -149,7 +189,7 @@ export default function SettingsPage() {
           <div className="flex w-full flex-col">
             <span className="text-left text-sm font-bold">Phone Number</span>
             <span className="text-left text-base text-gray-900">
-              {userProfile.phone}
+              {userProfile.phoneNumber}
             </span>
           </div>
 
@@ -323,7 +363,7 @@ export default function SettingsPage() {
 
         <div className="mx-3 space-y-4">
           <div
-            className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "Free" ? "relative border-8 border-black" : ""}`}
+            className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "free" ? "relative border-8 border-black" : ""}`}
           >
             <h3 className="mb-2 text-lg font-bold">FREE PLAN</h3>
             <ul className="space-y-1">
@@ -331,7 +371,7 @@ export default function SettingsPage() {
               <li>- interact with other sellers</li>
               <li>-</li>
             </ul>
-            {userProfile.plan === "Free" && (
+            {userProfile.plan === "free" && (
               <div className="absolute right-6 top-6">
                 <Check className="size-16 text-[#C6A052]" />
               </div>
@@ -339,7 +379,7 @@ export default function SettingsPage() {
           </div>
 
           <button
-            className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "Paid" ? "relative border-8 border-black" : ""}`}
+            className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "paid" ? "relative border-8 border-black" : ""}`}
             onClick={handleCheckoutClick} // On click, show the modal
           >
             <h3 className="mb-2 text-lg font-bold">
@@ -350,20 +390,20 @@ export default function SettingsPage() {
               <li>- enable full checkout experience for customers</li>
               <li>- keep track of sold inventory from backroom</li>
             </ul>
-            {userProfile.plan === "Paid" && (
+            {userProfile.plan === "paid" && (
               <div className="absolute right-6 top-6">
                 <Check className="size-16 text-[#C6A052]" />
               </div>
             )}
           </button>
 
-          {userProfile.plan === "Paid" && (
+          {userProfile.plan === "paid" && (
             <div className="mt-8">
               <SellerOnboardingButton />
             </div>
           )}
 
-          {userProfile.plan === "Paid" && (
+          {userProfile.plan === "paid" && (
             <div>
               <button
                 onClick={handleCancelSubscription}
@@ -407,42 +447,56 @@ export default function SettingsPage() {
 
   const renderEditView = (field: string, value: string) => (
     <div className="space-y-4">
-      <div className="mx-3">
-        <h1 className="text-2xl font-bold">Settings</h1>
-      </div>
       <div className="mx-3 flex items-center gap-2">
         <button onClick={() => setCurrentView("profile")} className="-ml-2 p-2">
           <ChevronLeft className="size-6" />
         </button>
-        <h1 className="text-xl font-bold">{field}</h1>
+        <h1 className="text-xl font-bold">Edit {field}</h1>
       </div>
-
-      <div className="mx-3 rounded-lg bg-gray-100 p-4">
+      <div className="mx-3">
         <input
-          type="text"
+          type={field === "email" ? "email" : "text"}
           defaultValue={value}
-          className="w-full bg-transparent text-lg"
+          className="w-full rounded-lg border p-4 text-base"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              const updates = {
+                [field.toLowerCase()]: e.currentTarget.value,
+              };
+              updateUserProfile(updates);
+            }
+          }}
         />
       </div>
     </div>
   );
 
   const renderContent = () => {
+    if (isLoading) {
+      return <div>Loading...</div>;
+    }
+
+    if (!user) {
+      return <div>Please sign in to view settings</div>;
+    }
+
     switch (currentView) {
+      case "main":
+        return renderMainView();
       case "profile":
         return renderProfileView();
       case "subscription":
         return renderSubscriptionView();
       case "editName":
-        return renderEditView("Name", userProfile.name);
+        return renderEditView("Name", userProfile.name || "");
       case "editPhone":
-        return renderEditView("Phone Number", userProfile.phone);
+        return renderEditView("Phone", userProfile.phoneNumber || "");
       case "editEmail":
         return renderEditView("Email", userProfile.email);
       case "editShopName":
-        return renderEditView("Shop Name", userProfile.shopName);
+        return renderEditView("Shop Name", userProfile.shopName || "");
       default:
-        return renderMainView();
+        return null;
     }
   };
 

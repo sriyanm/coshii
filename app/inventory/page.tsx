@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Store, Search, PlusSquare, Shirt, Settings } from "lucide-react";
 // import { CoatHanger } from '@lucide/lab';
 import { ProductCard } from "../components/product-card";
@@ -9,6 +9,9 @@ import { ProductDetailsView } from "../components/product-details-view";
 import { OrderDetailsView } from "../components/order-details-view";
 import type { Product, Order, NavigationItem } from "../types";
 import Link from "next/link";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/app/lib/client/firebase";
+import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 
 const navigation: NavigationItem[] = [
   { name: "Shop", icon: Store, href: "/shop" },
@@ -18,64 +21,61 @@ const navigation: NavigationItem[] = [
   { name: "Settings", icon: Settings, href: "/settings" },
 ];
 
-// Sample data
-const products: Product[] = [
-  {
-    id: "1",
-    name: "Charm Necklace",
-    price: 31,
-    images: ["/placeholder.svg"],
-    description:
-      "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
-    stock: 4,
-    isListed: true,
-    tags: [],
-    shopName: "",
-    sellerId: "",
-  },
-  {
-    id: "2",
-    name: "Vase Necklace",
-    price: 18,
-    images: ["/placeholder.svg"],
-    description:
-      "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
-    stock: 4,
-    isListed: true,
-    tags: [],
-    shopName: "",
-    sellerId: "",
-  },
-  {
-    id: "3",
-    name: "Custom Candle",
-    price: 60,
-    images: ["/placeholder.svg"],
-    description:
-      "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
-    stock: 4,
-    isListed: false,
-    tags: [],
-    shopName: "",
-    sellerId: "",
-  },
-  {
-    id: "4",
-    name: "Ashtrays",
-    price: 79,
-    images: ["/placeholder.svg"],
-    description:
-      "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
-    stock: 4,
-    isListed: false,
-    tags: [],
-    shopName: "",
-    sellerId: "",
-  },
-];
-
-//TODO: update this either fetch from backend or use context
-const isPremium = true;
+// // TODO: this is all sample data, check /types/index.ts if there are any type issues
+// const products: Product[] = [
+//   {
+//     id: "1",
+//     name: "Charm Necklace",
+//     price: 31,
+//     images: ["/placeholder.svg"],
+//     description:
+//       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
+//     stock: 4,
+//     isListed: true,
+//     tags: [],
+//     shopName: "",
+//     sellerId: "",
+//   },
+//   {
+//     id: "2",
+//     name: "Vase Necklace",
+//     price: 18,
+//     images: ["/placeholder.svg"],
+//     description:
+//       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
+//     stock: 4,
+//     isListed: true,
+//     tags: [],
+//     shopName: "",
+//     sellerId: "",
+//   },
+//   {
+//     id: "3",
+//     name: "Custom Candle",
+//     price: 60,
+//     images: ["/placeholder.svg"],
+//     description:
+//       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
+//     stock: 4,
+//     isListed: false,
+//     tags: [],
+//     shopName: "",
+//     sellerId: "",
+//   },
+//   {
+//     id: "4",
+//     name: "Ashtrays",
+//     price: 79,
+//     images: ["/placeholder.svg"],
+//     description:
+//       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
+//     stock: 4,
+//     isListed: false,
+//     tags: [],
+//     shopName: "",
+//     sellerId: "",
+//   },
+// ];
 
 const orders: Order[] = [
   {
@@ -139,17 +139,83 @@ const orders: Order[] = [
 
 type View = "backrooms" | "transactions" | "productDetails" | "orderDetails";
 
-export default function Home() {
+//TODO: fetch from account in backend (or local account if cached)
+const userPlan = "paid";
+
+export default function InventoryPage() {
   const [view, setView] = useState<View>("backrooms");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [currentTab] = useState("Backrooms");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const auth = getAuth();
 
   const listedProducts = products.filter((p) => p.isListed);
   const unlistedProducts = products.filter((p) => !p.isListed);
   const activeOrders = orders.filter((o) => o.status === "active");
   const archivedOrders = orders.filter((o) => o.status === "archived");
-  const purchases = orders.filter((o) => o.status === "completed");
+
+  // Handle auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
+
+  // Fetch products when user auth state changes
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!user) {
+        setProducts([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const productsRef = collection(db, "products");
+        const q = query(productsRef, where("createdBy", "==", user.uid));
+
+        const querySnapshot = await getDocs(q);
+        const fetchedProducts: Product[] = [];
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          fetchedProducts.push({
+            id: doc.id,
+            name: data.name || "",
+            price: data.price || 0,
+            images: data.images || ["/placeholder.svg"],
+            description: data.description || "",
+            stock: data.inventory || 0,
+            isListed: data.isListed ?? true,
+            tags: data.tags || [],
+            shopName: data.shopName || "",
+            sellerId: data.sellerId || "",
+          });
+        });
+
+        // Sort products by creation date if available, or name as fallback
+        fetchedProducts.sort((a, b) => {
+          if (a.name && b.name) {
+            return a.name.localeCompare(b.name);
+          }
+          return 0;
+        });
+
+        setProducts(fetchedProducts);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [user]);
 
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
@@ -166,6 +232,22 @@ export default function Home() {
     setSelectedProduct(null);
     setSelectedOrder(null);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-gray-500">Please sign in to view your inventory</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-white">
@@ -186,8 +268,7 @@ export default function Home() {
               >
                 Backrooms
               </button>
-
-              {isPremium && (
+              {userPlan === "paid" && (
                 <button
                   className={`text-xl ${view === "transactions" ? "font-bold" : "text-muted-foreground"}`}
                   onClick={() => setView("transactions")}
@@ -247,20 +328,6 @@ export default function Home() {
                   <h2 className="mb-2 text-lg font-semibold">Archive</h2>
                   <div className="divide-y rounded-lg border">
                     {archivedOrders.map((order) => (
-                      <div
-                        key={order.id}
-                        onClick={() => handleOrderClick(order)}
-                      >
-                        <OrderCard order={order} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h2 className="mb-2 text-lg font-semibold">Your Purchases</h2>
-                  <div className="divide-y rounded-lg border">
-                    {purchases.map((order) => (
                       <div
                         key={order.id}
                         onClick={() => handleOrderClick(order)}
