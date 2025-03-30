@@ -1,6 +1,6 @@
 "use client";
 
-import Coshii from "@/app/components/icons/coshii.svg";
+// import Coshii from "@/app/components/icons/coshii.svg";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import {
@@ -22,10 +22,15 @@ import {
 } from "../hooks/firebase";
 import { db, auth } from "@/app/lib/client/firebase";
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
+import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
+// import { set } from "zod";
 
 enum Page {
   INTRO = 1,
   DETAILS,
+  MOREDETAILS,
+  SIGNIN,
+  PHONE,
   OTP,
   FINISH,
 }
@@ -38,6 +43,8 @@ type ConfirmationResultMutationParams = {
 export default function OnboardingPage() {
   const [page, setPage] = useState(Page.INTRO);
   const [shopName, setShopName] = useState("");
+  const [shopHandle, setShopHandle] = useState("");
+  const [shopBio, setShopBio] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
   const signInMutation = useSignInWithPhoneNumber("recaptcha-element");
@@ -52,6 +59,24 @@ export default function OnboardingPage() {
       phoneNumber,
       setPhoneNumber,
       signInMutation,
+      shopHandle,
+      setShopHandle,
+    );
+  } else if (page == Page.MOREDETAILS) {
+    return OnboardingMoreDetailsPage(
+      setPage,
+      signInMutation,
+      shopBio,
+      setShopBio,
+    );
+  } else if (page == Page.SIGNIN) {
+    return SignInPage(setPage, signInMutation);
+  } else if (page == Page.PHONE) {
+    return PhoneNumberPage(
+      setPage,
+      signInMutation,
+      phoneNumber,
+      setPhoneNumber,
     );
   } else if (page == Page.OTP) {
     return OnboardingPhoneOtpPage(
@@ -61,9 +86,10 @@ export default function OnboardingPage() {
       signInMutation,
       confirmationResultMutation,
       shopName,
+      phoneNumber,
     );
   } else if (page == Page.FINISH) {
-    return OnboardingFinishPage();
+    return OnboardingFinishPage(shopName);
   } else {
     throw Error("unknown page");
   }
@@ -71,16 +97,26 @@ export default function OnboardingPage() {
 
 function IntroPage(setPage: Dispatch<SetStateAction<Page>>) {
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col items-center bg-gradient-to-b from-red-500 to-red-200 p-8">
-      <Coshii className="m-auto fill-white" width={220} height={220} />
+    <div className="mx-auto flex min-h-screen max-w-md flex-col items-center bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-8">
+      <div className="flex-1"></div>
+
+      <div className="flex flex-col items-center text-center">
+        <h1 className="mb-2 text-xl font-bold text-white">Welcome to</h1>
+        <div className="mb-4 text-8xl font-bold text-white">Coshii</div>
+        <p className="text-xl font-medium text-white">
+          Sell Online, Sell Together
+        </p>
+      </div>
+
+      <div className="flex-1"></div>
       <Button
-        className="px-8 py-6 text-lg"
-        variant="onboarding"
+        className="px-36 py-6 text-lg"
+        variant="onboardingFirst"
         onClick={function () {
           setPage(Page.DETAILS);
         }}
       >
-        Continue
+        Get Started
       </Button>
     </div>
   );
@@ -93,6 +129,235 @@ function OnboardingDetailsPage(
   phoneNumber: string,
   setPhoneNumber: Dispatch<SetStateAction<string>>,
   signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
+  shopHandle: string,
+  setShopHandle: Dispatch<SetStateAction<string>>,
+) {
+  const getButtonText = () => {
+    if (signInMutation.isPending) {
+      return "Sending SMS...";
+    } else if (signInMutation.isError) {
+      return "Error! Try again";
+    } else {
+      return "Continue";
+    }
+  };
+
+  const handleContinue = async () => {
+    try {
+      // Update the phone number in users collection first
+      if (auth.currentUser) {
+        const userDocRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userDocRef, {
+          // TODO: update shop name and shop handle, check if handle exists
+        });
+      }
+      // Development bypass for SMS verification
+      // console.log("SMS Handler Called with phone number:", phoneNumber);
+      setPage(Page.MOREDETAILS);
+
+      // Comment out the actual SMS verification for now
+      /*
+      signInMutation.mutate(phoneNumber, {
+        onSuccess: () => setPage(Page.OTP)
+      });
+      */
+    } catch (error) {
+      console.error("Error updating user info:", error);
+    }
+  };
+
+  return (
+    <div className="mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+      <div>
+        <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
+          Let&#39;s get some quick info!
+        </h1>
+      </div>
+      {/* <div className="mt-4 rounded-full border border-gray-500 p-8">
+        <Coshii className="fill-gray-500" width={175} height={175} />
+      </div> */}
+      <div className="mb-5 mt-4 grid w-full max-w-sm items-center gap-1.5">
+        <Label htmlFor="shop-name" className="text-md text-left">
+          What will you call your shop? You can always change it later...
+        </Label>
+        <Input
+          id="shop-name"
+          placeholder="Srikar Studios"
+          onChange={function (e) {
+            setShopName(e.currentTarget.value);
+          }}
+          value={shopName}
+          className="h-12 w-96 p-4 text-xl"
+        />
+      </div>
+      <div className="mt-4 grid w-full max-w-sm items-center gap-1.5">
+        <Label htmlFor="shop-handle" className="text-md text-left">
+          Coshii is social. Pick a handle for your shop. This is like a handle
+          on social media that others sellers can use to find and follow you.
+        </Label>
+        {/* <PhoneInput
+          id="phone-number"
+          country="US"
+          international={false}
+          placeholder="(656) 555-7536"
+          className="w-full"
+          onChange={function (phoneNumber) {
+            setPhoneNumber(phoneNumber || "");
+          }}
+          value={phoneNumber}
+          disabled={signInMutation.isPending}
+        /> */}
+        <Input
+          id="shop-name"
+          placeholder="@Srikar"
+          onChange={(e) => {
+            setShopHandle(e.currentTarget.value.replace(/^@/, "")); // Remove leading @ if present
+          }}
+          value={`@${shopHandle}`}
+          className="h-12 w-96 p-4 text-xl"
+        />
+      </div>
+      <Button
+        id="recaptcha-element"
+        className="mt-auto px-36 py-6 text-lg"
+        variant="onboarding"
+        onClick={handleContinue}
+        disabled={
+          signInMutation.isPending || !shopName || !shopHandle
+          // TODO: or if handle already exists
+        }
+      >
+        {getButtonText()}
+      </Button>
+    </div>
+  );
+}
+
+function OnboardingMoreDetailsPage(
+  setPage: Dispatch<SetStateAction<Page>>,
+  signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
+  shopBio: string,
+  setShopBio: Dispatch<SetStateAction<string>>,
+) {
+  const getButtonText = () => {
+    if (signInMutation.isPending) {
+      return "Sending SMS...";
+    } else if (signInMutation.isError) {
+      return "Error! Try again";
+    } else {
+      return "Continue";
+    }
+  };
+
+  const handleContinue = async () => {
+    try {
+      // Update the phone number in users collection first
+      if (auth.currentUser) {
+        const userDocRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userDocRef, {
+          // TODO: update shop bio
+        });
+      }
+      // Development bypass for SMS verification
+      // console.log("SMS Handler Called with phone number:", phoneNumber);
+      // window.location.href = "/signin";
+      setPage(Page.SIGNIN);
+      // Comment out the actual SMS verification for now
+      /*
+      signInMutation.mutate(phoneNumber, {
+        onSuccess: () => setPage(Page.OTP)
+      });
+      */
+    } catch (error) {
+      console.error("Error updating user info:", error);
+    }
+  };
+
+  return (
+    <div className="mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+      <div>
+        <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
+          Let&#39;s get some quick info!
+        </h1>
+      </div>
+      {/* <div className="mt-4 rounded-full border border-gray-500 p-8">
+        <Coshii className="fill-gray-500" width={175} height={175} />
+      </div> */}
+      <div className="mb-5 mt-4 grid w-full max-w-sm items-center gap-1.5">
+        <Label htmlFor="shop-bio" className="text-md mb-6 text-left">
+          Write a short bio to describe what you sell, your vibe, or anything
+          else you want to into your shop to people.
+        </Label>
+        <textarea
+          id="bio"
+          placeholder="Handmade ceramics from my studio in Los Angeles. DM me on Insta with any questions!"
+          onChange={(e) => setShopBio(e.currentTarget.value)}
+          value={shopBio}
+          className="text-md h-48 w-96 resize-none rounded-lg border p-4"
+        />
+      </div>
+      <Button
+        id="recaptcha-element"
+        className="mt-auto px-36 py-6 text-lg"
+        variant="onboarding"
+        onClick={handleContinue}
+        disabled={signInMutation.isPending || !shopBio}
+      >
+        {getButtonText()}
+      </Button>
+    </div>
+  );
+}
+
+function SignInPage(
+  setPage: Dispatch<SetStateAction<Page>>,
+  signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
+) {
+  const getButtonText = () => {
+    if (signInMutation.isPending) {
+      return "Sending SMS...";
+    } else if (signInMutation.isError) {
+      return "Error! Try again";
+    } else {
+      return "Continue";
+    }
+  };
+
+  const handleContinue = () => {
+    setPage(Page.PHONE);
+  };
+  return (
+    <>
+      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+        <div>
+          <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
+            Let&#39;s set up your account!
+          </h1>
+        </div>
+        {/* TODO: google sign in here */}
+        <MagicLinkSigninForm />
+        <Button
+          id="recaptcha-element"
+          className="mt-auto px-36 py-6 text-lg"
+          variant="onboarding"
+          onClick={handleContinue}
+          disabled={
+            signInMutation.isPending
+            // TOOD: signin not complete
+          }
+        >
+          {getButtonText()}
+        </Button>
+      </div>
+    </>
+  );
+}
+
+function PhoneNumberPage(
+  setPage: Dispatch<SetStateAction<Page>>,
+  signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
+  phoneNumber: string,
+  setPhoneNumber: Dispatch<SetStateAction<string>>,
 ) {
   const getButtonText = () => {
     if (signInMutation.isPending) {
@@ -114,9 +379,8 @@ function OnboardingDetailsPage(
         });
       }
       // Development bypass for SMS verification
-      console.log("SMS Handler Called with phone number:", phoneNumber);
+      // console.log("SMS Handler Called with phone number:", phoneNumber);
       setPage(Page.OTP);
-
       // Comment out the actual SMS verification for now
       /*
       signInMutation.mutate(phoneNumber, {
@@ -127,43 +391,26 @@ function OnboardingDetailsPage(
       console.error("Error updating phone number:", error);
     }
   };
-
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
       <div>
-        <h1 className="mt-4 text-center text-2xl text-black">
-          Let&#39;s get some quick info!
+        <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
+          Let&#39;s set up your account!
         </h1>
-        <h2 className="text-center text-gray-400">
-          You can edit this later in settings
-        </h2>
       </div>
-      <div className="mt-4 rounded-full border border-gray-500 p-8">
+      {/* <div className="mt-4 rounded-full border border-gray-500 p-8">
         <Coshii className="fill-gray-500" width={175} height={175} />
-      </div>
-      <div className="mt-4 grid w-full max-w-sm items-center gap-1.5">
-        <Label htmlFor="shop-name" className="text-center text-lg">
-          What will you call your shop?
-        </Label>
-        <Input
-          id="shop-name"
-          placeholder="Hannah's Shop"
-          onChange={function (e) {
-            setShopName(e.currentTarget.value);
-          }}
-          value={shopName}
-        />
-      </div>
-      <div className="mt-4 grid w-full max-w-sm items-center gap-1.5">
-        <Label htmlFor="phone-number" className="text-center text-lg">
-          What is your phone number?
+      </div> */}
+      <div className="mb-5 mt-4 grid w-full max-w-sm items-center gap-1.5">
+        <Label htmlFor="shop-name" className="text-md text-left">
+          To verify its you, what is your phone number?
         </Label>
         <PhoneInput
           id="phone-number"
           country="US"
           international={false}
           placeholder="(656) 555-7536"
-          className="w-full"
+          className="h-12 w-96 p-4 text-xl"
           onChange={function (phoneNumber) {
             setPhoneNumber(phoneNumber || "");
           }}
@@ -173,12 +420,11 @@ function OnboardingDetailsPage(
       </div>
       <Button
         id="recaptcha-element"
-        className="mt-auto px-8 py-6 text-lg"
+        className="mt-auto px-36 py-6 text-lg"
         variant="onboarding"
         onClick={handleContinue}
         disabled={
           signInMutation.isPending ||
-          !shopName ||
           !phoneNumber ||
           !isPossiblePhoneNumber(phoneNumber)
         }
@@ -201,6 +447,7 @@ function OnboardingPhoneOtpPage(
     void
   >,
   shopName: string,
+  phoneNumber: string,
 ) {
   const getButtonText = () => {
     if (confirmationResultMutation.isPending) {
@@ -245,7 +492,7 @@ function OnboardingPhoneOtpPage(
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-between p-8">
       <div className="flex flex-col items-center justify-between">
         <h1 className="mt-4 text-center text-2xl text-black">
-          We&#39;ve sent a text message to TODO
+          We&#39;ve sent a text message to {phoneNumber}
         </h1>
         <h2 className="mt-4 text-center text-gray-400">
           What is your verification code?
@@ -310,15 +557,15 @@ function OnboardingPhoneOtpPage(
   );
 }
 
-function OnboardingFinishPage() {
+function OnboardingFinishPage(shopName: string) {
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-between bg-gradient-to-b from-red-500 to-red-200 p-8">
       <div className="flex flex-col items-center justify-between">
-        <h1 className="mt-8 text-center text-4xl text-white">
-          Coshii makes it easy to sell your homemade pieces.
+        <h1 className="mt-8 text-left text-4xl text-white">
+          Selling on Coshii is easy
         </h1>
-        <h1 className="mt-8 text-center text-4xl text-white">
-          Would you like to add one now?
+        <h1 className="mt-8 text-left text-4xl text-white">
+          Would you like to add a new item now?
         </h1>
       </div>
       <div className="flex flex-col items-center justify-between">
@@ -326,7 +573,7 @@ function OnboardingFinishPage() {
           <Link href="/add-product">Add a piece</Link>
         </Button>
         <Button className="px-8 py-6 text-lg" variant="onboardingSecondary">
-          <Link href="/profile">Not now</Link>
+          <Link href={`/${shopName}`}>Take me to my shop</Link>
         </Button>
       </div>
     </div>

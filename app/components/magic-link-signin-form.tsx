@@ -23,9 +23,8 @@ export function MagicLinkSigninForm() {
   return (
     <div className="mx-auto max-w-md space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">Sign in</h1>
         <p className="text-muted-foreground">
-          Enter your email below to receive a magic link to sign in.
+          Don&apos;t have the above? Sign in with your email.
         </p>
       </div>
       <form className="space-y-4" onSubmit={handleSubmit}>
@@ -74,7 +73,7 @@ export function MagicLinkSigninForm() {
           prefetch={false}
         >
           Terms of Service
-        </Link>
+        </Link>{" "}
         and{" "}
         <Link
           href="#"
