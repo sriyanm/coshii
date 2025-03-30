@@ -49,6 +49,31 @@ export default function CheckoutPage() {
 
       const { url } = await response.json();
       window.location.href = url;
+
+      // Fetch the send-email API after the product creation
+      const emailResponse = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: "sriyan@umich.edu", // use the actual email of the user or admin
+          subject: "Congrats! You got a sale on Coshii.",
+          text: `Hi there},\n\nYou just sold an item on Coshii. Log into your Coshii account to see the details of your transaction. Make sure to get our items delivered to your buyer as soon as possible!\n\nThe Coshii Team`,
+          html: `
+            <p>Hi there},</p> 
+            <p>You just sold an item on Coshii. Log into your Coshii account to see the details of your transaction. Make sure to get our items delivered to your buyer as soon as possible!</p>
+            <p>The Coshii Team</p>
+          `, // add name in replace of "there" in the "Hi there" line
+        }),
+      });
+
+      if (emailResponse.ok) {
+        console.log("Confirmation email sent");
+      } else {
+        console.error("Failed to send email");
+      }
     } catch (error) {
       console.error("Error initiating checkout:", error);
       setLoading(false);
