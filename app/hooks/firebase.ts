@@ -13,6 +13,8 @@ import {
   signInWithPhoneNumber,
   signOut,
   User,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useContext } from "react";
@@ -162,6 +164,36 @@ export function usePhoneNumberConfirmationResult() {
     },
     onError: (error) => {
       console.error("failed to confirm SMS sign-in code: ", error.message);
+    },
+  });
+}
+
+export function useSignInWithGoogle() {
+  const router = useRouter();
+  return useMutation({
+    mutationKey: ["signInWithGoogle"],
+    mutationFn: async () => {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const userInfo = getAdditionalUserInfo(result);
+      if (!userInfo) {
+        throw new Error("Failed to get user info");
+      }
+      return {
+        user: result.user,
+        isNewUser: userInfo.isNewUser,
+      };
+    },
+    retry: false,
+    onMutate: () => {
+      console.log("signing in with Google");
+    },
+    onSuccess: (data) => {
+      console.log("signed in with Google", data);
+      router.push("/");
+    },
+    onError: (error) => {
+      console.error("failed to sign in with Google:", error.message);
     },
   });
 }
