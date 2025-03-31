@@ -10,6 +10,7 @@ import Link from "next/link";
 // import { TimestampString } from "@firebasegen/dataconnect";
 // import { StringValidation } from "zod";
 import { Product, Shop, CartItem } from "../types/index";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 // import { CartItem } from "../components/CartItem";
 
 export default function ProfilePage() {
@@ -17,12 +18,13 @@ export default function ProfilePage() {
   const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
-  const sellerView = false; // TODO: Replace with actual seller role check (true iff the shop belongs to the currently signed in user)
-  const buyerView = true; // TODO: Replace with actual buyer role check (true iff the currently signed in user does not have any shop)
+  const [sellerView, setSellerView] = useState(false);
+  const [buyerView, setBuyerView] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]); // State to manage cart items
-  const [itemCount, setCount] = useState<number>(0);
+  const popupTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastProductRef = useRef<HTMLDivElement | null>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [itemCount, setItemCount] = useState<number>(0);
   const [shopData, setShopData] = useState<Shop>({
     //TODO: this is hardcoded
     createdAt: "",
@@ -62,7 +64,12 @@ export default function ProfilePage() {
   const handleAddToCart = (product: Product) => {
     if (sellerView) {
       setShowPopup(true);
-      setTimeout(() => setShowPopup(false), 3000); // Hide after 3 seconds
+
+      if (popupTimerRef.current) {
+        clearTimeout(popupTimerRef.current);
+      }
+
+      popupTimerRef.current = setTimeout(() => setShowPopup(false), 3000);
       return;
     }
 
@@ -88,7 +95,7 @@ export default function ProfilePage() {
       updatedCart = [...cart, newItem];
     }
 
-    setCount(itemCount + 1);
+    setItemCount(itemCount + 1);
     setCart(updatedCart);
     sessionStorage.setItem("cart", JSON.stringify(updatedCart));
     sessionStorage.setItem("sellerId", "acct_1R1Yp7E2rsuqp9lw"); //TODO: this is hardcoded
@@ -97,8 +104,10 @@ export default function ProfilePage() {
   };
 
   const fetchProducts = async (offset: number) => {
-    //TODO: this is all hardcoded
+    if (isFetching) return;
+
     setIsFetching(true);
+
     const imageSets = [
       [
         "/tempImages/bowl1.jpg",
@@ -127,50 +136,92 @@ export default function ProfilePage() {
       ],
     ];
 
-    const newProducts = Array.from({ length: 5 }, (_, i) => {
-      const images = imageSets[i % imageSets.length];
-
-      // Create the new product object
-      return {
-        id: `product_${offset + i + 1}`, // Create a unique product ID
-        images: images,
-        description: `Product ${offset + i + 1} caption. Here's more of a description of the product. You should've been clicking see more in order to see all of this.`,
+    const newProducts = [];
+    for (let i = 0; i < 5; i++) {
+      const imageSet = imageSets[i % imageSets.length];
+      newProducts.push({
+        id: `product_${offset + i + 1}`,
+        images: imageSet,
+        description: `Product ${offset + i + 1} caption. Here's more of a description of the product.`,
         shopName: "Mike's Shop",
         name: `Product ${offset + i + 1}`,
         price: (offset + i + 1) * 10 + 0.99,
-        tags: ["tag1", "tag2"], // Example tags
+        tags: ["tag1", "tag2"],
         sellerId: "acct_1R1Yp7E2rsuqp9lw",
-      };
-    });
+      });
+    }
 
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     setProducts((prevProducts) => [...prevProducts, ...newProducts]);
-
     setIsFetching(false);
   };
 
   useEffect(() => {
-    if (observerRef.current) observerRef.current.disconnect();
-
-    observerRef.current = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !isFetching) {
           fetchProducts(products.length);
         }
       },
-      { threshold: 1.0 },
+      { threshold: 0.5 },
     );
 
-    const target = document.querySelector("#load-more-trigger");
-    if (target) observerRef.current.observe(target);
+    if (lastProductRef.current) {
+      observer.observe(lastProductRef.current);
+    }
 
-    return () => observerRef.current?.disconnect();
-  }, [products, isFetching]);
+    return () => observer.disconnect();
+  }, [products.length, isFetching, fetchProducts]);
 
   useEffect(() => {
-    fetchProducts(0); // Initial data fetch
+    fetchProducts(0);
+  }, [fetchProducts]);
+
+  useEffect(() => {
+    return () => {
+      if (popupTimerRef.current) {
+        clearTimeout(popupTimerRef.current);
+      }
+    };
   }, []);
+
+  // Handle authentication and set user role
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        // Check if the current user is the owner of this shop
+        // This assumes shopData.creatorId would contain the user ID of the shop owner
+        const isShopOwner = currentUser.uid === shopData.creatorId;
+        setSellerView(isShopOwner);
+        setBuyerView(!isShopOwner);
+
+        // Optional: fetch user-specific data here
+        // For example, load their cart from session storage or database
+        const savedCart = sessionStorage.getItem("cart");
+        if (savedCart) {
+          const parsedCart = JSON.parse(savedCart);
+          setCart(parsedCart);
+          const totalItems = parsedCart.reduce(
+            (sum: number, item: CartItem) => sum + item.quantity,
+            0,
+          );
+          setItemCount(totalItems);
+        }
+      } else {
+        // Not logged in
+        setSellerView(false);
+        setBuyerView(true);
+        // Clear cart when logged out
+        setCart([]);
+        setItemCount(0);
+      }
+    });
+
+    // Cleanup subscription
+    return () => unsubscribe();
+  }, [shopData.creatorId]);
 
   return (
     <div className="flex min-h-screen flex-col items-center font-sans">
@@ -251,17 +302,18 @@ export default function ProfilePage() {
       <div className="space-y-6 pt-2">
         {products.map((product, index) => (
           <ProductPage
-            key={index}
+            key={product.id}
             media={product.images}
             caption={product.description || ""}
             productName={product.name}
             price={`\$${product.price}`}
             onAddToCart={() => handleAddToCart(product)}
-            onLike={() => console.log("Liked")} //TODO: store in backend
-            onComment={() => console.log("Commented")} //TODO: store in backend (see components/comments.tsx)
-            onShare={() => console.log("Shared")} //TODO: do something
+            onLike={() => console.log("Liked")}
+            onComment={() => console.log("Commented")}
+            onShare={() => console.log("Shared")}
             buyerView={buyerView}
             isPremium={shopData.isPremium}
+            ref={index === products.length - 1 ? lastProductRef : null}
           />
         ))}
       </div>
@@ -272,9 +324,6 @@ export default function ProfilePage() {
           <p>Sorry, you cant add your own products to your cart</p>
         </div>
       )}
-
-      {/* Intersection Observer Trigger */}
-      <div id="load-more-trigger" className="h-4 w-full"></div>
 
       {/* Conditionally render the NavigationBar */}
       {sellerView && (
