@@ -12,7 +12,7 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (user) {
-      router.push("/");
+      router.push("/shop");
     }
   }, [user, router]);
 
@@ -21,7 +21,7 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center">
+    <div className="flex h-screen flex-col items-center justify-center gap-5">
       <MagicLinkSigninForm />
       <GoogleSigninButton />
     </div>

@@ -13,6 +13,7 @@ import {
   SetStateAction,
   useState,
   useEffect,
+  useRef,
 } from "react";
 import { Input } from "../components/ui/input";
 import { useSearchParams } from "next/navigation";
@@ -20,6 +21,7 @@ import { Facebook, Share2 } from "lucide-react";
 import Image from "next/image";
 import { collection, addDoc } from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
+import { useFirebaseAuth, useProductMediaUpload } from "@/app/hooks/firebase";
 
 enum Page {
   MEDIA = 1,
@@ -170,13 +172,73 @@ function PageIndicator({ page }: { page: Page }) {
   ) : null;
 }
 
-function MediaPicker() {
+function MediaPicker({
+  handleFileUpload,
+  mediaUrls,
+  isUploading,
+}: {
+  handleFileUpload: (file: File) => Promise<string | undefined>;
+  mediaUrls: string[];
+  isUploading: boolean;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      console.log("File selected:", files[0].name);
+      try {
+        const result = await handleFileUpload(files[0]);
+        console.log("Upload result:", result);
+      } catch (error) {
+        console.error("Error in handleFileChange:", error);
+      }
+    }
+  };
+
   return (
-    <div className="mx-auto mb-auto mt-5 flex h-[500px] w-80 flex-col items-center justify-center rounded-lg bg-black/20 px-8 text-white/90 hover:bg-black/30">
-      <ImagePlus className="size-10" />
-      <p className="text-wrap text-center text-xl">
-        Add up to 60 seconds of video or photo
-      </p>
+    <div
+      className="mx-auto mb-auto mt-5 flex h-[500px] w-80 cursor-pointer flex-col items-center justify-center rounded-lg bg-black/20 px-8 text-white/90 hover:bg-black/30"
+      onClick={handleClick}
+    >
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*,video/*"
+        className="hidden"
+      />
+      {mediaUrls.length > 0 ? (
+        <div className="relative size-full">
+          {mediaUrls.map((url, index) => (
+            <Image
+              key={index}
+              src={url}
+              alt="Uploaded media"
+              fill
+              className="object-contain"
+            />
+          ))}
+        </div>
+      ) : isUploading ? (
+        <>
+          <div className="animate-pulse">
+            <ImagePlus className="size-10" />
+          </div>
+          <p className="text-wrap text-center text-xl">Uploading...</p>
+        </>
+      ) : (
+        <>
+          <ImagePlus className="size-10" />
+          <p className="text-wrap text-center text-xl">
+            Add up to 60 seconds of video or photo
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -440,6 +502,11 @@ export default function AddProductPage() {
   const [price, setPrice] = useState<number>(0);
   const [inventory, setInventory] = useState<number>(1);
 
+  const { user } = useFirebaseAuth();
+  const mediaUpload = useProductMediaUpload();
+  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
   const handlePost = async () => {
     try {
       if (!auth.currentUser) {
@@ -447,12 +514,15 @@ export default function AddProductPage() {
         return;
       }
 
+      console.log("Posting product with media URLs:", mediaUrls);
+
       const productRef = collection(db, "products");
       await addDoc(productRef, {
         name,
         description,
         price,
         inventory,
+        mediaUrls,
         isListed: true,
         createdBy: auth.currentUser.uid,
         createdAt: new Date(),
@@ -466,13 +536,56 @@ export default function AddProductPage() {
     }
   };
 
+  const handleFileUpload = async (file: File) => {
+    if (!user) {
+      console.error("User not authenticated");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // Use the hook's mutation function instead of reimplementing upload logic
+      const downloadURL = await mediaUpload.mutateAsync({
+        file: file,
+        userId: user.uid,
+      });
+
+      console.log("File available at", downloadURL);
+
+      // Add to the media URLs state
+      setMediaUrls((prev) => [...prev, downloadURL]);
+
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading file:", error);
+
+      // Log error details for debugging
+      if (error instanceof Error) {
+        console.log("Error name:", error.name);
+        console.log("Error message:", error.message);
+        console.log("Error stack:", error.stack);
+      }
+
+      alert("Upload failed. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   let content: JSX.Element;
   let nextPage: Page | null = null;
   let previousPage: Page | null = null;
   let backgroundImage: string | null = null;
   if (page == Page.MEDIA) {
     nextPage = Page.DESCRIPTION;
-    content = <MediaPicker />;
+    content = (
+      <MediaPicker
+        handleFileUpload={handleFileUpload}
+        mediaUrls={mediaUrls}
+        isUploading={isUploading}
+      />
+    );
   } else if (page == Page.DESCRIPTION) {
     previousPage = Page.MEDIA;
     nextPage = Page.PRICE;
