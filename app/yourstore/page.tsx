@@ -11,6 +11,8 @@ import Link from "next/link";
 // import { StringValidation } from "zod";
 import { Product, Shop, CartItem } from "../types/index";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/app/lib/client/firebase";
 // import { CartItem } from "../components/CartItem";
 
 export default function ProfilePage() {
@@ -103,80 +105,64 @@ export default function ProfilePage() {
     console.log("Account Id: ", "acct_1R1Yp7E2rsuqp9lw"); //TODO: this is hardcoded
   };
 
-  const fetchProducts = async (offset: number) => {
+  const fetchProducts = async () => {
     if (isFetching) return;
 
     setIsFetching(true);
 
-    const imageSets = [
-      [
-        "/tempImages/bowl1.jpg",
-        "/tempImages/bowl2.jpg",
-        "/tempImages/dawn.mp4",
-      ],
-      [
-        "/tempImages/camera1.jpg",
-        "/tempImages/camera2.jpeg",
-        "/tempImages/dawn.mp4",
-      ],
-      [
-        "/tempImages/guitar.jpg",
-        "/tempImages/guitar2.jpg",
-        "/tempImages/dawn.mp4",
-      ],
-      [
-        "/tempImages/lego2.jpg",
-        "/tempImages/lego3.jpg",
-        "/tempImages/dawn.mp4",
-      ],
-      [
-        "/tempImages/coconut.jpg",
-        "/tempImages/basket.jpeg",
-        "/tempImages/dawn.mp4",
-      ],
-    ];
+    try {
+      // Query products collection for products created by this shop's owner
+      const productsRef = collection(db, "products");
+      const q = query(
+        productsRef,
+        where("createdBy", "==", shopData.creatorId),
+      );
+      const querySnapshot = await getDocs(q);
 
-    const newProducts = [];
-    for (let i = 0; i < 5; i++) {
-      const imageSet = imageSets[i % imageSets.length];
-      newProducts.push({
-        id: `product_${offset + i + 1}`,
-        images: imageSet,
-        description: `Product ${offset + i + 1} caption. Here's more of a description of the product.`,
-        shopName: "Mike's Shop",
-        name: `Product ${offset + i + 1}`,
-        price: (offset + i + 1) * 10 + 0.99,
-        tags: ["tag1", "tag2"],
-        sellerId: "acct_1R1Yp7E2rsuqp9lw",
+      const newProducts: Product[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        newProducts.push({
+          id: doc.id,
+          name: data.name || "",
+          price: data.price || 0,
+          images: data.mediaUrls || ["/placeholder.svg"],
+          description: data.description || "",
+          stock: data.inventory || 0,
+          isListed: data.isListed ?? true,
+          tags: data.tags || [],
+          shopName: shopData.shopName,
+          sellerId: data.sellerId || "",
+        });
       });
+
+      // Sort products by creation date if available, or name as fallback
+      newProducts.sort((a, b) => {
+        if (a.name && b.name) {
+          return a.name.localeCompare(b.name);
+        }
+        return 0;
+      });
+
+      setProducts(newProducts);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setIsFetching(false);
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    setProducts((prevProducts) => [...prevProducts, ...newProducts]);
-    setIsFetching(false);
   };
 
+  // Remove the infinite scroll observer effect
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isFetching) {
-          fetchProducts(products.length);
-        }
-      },
-      { threshold: 0.5 },
-    );
-
-    if (lastProductRef.current) {
-      observer.observe(lastProductRef.current);
+    if (shopData.creatorId) {
+      fetchProducts();
     }
+  }, [shopData.creatorId]);
 
-    return () => observer.disconnect();
-  }, [products.length, isFetching, fetchProducts]);
-
-  useEffect(() => {
-    fetchProducts(0);
-  }, [fetchProducts]);
+  // Remove the initial fetch effect since we now fetch when creatorId changes
+  // useEffect(() => {
+  //   fetchProducts(0);
+  // }, [fetchProducts]);
 
   useEffect(() => {
     return () => {
@@ -189,25 +175,46 @@ export default function ProfilePage() {
   // Handle authentication and set user role
   useEffect(() => {
     const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Check if the current user is the owner of this shop
-        // This assumes shopData.creatorId would contain the user ID of the shop owner
-        const isShopOwner = currentUser.uid === shopData.creatorId;
-        setSellerView(isShopOwner);
-        setBuyerView(!isShopOwner);
+        try {
+          // Query the shops collection for the current user's shop
+          const shopsRef = collection(db, "shops");
+          const q = query(shopsRef, where("creatorId", "==", currentUser.uid));
+          const querySnapshot = await getDocs(q);
 
-        // Optional: fetch user-specific data here
-        // For example, load their cart from session storage or database
-        const savedCart = sessionStorage.getItem("cart");
-        if (savedCart) {
-          const parsedCart = JSON.parse(savedCart);
-          setCart(parsedCart);
-          const totalItems = parsedCart.reduce(
-            (sum: number, item: CartItem) => sum + item.quantity,
-            0,
-          );
-          setItemCount(totalItems);
+          if (!querySnapshot.empty) {
+            const shopDoc = querySnapshot.docs[0];
+            const shopData = shopDoc.data();
+
+            // Update shop data with the fetched data
+            setShopData((prevData) => ({
+              ...prevData,
+              creatorId: shopData.creatorId,
+              shopName: shopData.shopName,
+              createdAt: shopData.createdAt?.toDate().toISOString() || "",
+            }));
+          }
+
+          // Check if the current user is the owner of this shop
+          const isShopOwner = currentUser.uid === shopData.creatorId;
+          setSellerView(isShopOwner);
+          setBuyerView(!isShopOwner);
+
+          // Optional: fetch user-specific data here
+          // For example, load their cart from session storage or database
+          const savedCart = sessionStorage.getItem("cart");
+          if (savedCart) {
+            const parsedCart = JSON.parse(savedCart);
+            setCart(parsedCart);
+            const totalItems = parsedCart.reduce(
+              (sum: number, item: CartItem) => sum + item.quantity,
+              0,
+            );
+            setItemCount(totalItems);
+          }
+        } catch (error) {
+          console.error("Error fetching shop data:", error);
         }
       } else {
         // Not logged in
