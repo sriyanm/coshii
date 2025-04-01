@@ -279,7 +279,7 @@ export default function ProfilePage() {
 
               {/* Bell Icon (visible only for sellers) */}
               {sellerView && (
-                <Link href="/shop">
+                <Link href="/yourstore">
                   <CiBellOn
                     className="ml-4 text-2xl"
                     title="Notifications"
