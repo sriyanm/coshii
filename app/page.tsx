@@ -15,7 +15,7 @@ export default function Home() {
       router.push("/signin");
     }
     if (auth.user) {
-      router.push("/shop");
+      router.push("/yourstore");
     }
   }, [auth, router]);
 

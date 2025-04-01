@@ -12,7 +12,7 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (user) {
-      router.push("/shop");
+      router.push("/yourstore");
     }
   }, [user, router]);
 
