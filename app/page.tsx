@@ -14,6 +14,9 @@ export default function Home() {
     if (!auth.isLoading && !auth.user) {
       router.push("/signin");
     }
+    if (auth.user) {
+      router.push("/store");
+    }
   }, [auth, router]);
 
   if (auth.isLoading) {

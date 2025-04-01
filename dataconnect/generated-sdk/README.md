@@ -23,7 +23,7 @@ A connector is a collection of Queries and Mutations. One SDK is generated for e
 You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
 
 ```javascript
-import { getDataConnect, DataConnect } from 'firebase/data-connect';
+import { getDataConnect } from 'firebase/data-connect';
 import { connectorConfig } from '@firebasegen/dataconnect';
 
 const dataConnect = getDataConnect(connectorConfig);
@@ -36,7 +36,7 @@ To connect to the emulator, you can use the following code.
 You can also follow the emulator instructions from the [Data Connect documentation](https://firebase.google.com/docs/data-connect/web-sdk#instrument-clients).
 
 ```javascript
-import { connectDataConnectEmulator, getDataConnect, DataConnect } from 'firebase/data-connect';
+import { connectDataConnectEmulator, getDataConnect } from 'firebase/data-connect';
 import { connectorConfig } from '@firebasegen/dataconnect';
 
 const dataConnect = getDataConnect(connectorConfig);
@@ -92,8 +92,9 @@ export interface GetCurrentUserData {
 ### Using `GetCurrentUser`'s action shortcut function
 
 ```javascript
-import { getDataConnect, DataConnect } from 'firebase/data-connect';
+import { getDataConnect } from 'firebase/data-connect';
 import { connectorConfig, getCurrentUser } from '@firebasegen/dataconnect';
+
 
 // Call the `getCurrentUser()` function to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
@@ -115,8 +116,9 @@ getCurrentUser().then((response) => {
 ### Using `GetCurrentUser`'s `QueryRef` function
 
 ```javascript
-import { getDataConnect, DataConnect, executeQuery } from 'firebase/data-connect';
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
 import { connectorConfig, getCurrentUserRef } from '@firebasegen/dataconnect';
+
 
 // Call the `getCurrentUserRef()` function to get a reference to the query.
 const ref = getCurrentUserRef();
@@ -139,6 +141,7 @@ executeQuery(ref).then((response) => {
 ```
 
 # Mutations
+
 There are two ways to execute a Data Connect Mutation using the generated Web SDK:
 - Using a Mutation Reference function, which returns a `MutationRef`
   - The `MutationRef` can be used as an argument to `executeMutation()`, which will execute the Mutation and return a `MutationPromise`
@@ -187,8 +190,9 @@ export interface UpsertUserData {
 ### Using `UpsertUser`'s action shortcut function
 
 ```javascript
-import { getDataConnect, DataConnect } from 'firebase/data-connect';
+import { getDataConnect } from 'firebase/data-connect';
 import { connectorConfig, upsertUser, UpsertUserVariables } from '@firebasegen/dataconnect';
+
 // The `UpsertUser` mutation has an optional argument of type `UpsertUserVariables`:
 const upsertUserVars: UpsertUserVariables = {
   phoneNumber: ..., // optional
@@ -219,8 +223,9 @@ upsertUser(upsertUserVars).then((response) => {
 ### Using `UpsertUser`'s `MutationRef` function
 
 ```javascript
-import { getDataConnect, DataConnect, executeMutation } from 'firebase/data-connect';
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
 import { connectorConfig, upsertUserRef, UpsertUserVariables } from '@firebasegen/dataconnect';
+
 // The `UpsertUser` mutation has an optional argument of type `UpsertUserVariables`:
 const upsertUserVars: UpsertUserVariables = {
   phoneNumber: ..., // optional
@@ -288,7 +293,7 @@ export interface UpsertProductData {
 ### Using `upsertProduct`'s action shortcut function
 
 ```javascript
-import { getDataConnect, DataConnect } from 'firebase/data-connect';
+import { getDataConnect } from 'firebase/data-connect';
 import { connectorConfig, upsertProduct, UpsertProductVariables } from '@firebasegen/dataconnect';
 
 // The `upsertProduct` mutation requires an argument of type `UpsertProductVariables`:
@@ -321,7 +326,7 @@ upsertProduct(upsertProductVars).then((response) => {
 ### Using `upsertProduct`'s `MutationRef` function
 
 ```javascript
-import { getDataConnect, DataConnect, executeMutation } from 'firebase/data-connect';
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
 import { connectorConfig, upsertProductRef, UpsertProductVariables } from '@firebasegen/dataconnect';
 
 // The `upsertProduct` mutation requires an argument of type `UpsertProductVariables`:

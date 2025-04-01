@@ -47,7 +47,7 @@ export interface User_Key {
 }
 
 /* Allow users to create refs without passing in DataConnect */
-export function upsertUserRef(vars?: UpsertUserVariables): (MutationRef<UpsertUserData, UpsertUserVariables> & { __angular?: false });
+export function upsertUserRef(vars?: UpsertUserVariables): MutationRef<UpsertUserData, UpsertUserVariables>;
 /* Allow users to pass in custom DataConnect instances */
 export function upsertUserRef(dc: DataConnect, vars?: UpsertUserVariables): MutationRef<UpsertUserData, UpsertUserVariables>;
 
