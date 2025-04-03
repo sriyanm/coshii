@@ -8,7 +8,7 @@ export function OrderCard({ order }: { order: Order }) {
     <div className="flex items-center justify-between p-4 hover:bg-muted/50">
       <div className="flex items-center gap-4">
         <Image
-          src={order.items[0].product.image || "/placeholder.svg"}
+          src={order.items[0].product.images[0] || "/placeholder.svg"}
           alt={order.items[0].product.name}
           width={48}
           height={48}
