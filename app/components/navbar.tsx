@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { ReactNode } from "react";
 import Link from "next/link";
 import { IoIosSearch } from "react-icons/io";
 import { MdHomeFilled } from "react-icons/md";
@@ -8,7 +8,7 @@ import { GoGear } from "react-icons/go";
 
 interface NavItem {
   label: string;
-  icon: JSX.Element;
+  icon: ReactNode;
   link: string;
 }
 
