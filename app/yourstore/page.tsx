@@ -105,12 +105,29 @@ export default function ProfilePage() {
     console.log("Account Id: ", "acct_1R1Yp7E2rsuqp9lw"); //TODO: this is hardcoded
   };
 
+  const CACHE_KEY = "cachedProducts";
+  const CACHE_EXPIRATION_MS = 5 * 60 * 1000; // 5 minutes
+
   const fetchProducts = async () => {
     if (isFetching) return;
 
     setIsFetching(true);
 
     try {
+      const cachedData = sessionStorage.getItem(CACHE_KEY);
+
+      if (cachedData) {
+        const { products: cachedProducts, timestamp } = JSON.parse(cachedData);
+
+        // Use cached data if it's still valid
+        if (Date.now() - timestamp < CACHE_EXPIRATION_MS) {
+          console.log("Using cached product data.");
+          setProducts(cachedProducts);
+          setIsFetching(false);
+          return;
+        }
+      }
+
       // Query products collection for products created by this shop's owner
       const productsRef = collection(db, "products");
       const q = query(
@@ -143,6 +160,12 @@ export default function ProfilePage() {
         }
         return 0;
       });
+
+      // Add cache products in sessionStorage
+      sessionStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({ products: newProducts, timestamp: Date.now() }),
+      );
 
       setProducts(newProducts);
     } catch (error) {
