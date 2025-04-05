@@ -1,23 +1,33 @@
 "use client";
+import { Store, Search, PlusSquare, Shirt, Settings } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Toggle } from "@/app/components/Toggle";
-import { NavigationBar } from "@/app/components/navbar";
 import { Profile } from "@/app/components/profile";
 import { ProductPage } from "../components/productPage";
 import { MdAddShoppingCart } from "react-icons/md";
 import { CiBellOn } from "react-icons/ci";
+import type { NavigationItem } from "../types";
 import Link from "next/link";
 // import { TimestampString } from "@firebasegen/dataconnect";
 // import { StringValidation } from "zod";
 import { Product, Shop, CartItem } from "../types/index";
 // import { CartItem } from "../components/CartItem";
 
+const navigation: NavigationItem[] = [
+  { name: "Shop", icon: Store, href: "/yourstore" },
+  { name: "Search", icon: Search, href: "/search" },
+  { name: "New Product", icon: PlusSquare, href: "/add-product" },
+  { name: "Backrooms", icon: Shirt, href: "/inventory" },
+  { name: "Settings", icon: Settings, href: "/settings" },
+];
+
 export default function ProfilePage() {
+  const [currentTab] = useState("Shop");
   const [products, setProducts] = useState<Product[]>([]);
   const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
-  const sellerView = false; // TODO: Replace with actual seller role check (true iff the shop belongs to the currently signed in user)
+  const sellerView = true; // TODO: Replace with actual seller role check (true iff the shop belongs to the currently signed in user)
   const buyerView = true; // TODO: Replace with actual buyer role check (true iff the currently signed in user does not have any shop)
   const [showPopup, setShowPopup] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -173,113 +183,135 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col items-center font-sans">
-      {/* Profile Section */}
-      <div className="w-full max-w-md p-4">
-        <Profile
-          shopData={shopData}
-          sellerView={sellerView}
-          onShopUpdate={handleShopUpdate}
-        />
-      </div>
+    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-white">
+      <div className="min-h-screen flex-1 flex-col items-center font-sans">
+        {/* Profile Section */}
+        <div className="w-full max-w-md p-4">
+          <Profile
+            shopData={shopData}
+            sellerView={sellerView}
+            onShopUpdate={handleShopUpdate}
+          />
+        </div>
 
-      {/* Sticky Container for both toggles */}
-      <div className="sticky top-0 z-10 w-full bg-white shadow-sm">
-        {/* Wrapper for both toggles */}
-        <div className="flex w-full flex-col">
-          {/* Shop Name Above the First Toggle */}
-          <div className="px-4 py-0.5 text-center text-sm font-medium">
-            {shopData.shopName}
-          </div>
+        {/* Sticky Container for both toggles */}
+        <div className="sticky top-0 z-10 w-full bg-white shadow-sm">
+          {/* Wrapper for both toggles */}
+          <div className="flex w-full flex-col">
+            {/* Shop Name Above the First Toggle */}
+            <div className="px-4 py-0.5 text-center text-sm font-medium">
+              {shopData.shopName}
+            </div>
 
-          {/* Shop/Activity Toggle and Shopping Cart in the Same Row */}
-          <div className="flex w-full items-center px-4 py-0.5">
-            {/* Shop/Activity Toggle */}
-            <div className="flex grow justify-center">
+            {/* Shop/Activity Toggle and Shopping Cart in the Same Row */}
+            <div className="flex w-full items-center px-4 py-0.5">
+              {/* Shop/Activity Toggle */}
+              <div className="flex grow justify-center">
+                <Toggle
+                  options={["Shop", "Activity"]}
+                  selectedOption={activeTab}
+                  onOptionSelect={setActiveTab}
+                  font="SF Pro"
+                  underline={true}
+                />
+              </div>
+              <div className="ml-auto flex shrink-0 items-end justify-end">
+                {/* Shopping Cart Icon */}
+                <Link
+                  href={{ pathname: "/checkout" }}
+                  title="Cart Button"
+                  className="relative"
+                >
+                  <MdAddShoppingCart className="text-2xl" />
+                  {itemCount > 0 && (
+                    <span className="absolute -right-2 -top-3 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                      {itemCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Bell Icon (visible only for sellers) */}
+                {sellerView && (
+                  <Link href="/shop">
+                    <CiBellOn
+                      className="ml-4 text-2xl"
+                      title="Notifications"
+                      style={{ strokeWidth: "0.6" }}
+                    />
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Categories Toggle */}
+            <div className="shrink-0 px-4 py-0.5">
               <Toggle
-                options={["Shop", "Activity"]}
-                selectedOption={activeTab}
-                onOptionSelect={setActiveTab}
+                options={shopData.categories}
+                selectedOption={selectedCategory}
+                onOptionSelect={setSelectedCategory}
                 font="SF Pro"
-                underline={true}
+                underline={false}
+                borderBox={true}
+                selectedColor="orange"
               />
             </div>
-            <div className="ml-auto flex shrink-0 items-end justify-end">
-              {/* Shopping Cart Icon */}
-              <Link
-                href={{ pathname: "/checkout" }}
-                title="Cart Button"
-                className="relative"
-              >
-                <MdAddShoppingCart className="text-2xl" />
-                {itemCount > 0 && (
-                  <span className="absolute -right-2 -top-3 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                    {itemCount}
-                  </span>
-                )}
-              </Link>
-
-              {/* Bell Icon (visible only for sellers) */}
-              {sellerView && (
-                <Link href="/shop">
-                  <CiBellOn
-                    className="ml-4 text-2xl"
-                    title="Notifications"
-                    style={{ strokeWidth: "0.6" }}
-                  />
-                </Link>
-              )}
-            </div>
           </div>
+        </div>
 
-          {/* Categories Toggle */}
-          <div className="shrink-0 px-4 py-0.5">
-            <Toggle
-              options={shopData.categories}
-              selectedOption={selectedCategory}
-              onOptionSelect={setSelectedCategory}
-              font="SF Pro"
-              underline={false}
-              borderBox={true}
-              selectedColor="orange"
+        {/* Product Pages */}
+        <div className="space-y-6 pt-2">
+          {products.map((product, index) => (
+            <ProductPage
+              key={index}
+              media={product.images}
+              caption={product.description || ""}
+              productName={product.name}
+              price={`\$${product.price}`}
+              onAddToCart={() => handleAddToCart(product)}
+              onLike={() => console.log("Liked")} //TODO: store in backend
+              onComment={() => console.log("Commented")} //TODO: store in backend (see components/comments.tsx)
+              onShare={() => console.log("Shared")} //TODO: do something
+              buyerView={buyerView}
+              isPremium={shopData.isPremium}
             />
+          ))}
+        </div>
+
+        {/* Pop-up Message if adding own product to cart */}
+        {showPopup && (
+          <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-white p-4 shadow-lg">
+            <p>Sorry, you cant add your own products to your cart</p>
           </div>
-        </div>
+        )}
+
+        {/* Intersection Observer Trigger */}
+        <div id="load-more-trigger" className="h-4 w-full"></div>
+
+        {/* Conditionally render the NavigationBar
+          {sellerView && (
+            <div className="fixed bottom-0 z-10 w-full">
+              <NavigationBar />
+            </div>
+          )} */}
       </div>
 
-      {/* Product Pages */}
-      <div className="space-y-6 pt-2">
-        {products.map((product, index) => (
-          <ProductPage
-            key={index}
-            media={product.images}
-            caption={product.description || ""}
-            productName={product.name}
-            price={`\$${product.price}`}
-            onAddToCart={() => handleAddToCart(product)}
-            onLike={() => console.log("Liked")} //TODO: store in backend
-            onComment={() => console.log("Commented")} //TODO: store in backend (see components/comments.tsx)
-            onShare={() => console.log("Shared")} //TODO: do something
-            buyerView={buyerView}
-            isPremium={shopData.isPremium}
-          />
-        ))}
-      </div>
-
-      {/* Pop-up Message if adding own product to cart */}
-      {showPopup && (
-        <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-white p-4 shadow-lg">
-          <p>Sorry, you cant add your own products to your cart</p>
-        </div>
-      )}
-
-      {/* Intersection Observer Trigger */}
-      <div id="load-more-trigger" className="h-4 w-full"></div>
-
-      {/* Conditionally render the NavigationBar */}
+      {/* Bottom Navigation */}
       {sellerView && (
-        <div className="fixed bottom-0 z-10 w-full">
-          <NavigationBar />
+        <div className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2">
+          <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
+            {navigation.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`flex flex-col items-center justify-center gap-1 ${
+                  currentTab === item.name ? "text-black" : "text-black/50"
+                }`}
+              >
+                <item.icon />
+                <span className="text-xs">{item.name}</span>
+              </Link>
+            ))}
+          </nav>
         </div>
       )}
     </div>

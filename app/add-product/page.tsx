@@ -415,7 +415,7 @@ function SuccessPage() {
             variant="onboarding"
             className="rounded-full bg-white px-8 py-2 text-lg font-semibold text-black shadow-md"
           >
-            <Link href="/shop">View Shop</Link>
+            <Link href="/yourstore">View Shop</Link>
           </Button>
           <Button
             asChild

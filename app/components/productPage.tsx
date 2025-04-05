@@ -84,7 +84,7 @@ export function ProductPage({
   };
 
   return (
-    <div className="relative h-[70vh] w-[95vw] bg-white">
+    <div className="relative h-[70vh] w-[95vw] max-w-md bg-white">
       {/* Media Scrollable Container */}
       <div
         ref={scrollContainerRef}
