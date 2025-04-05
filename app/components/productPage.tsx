@@ -1,6 +1,7 @@
 import { useState, useRef, UIEvent } from "react";
 import { SocialBar } from "./SocialBar"; // Import SocialBar
 import { Caption } from "./Caption"; // Import Caption
+import Image from "next/image";
 
 interface ProductPageProps {
   media: string[]; // Supports both images (.jpg, .png) and videos (.mp4)
@@ -127,8 +128,9 @@ export function ProductPage({
               </button>
             </div>
           ) : (
-            <img
+            <Image
               key={index}
+              fill
               src={item}
               alt={`${productName} - media ${index + 1}`}
               className="inline-block size-full rounded-lg object-cover"

@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 export function CartItem({
   name,
@@ -13,7 +14,9 @@ export function CartItem({
 }) {
   return (
     <div className="flex h-[14.2857vh] w-[90vw] items-center justify-between rounded-lg bg-white p-4 shadow">
-      <img
+      <Image
+        width={100}
+        height={100}
         src={image}
         alt={name}
         className="h-full w-20 rounded-lg object-cover"
