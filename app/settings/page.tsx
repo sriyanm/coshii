@@ -23,6 +23,7 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
+import { SignoutButton } from "../components/SignoutButton";
 
 // const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 const stripePromise = loadStripe(
@@ -151,6 +152,8 @@ export default function SettingsPage() {
           <span className="font-bold">[Placeholder]</span>
           <ChevronRight className="size-5 text-gray-400" />
         </button>
+
+        <SignoutButton />
       </div>
     </div>
   );

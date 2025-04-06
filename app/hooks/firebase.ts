@@ -13,9 +13,12 @@ import {
   signInWithPhoneNumber,
   signOut,
   User,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useContext } from "react";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export function useFirebaseAuth() {
   const context = useContext(FirebaseAuthContext);
@@ -162,6 +165,76 @@ export function usePhoneNumberConfirmationResult() {
     },
     onError: (error) => {
       console.error("failed to confirm SMS sign-in code: ", error.message);
+    },
+  });
+}
+
+export function useSignInWithGoogle() {
+  const router = useRouter();
+  return useMutation({
+    mutationKey: ["signInWithGoogle"],
+    mutationFn: async () => {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const userInfo = getAdditionalUserInfo(result);
+      if (!userInfo) {
+        throw new Error("Failed to get user info");
+      }
+      return {
+        user: result.user,
+        isNewUser: userInfo.isNewUser,
+      };
+    },
+    retry: false,
+    onMutate: () => {
+      console.log("signing in with Google");
+    },
+    onSuccess: (data) => {
+      console.log("signed in with Google", data);
+      router.push("/");
+    },
+    onError: (error) => {
+      console.error("failed to sign in with Google:", error.message);
+    },
+  });
+}
+
+// Initialize Firebase Storage
+const storage = getStorage(auth.app);
+
+// Function to upload a file to Firebase Storage
+export async function uploadProductMedia(
+  file: File,
+  userId: string,
+): Promise<string> {
+  // Create a storage reference with user ID and unique timestamp
+  const timestamp = Date.now();
+  const fileExtension = file.name.split(".").pop();
+  const storagePath = `products/${userId}/${timestamp}.${fileExtension}`;
+  const storageRef = ref(storage, storagePath);
+
+  // Add metadata configuration with content type
+  const metadata = {
+    contentType: file.type,
+    customMetadata: {
+      origin: window.location.origin,
+    },
+  };
+
+  // Upload the file with metadata
+  await uploadBytes(storageRef, file, metadata);
+
+  // Get and return the download URL
+  const downloadURL = await getDownloadURL(storageRef);
+  return downloadURL;
+}
+
+// Hook to use the upload function with React
+export function useProductMediaUpload() {
+  return useMutation({
+    mutationKey: ["uploadProductMedia"],
+    mutationFn: async ({ file, userId }: { file: File; userId: string }) => {
+      return uploadProductMedia(file, userId);
     },
   });
 }

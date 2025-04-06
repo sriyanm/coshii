@@ -1,6 +1,6 @@
 "use client";
 import { Store, Search, PlusSquare, Shirt, Settings } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { Toggle } from "@/app/components/Toggle";
 import { Profile } from "@/app/components/profile";
 import { ProductPage } from "../components/productPage";
@@ -11,6 +11,9 @@ import Link from "next/link";
 // import { TimestampString } from "@firebasegen/dataconnect";
 // import { StringValidation } from "zod";
 import { Product, Shop, CartItem } from "../types/index";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/app/lib/client/firebase";
 // import { CartItem } from "../components/CartItem";
 
 const navigation: NavigationItem[] = [
@@ -21,29 +24,34 @@ const navigation: NavigationItem[] = [
   { name: "Settings", icon: Settings, href: "/settings" },
 ];
 
-export default function ProfilePage() {
+export default function ProfilePage({
+  params,
+}: {
+  params: Promise<{ shop: string }>;
+}) {
+  const shopHandle = use(params).shop;
   const [currentTab] = useState("Shop");
   const [products, setProducts] = useState<Product[]>([]);
   const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
-  const sellerView = true; // TODO: Replace with actual seller role check (true iff the shop belongs to the currently signed in user)
-  const buyerView = true; // TODO: Replace with actual buyer role check (true iff the currently signed in user does not have any shop)
+  const [sellerView, setSellerView] = useState(false);
+  const [buyerView, setBuyerView] = useState(true);
+  const [invalidShop, setInvalidShop] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]); // State to manage cart items
-  const [itemCount, setCount] = useState<number>(0);
+  const popupTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastProductRef = useRef<HTMLDivElement | null>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [itemCount, setItemCount] = useState<number>(0);
   const [shopData, setShopData] = useState<Shop>({
-    //TODO: this is hardcoded
     createdAt: "",
     creatorId: "",
     creatorName: "",
-    profilePic: "/tempImages/basketWeaver.jpg",
-    shopName: "Mike's Shop",
-    username: "basketweaver",
-    email: "Mike@gmail.com",
-    description:
-      "Hey this is my basketweaving description! It'd be funny if this was left in prod",
+    profilePic: "",
+    shopName: "",
+    username: "",
+    email: "",
+    description: "",
     socialLinks: [
       { platform: "Facebook", url: "https://facebook.com", username: "Mike H" },
       { platform: "Twitter", url: "https://twitter.com", username: "Mike H" },
@@ -72,7 +80,12 @@ export default function ProfilePage() {
   const handleAddToCart = (product: Product) => {
     if (sellerView) {
       setShowPopup(true);
-      setTimeout(() => setShowPopup(false), 3000); // Hide after 3 seconds
+
+      if (popupTimerRef.current) {
+        clearTimeout(popupTimerRef.current);
+      }
+
+      popupTimerRef.current = setTimeout(() => setShowPopup(false), 3000);
       return;
     }
 
@@ -98,7 +111,7 @@ export default function ProfilePage() {
       updatedCart = [...cart, newItem];
     }
 
-    setCount(itemCount + 1);
+    setItemCount(itemCount + 1);
     setCart(updatedCart);
     sessionStorage.setItem("cart", JSON.stringify(updatedCart));
     sessionStorage.setItem("sellerId", "acct_1R1Yp7E2rsuqp9lw"); //TODO: this is hardcoded
@@ -106,81 +119,150 @@ export default function ProfilePage() {
     console.log("Account Id: ", "acct_1R1Yp7E2rsuqp9lw"); //TODO: this is hardcoded
   };
 
-  const fetchProducts = async (offset: number) => {
-    //TODO: this is all hardcoded
+  const CACHE_KEY = "cachedProducts";
+  // const CACHE_EXPIRATION_MS = 5 * 60 * 1000; // 5 minutes
+
+  const fetchProducts = async () => {
+    if (isFetching) return;
+
     setIsFetching(true);
-    const imageSets = [
-      [
-        "/tempImages/bowl1.jpg",
-        "/tempImages/bowl2.jpg",
-        "/tempImages/dawn.mp4",
-      ],
-      [
-        "/tempImages/camera1.jpg",
-        "/tempImages/camera2.jpeg",
-        "/tempImages/dawn.mp4",
-      ],
-      [
-        "/tempImages/guitar.jpg",
-        "/tempImages/guitar2.jpg",
-        "/tempImages/dawn.mp4",
-      ],
-      [
-        "/tempImages/lego2.jpg",
-        "/tempImages/lego3.jpg",
-        "/tempImages/dawn.mp4",
-      ],
-      [
-        "/tempImages/coconut.jpg",
-        "/tempImages/basket.jpeg",
-        "/tempImages/dawn.mp4",
-      ],
-    ];
 
-    const newProducts = Array.from({ length: 5 }, (_, i) => {
-      const images = imageSets[i % imageSets.length];
+    try {
+      // const cachedData = sessionStorage.getItem(CACHE_KEY);
 
-      // Create the new product object
-      return {
-        id: `product_${offset + i + 1}`, // Create a unique product ID
-        images: images,
-        description: `Product ${offset + i + 1} caption. Here's more of a description of the product. You should've been clicking see more in order to see all of this.`,
-        shopName: "Mike's Shop",
-        name: `Product ${offset + i + 1}`,
-        price: (offset + i + 1) * 10 + 0.99,
-        tags: ["tag1", "tag2"], // Example tags
-        sellerId: "acct_1R1Yp7E2rsuqp9lw",
-      };
-    });
+      // if (cachedData) {
+      //   const { products: cachedProducts, timestamp } = JSON.parse(cachedData);
+      //   // Use cached data if it's still valid
+      //   if (Date.now() - timestamp < CACHE_EXPIRATION_MS) {
+      //     console.log("Using cached product data.");
+      //     setProducts(cachedProducts);
+      //     setIsFetching(false);
+      //     return;
+      //   }
+      // }
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+      // Query products collection for products created by this shop's owner
+      const productsRef = collection(db, "products");
+      const q = query(
+        productsRef,
+        where("createdBy", "==", shopData.creatorId),
+      );
+      const querySnapshot = await getDocs(q);
 
-    setProducts((prevProducts) => [...prevProducts, ...newProducts]);
+      const newProducts: Product[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        newProducts.push({
+          id: doc.id,
+          name: data.name || "",
+          price: data.price || 0,
+          images: data.mediaUrls || ["/tempImages/basket.jpeg"],
+          description: data.description || "",
+          stock: data.inventory || 0,
+          isListed: data.isListed ?? true,
+          tags: data.tags || [],
+          shopName: shopData.shopName,
+          sellerId: data.sellerId || "",
+        });
+      });
 
-    setIsFetching(false);
+      // Sort products by creation date if available, or name as fallback
+      newProducts.sort((a, b) => {
+        if (a.name && b.name) {
+          return a.name.localeCompare(b.name);
+        }
+        return 0;
+      });
+
+      // Add cache products in sessionStorage
+      sessionStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({ products: newProducts, timestamp: Date.now() }),
+      );
+
+      setProducts(newProducts);
+      console.log("products:", products);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setIsFetching(false);
+    }
   };
 
+  // Remove the infinite scroll observer effect
   useEffect(() => {
-    if (observerRef.current) observerRef.current.disconnect();
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isFetching) {
-          fetchProducts(products.length);
-        }
-      },
-      { threshold: 1.0 },
-    );
-
-    const target = document.querySelector("#load-more-trigger");
-    if (target) observerRef.current.observe(target);
-
-    return () => observerRef.current?.disconnect();
-  }, [products, isFetching]);
+    if (shopData.creatorId) {
+      fetchProducts();
+    }
+  }, [shopData.creatorId]);
 
   useEffect(() => {
-    fetchProducts(0); // Initial data fetch
+    return () => {
+      if (popupTimerRef.current) {
+        clearTimeout(popupTimerRef.current);
+      }
+    };
   }, []);
+
+  // Handle authentication and set user role
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        setSellerView(false);
+        setBuyerView(true);
+        setCart([]);
+        setItemCount(0);
+      } else {
+        // Wait until shopData is loaded
+        const isShopOwner = !!(
+          shopData && currentUser.uid === shopData.creatorId
+        );
+        setSellerView(isShopOwner);
+        setBuyerView(!isShopOwner);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [shopData]); // run again once shopData is fetched
+
+  // Fetch shop data
+  useEffect(() => {
+    const fetchShopData = async () => {
+      const shopsRef = collection(db, "shops");
+      const q = query(shopsRef, where("username", "==", shopHandle));
+      const querySnapshot = await getDocs(q);
+
+      console.log("searching for", shopHandle);
+
+      if (querySnapshot.empty) {
+        setInvalidShop(true);
+        return;
+      }
+
+      console.log("Found shop for username", shopHandle);
+      const shopDoc = querySnapshot.docs[0];
+      const shopData = shopDoc.data() as Shop;
+
+      setShopData(shopData);
+      // fetchProducts();
+    };
+    fetchShopData();
+  }, []);
+
+  // If invalid shop
+  if (invalidShop) {
+    return (
+      <div>
+        You have entered an invalid shop name — go home
+        <Link href="/">
+          <button className="rounded mt-2 bg-black px-4 py-2 text-white">
+            Go Home
+          </button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-white">
@@ -232,7 +314,7 @@ export default function ProfilePage() {
 
                 {/* Bell Icon (visible only for sellers) */}
                 {sellerView && (
-                  <Link href="/shop">
+                  <Link href="/notifs">
                     <CiBellOn
                       className="ml-4 text-2xl"
                       title="Notifications"
@@ -259,20 +341,21 @@ export default function ProfilePage() {
         </div>
 
         {/* Product Pages */}
-        <div className="space-y-6 pt-2">
+        <div className="mb-16 space-y-6 pt-2">
           {products.map((product, index) => (
             <ProductPage
-              key={index}
+              key={product.id}
               media={product.images}
               caption={product.description || ""}
               productName={product.name}
               price={`\$${product.price}`}
               onAddToCart={() => handleAddToCart(product)}
-              onLike={() => console.log("Liked")} //TODO: store in backend
-              onComment={() => console.log("Commented")} //TODO: store in backend (see components/comments.tsx)
-              onShare={() => console.log("Shared")} //TODO: do something
+              onLike={() => console.log("Liked")}
+              onComment={() => console.log("Commented")}
+              onShare={() => console.log("Shared")}
               buyerView={buyerView}
               isPremium={shopData.isPremium}
+              ref={index === products.length - 1 ? lastProductRef : null}
             />
           ))}
         </div>
@@ -284,9 +367,6 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Intersection Observer Trigger */}
-        <div id="load-more-trigger" className="h-4 w-full"></div>
-
         {/* Conditionally render the NavigationBar
           {sellerView && (
             <div className="fixed bottom-0 z-10 w-full">
@@ -296,7 +376,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Bottom Navigation */}
-      {sellerView && (
+      {!buyerView && (
         <div className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2">
           <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
             {navigation.map((item) => (

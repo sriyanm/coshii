@@ -12,7 +12,7 @@ export function ProductCard({ product, showStock }: ProductCardProps) {
     <div className="flex items-center justify-between p-4 hover:bg-muted/50">
       <div className="flex items-center gap-4">
         <Image
-          src={product.image || "/placeholder.svg"}
+          src={product.images?.[0] || "/placeholder.svg"}
           alt={product.name}
           width={48}
           height={48}

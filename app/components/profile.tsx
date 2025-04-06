@@ -25,7 +25,7 @@ function ProfileHeader({
       {/* Bell Icon (Top-Right Corner) */}
       {sellerView && (
         <div className="absolute right-5 top-5">
-          <Link href="/shop">
+          <Link href="/yourstore">
             <CiBellOn
               className="size-6 cursor-pointer font-bold text-gray-500 hover:text-gray-800"
               title="Notifications"
@@ -35,7 +35,7 @@ function ProfileHeader({
       )}
       {/* Profile Picture */}
       <img
-        src={shopData.profilePic}
+        src={shopData.profilePic || "/tempImages/blank.jpg"}
         alt="Profile"
         className="mx-auto size-24 rounded-full object-cover"
       />

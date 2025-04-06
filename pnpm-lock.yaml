@@ -14,7 +14,7 @@ importers:
     dependencies:
       '@firebasegen/dataconnect':
         specifier: file:dataconnect/generated-sdk
-        version: file:dataconnect/generated-sdk(firebase@11.1.0)
+        version: link:dataconnect/generated-sdk
       '@fontsource/inter':
         specifier: ^5.1.1
         version: 5.1.1
@@ -956,12 +956,6 @@ packages:
 
   '@firebase/webchannel-wrapper@1.0.3':
     resolution: {integrity: sha512-2xCRM9q9FlzGZCdgDMJwc0gyUkWFtkosy7Xxr6sFgQwn+wMNIWd7xIvYNauU1r64B5L5rsGKy/n9TKJ0aAFeqQ==}
-
-  '@firebasegen/dataconnect@file:dataconnect/generated-sdk':
-    resolution: {directory: dataconnect/generated-sdk, type: directory}
-    engines: {node: ' >=18.0'}
-    peerDependencies:
-      firebase: ^10.14.0 || ^11.3.0
 
   '@fontsource/inter@5.1.1':
     resolution: {integrity: sha512-weN3E+rq0Xb3Z93VHJ+Rc7WOQX9ETJPTAJ+gDcaMHtjft67L58sfS65rAjC5tZUXQ2FdZ/V1/sSzCwZ6v05kJw==}
@@ -4573,10 +4567,6 @@ snapshots:
       tslib: 2.8.1
 
   '@firebase/webchannel-wrapper@1.0.3': {}
-
-  '@firebasegen/dataconnect@file:dataconnect/generated-sdk(firebase@11.1.0)':
-    dependencies:
-      firebase: 11.1.0
 
   '@fontsource/inter@5.1.1': {}
 

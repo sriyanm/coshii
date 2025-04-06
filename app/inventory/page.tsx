@@ -184,11 +184,23 @@ export default function InventoryPage() {
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
+          console.log("Product data:", data);
+
+          // Check if mediaUrls exists and has valid entries
+          const mediaUrl =
+            data.mediaUrls && data.mediaUrls.length > 0
+              ? data.mediaUrls[0]
+              : null;
+          console.log("Using mediaUrl:", mediaUrl);
+
           fetchedProducts.push({
             id: doc.id,
             name: data.name || "",
             price: data.price || 0,
-            images: data.images || ["/placeholder.svg"],
+            // Make sure we use the full URL string without modifications
+            images: mediaUrl
+              ? [mediaUrl.toString()]
+              : data.images || ["/placeholder.svg"],
             description: data.description || "",
             stock: data.inventory || 0,
             isListed: data.isListed ?? true,
@@ -196,6 +208,11 @@ export default function InventoryPage() {
             shopName: data.shopName || "",
             sellerId: data.sellerId || "",
           });
+
+          console.log(
+            "Final images array:",
+            fetchedProducts[fetchedProducts.length - 1].images,
+          );
         });
 
         // Sort products by creation date if available, or name as fallback
