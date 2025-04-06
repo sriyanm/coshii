@@ -14,6 +14,7 @@ interface ProductPageProps {
   onShare: () => void;
   buyerView: boolean;
   isPremium: boolean;
+  id: string;
 }
 
 export function ProductPage({
@@ -27,6 +28,7 @@ export function ProductPage({
   onShare,
   buyerView,
   isPremium,
+  id,
 }: ProductPageProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [scrolling, setScrolling] = useState(false);
@@ -85,7 +87,10 @@ export function ProductPage({
   };
 
   return (
-    <div className="relative h-[70vh] w-[95vw] bg-white">
+    <div
+      id={`product-${id}`}
+      className="relative h-[70vh] w-[95vw] max-w-md bg-white"
+    >
       {/* Media Scrollable Container */}
       <div
         ref={scrollContainerRef}

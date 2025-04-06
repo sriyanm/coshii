@@ -38,7 +38,7 @@ function ProfileHeader({
       <Image
         width={100}
         height={100}
-        src={shopData.profilePic}
+        src={shopData.profilePic || "/tempImages/blank.jpg"}
         alt="Profile"
         className="mx-auto size-24 rounded-full object-cover"
       />

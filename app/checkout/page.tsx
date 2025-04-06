@@ -92,13 +92,27 @@ export default function CheckoutPage() {
           >
             {/* Left Side: Image + Caption */}
             <div className="flex items-center gap-2">
-              <Image
-                width={100}
-                height={100}
-                src={item.image}
-                alt={item.name}
-                className="rounded size-16 object-cover"
-              />
+              {item.image.endsWith(".mp4") ? (
+                <video
+                  width={100}
+                  height={100}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="rounded size-16 object-cover"
+                >
+                  <source src={item.image} type="video/mp4" />
+                </video>
+              ) : (
+                <Image
+                  width={100}
+                  height={100}
+                  src={item.image}
+                  alt={item.name}
+                  className="rounded size-16 object-cover"
+                />
+              )}
               <span className="italic text-gray-500">{item.description}</span>
             </div>
 
