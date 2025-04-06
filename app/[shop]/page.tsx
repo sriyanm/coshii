@@ -89,12 +89,14 @@ export default function ProfilePage({
       return;
     }
 
+    console.log(product, cart);
     const existingProductIndex = cart.findIndex(
-      (item) => item.name === product.name,
+      (item) => item.productId === product.id,
     );
     let updatedCart;
     if (existingProductIndex >= 0) {
       // Product already exists in the cart, so update the quantity
+      console.log("Already in cart, incrementing quantity");
       updatedCart = [...cart];
       updatedCart[existingProductIndex].quantity += 1;
     } else {
@@ -109,6 +111,7 @@ export default function ProfilePage({
         sellerId: product.sellerId,
       };
       updatedCart = [...cart, newItem];
+      console.log("New item in cart");
     }
 
     setItemCount(itemCount + 1);
@@ -181,7 +184,7 @@ export default function ProfilePage({
       );
 
       setProducts(newProducts);
-      console.log("products:", products);
+      console.log("products:", newProducts);
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -249,6 +252,23 @@ export default function ProfilePage({
     };
     fetchShopData();
   }, []);
+
+  // Sticky link
+  useEffect(() => {
+    const hash = window.location.hash; // Get the current URL hash
+    if (hash) {
+      const productId = hash.substring(1); // Remove the '#' from the hash
+      console.log("Sticky", productId);
+      const productElement = document.getElementById(`product-${productId}`);
+      console.log(productElement);
+      if (productElement) {
+        productElement.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }
+  }, [products]);
 
   // If invalid shop
   if (invalidShop) {
@@ -355,6 +375,7 @@ export default function ProfilePage({
               onShare={() => console.log("Shared")}
               buyerView={buyerView}
               isPremium={shopData.isPremium}
+              id={`product-${product.id}`}
               ref={index === products.length - 1 ? lastProductRef : null}
             />
           ))}

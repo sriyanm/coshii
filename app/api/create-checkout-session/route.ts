@@ -19,30 +19,32 @@ export async function POST(req: Request) {
     const lineItems = cartItems.map((item) => ({
       price_data: {
         currency: "usd",
-        product_data: { name: item.name },
+        product_data: { name: item.name || "Unnamed Product" },
         unit_amount: Math.round(item.price * 100), // Convert price to cents
       },
       quantity: item.quantity,
     }));
 
     // Create a Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: lineItems,
-      payment_intent_data: {
-        application_fee_amount: 0,
-        transfer_data: {
-          destination: sellerId,
+    const session = await stripe.checkout.sessions.create(
+      {
+        payment_method_types: ["card"],
+        line_items: lineItems,
+        payment_intent_data: {
+          application_fee_amount: 0, // or your fee logic
         },
+        mode: "payment",
+        shipping_address_collection: {
+          allowed_countries: ["US", "CA"],
+        },
+        automatic_tax: { enabled: false },
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+        cancel_url: referer || `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
       },
-      mode: "payment",
-      shipping_address_collection: {
-        allowed_countries: ["US", "CA"], // Customize allowed countries
+      {
+        stripeAccount: sellerId,
       },
-      automatic_tax: { enabled: false }, //TODO: change this to true (setup stripe tax)
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
-      cancel_url: referer,
-    });
+    );
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
