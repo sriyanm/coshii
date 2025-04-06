@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-
+import { collection, addDoc } from "firebase/firestore";
+import { db, auth } from "@/app/lib/client/firebase";
 // Comment type definition
 interface Comment {
   text: string;
@@ -104,6 +105,23 @@ export function CommentsPopup({
         console.error("Failed to post comment:", error);
       } finally {
         setLoading(false);
+      }
+      // send notification
+      try {
+        const notifsRef = collection(db, "notifications");
+        await addDoc(notifsRef, {
+          toUser: "X6WJJyhYLJcMppEPgnUALnLhy1i1",
+          fromUser: auth.currentUser?.uid,
+          type: "comment",
+          content: newComment,
+          target: productId, // The product ID or relevant identifier
+          timestamp: new Date().toISOString(),
+          thumbnail: "",
+        });
+
+        console.log("Notif sent successfully");
+      } catch (error) {
+        console.error("Failed to post comment:", error);
       }
     }
   };
