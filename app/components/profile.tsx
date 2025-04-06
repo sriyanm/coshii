@@ -6,6 +6,7 @@ import { SiFacebook, SiX, SiInstagram } from "@icons-pack/react-simple-icons";
 import EditShopModal from "../components/EditShopModal";
 import { useState } from "react";
 import { Shop } from "../types/index";
+import Image from "next/image";
 
 // Subcomponent for Profile Header
 function ProfileHeader({
@@ -34,7 +35,9 @@ function ProfileHeader({
         </div>
       )}
       {/* Profile Picture */}
-      <img
+      <Image
+        width={100}
+        height={100}
         src={shopData.profilePic || "/tempImages/blank.jpg"}
         alt="Profile"
         className="mx-auto size-24 rounded-full object-cover"
