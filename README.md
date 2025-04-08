@@ -4,7 +4,7 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 1. Install nvm from [Github](https://github.com/nvm-sh/nvm?tab=readme-ov-file#install--update-script)
 
-1. Switch to project dir
+1. Switch to project dir.
 
 1. Use the project's node version:
 
