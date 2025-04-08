@@ -1,14 +1,28 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY as string);
+if (!process.env.TEST_STRIPE_SECRET_KEY) {
+  throw new Error("TEST_STRIPE_SECRET_KEY is not defined");
+}
+
+const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY);
 
 async function getSession(sessionId: string) {
-  const session = await stripe.checkout.sessions.retrieve(sessionId!);
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
   return session;
 }
 
-export default async function CheckoutReturn({ searchParams }) {
-  const sessionId = searchParams.session_id;
+export default async function CheckoutReturn({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const sessionId = params.session_id;
+
+  if (!sessionId || typeof sessionId !== "string") {
+    return <p>Invalid session ID</p>;
+  }
+
   const session = await getSession(sessionId);
 
   console.log(session);

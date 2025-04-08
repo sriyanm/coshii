@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import InventoryInput from "@/app/components/inventory-input";
 import MoneyInput, { MoneyInputValues } from "@/app/components/money-input";
 import { Button } from "@/app/components/ui/button";
@@ -532,7 +533,7 @@ function SuccessPage() {
   );
 }
 
-export default function AddProductPage() {
+function AddProductContent() {
   const searchParams = useSearchParams();
   const initialPage = Number(searchParams.get("page")) || Page.MEDIA;
 
@@ -670,5 +671,13 @@ export default function AddProductPage() {
         onPost={handlePost}
       />
     </Container>
+  );
+}
+
+export default function AddProductPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddProductContent />
+    </Suspense>
   );
 }

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { CiBellOn } from "react-icons/ci"; // Import CiBellOn
-import { SiFacebook, SiX, SiInstagram } from "@icons-pack/react-simple-icons";
+import { SiFacebook, SiX, SiInstagram } from "react-icons/si";
 import EditShopModal from "../components/EditShopModal";
 import { useState } from "react";
 import { Shop } from "../types/index";
 import Image from "next/image";
+import { JSX } from "react";
 
 // Subcomponent for Profile Header
 function ProfileHeader({
