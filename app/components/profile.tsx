@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { CiBellOn } from "react-icons/ci"; // Import CiBellOn
-import { SiFacebook, SiX, SiInstagram } from "@icons-pack/react-simple-icons";
+import { SiFacebook, SiX, SiInstagram } from "react-icons/si";
 import EditShopModal from "../components/EditShopModal";
 import { useState } from "react";
 import { Shop } from "../types/index";
 import Image from "next/image";
+import { JSX } from "react";
 
 // Subcomponent for Profile Header
 function ProfileHeader({
@@ -26,7 +27,7 @@ function ProfileHeader({
       {/* Bell Icon (Top-Right Corner) */}
       {sellerView && (
         <div className="absolute right-5 top-5">
-          <Link href="/yourstore">
+          <Link href="/notifications">
             <CiBellOn
               className="size-6 cursor-pointer font-bold text-gray-500 hover:text-gray-800"
               title="Notifications"

@@ -67,7 +67,7 @@ export function ProductDetailsView({
           />
         </div>
         <Image
-          src={product.image || "/ajay-product.png"}
+          src={product.images[0] || "/ajay-product.png"}
           alt={product.name}
           width={400}
           height={400}
@@ -91,7 +91,7 @@ export function ProductDetailsView({
                 desc: product.description,
                 price: product.price,
                 stock: product.stock,
-                image: product.image,
+                image: product.images[0],
                 cancel: "/inventory",
               },
             }}

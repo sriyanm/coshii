@@ -57,6 +57,21 @@ export interface OrderItem {
   quantity: number;
 }
 
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  user: {
+    name: string;
+    avatar: string;
+  };
+  content?: string;
+  target?: string;
+  timestamp: string;
+  thumbnail?: string;
+}
+
+export type NotificationType = "like" | "comment" | "follow" | "post";
+
 export type NavigationItem = {
   name: string;
   icon: React.ComponentType;

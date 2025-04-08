@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import InventoryInput from "@/app/components/inventory-input";
 import MoneyInput, { MoneyInputValues } from "@/app/components/money-input";
 import { Button } from "@/app/components/ui/button";
@@ -214,15 +215,55 @@ function MediaPicker({
       />
       {mediaUrls.length > 0 ? (
         <div className="relative size-full">
-          {mediaUrls.map((url, index) => (
-            <Image
-              key={index}
-              src={url}
-              alt="Uploaded media"
-              fill
-              className="object-contain"
-            />
-          ))}
+          {mediaUrls.map((url, index) => {
+            const fileExtension = url
+              .split(".")
+              .pop()
+              ?.toLowerCase()
+              .split("?")[0];
+            console.log("File extension:", fileExtension);
+            console.log("File URL:", url);
+            const isVideo = fileExtension === "mp4" || fileExtension === "mov";
+
+            const isImage =
+              fileExtension === "jpg" ||
+              fileExtension === "jpeg" ||
+              fileExtension === "png" ||
+              fileExtension === "gif" ||
+              fileExtension === "bmp";
+
+            if (isVideo) {
+              return (
+                <div key={index} className="video-container">
+                  <video
+                    src={url}
+                    autoPlay
+                    loop
+                    // muted={false}
+                    playsInline
+                    className="inline-block size-full rounded-lg object-cover"
+                    // onClick={togglePlayPause}
+                  />
+                  <source src={url} type={`video/${fileExtension}`} />
+                </div>
+              );
+            }
+
+            if (isImage) {
+              return (
+                <Image
+                  key={index}
+                  src={url}
+                  alt="Uploaded media"
+                  fill
+                  className="object-contain"
+                />
+              );
+            }
+            alert("File type not supported");
+            console.error("Unsupported file type:", fileExtension);
+            return null;
+          })}
         </div>
       ) : isUploading ? (
         <>
@@ -492,7 +533,7 @@ function SuccessPage() {
   );
 }
 
-export default function AddProductPage() {
+function AddProductContent() {
   const searchParams = useSearchParams();
   const initialPage = Number(searchParams.get("page")) || Page.MEDIA;
 
@@ -552,6 +593,7 @@ export default function AddProductPage() {
       });
 
       console.log("File available at", downloadURL);
+      console.log("File type:", file.type);
 
       // Add to the media URLs state
       setMediaUrls((prev) => [...prev, downloadURL]);
@@ -629,5 +671,13 @@ export default function AddProductPage() {
         onPost={handlePost}
       />
     </Container>
+  );
+}
+
+export default function AddProductPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddProductContent />
+    </Suspense>
   );
 }

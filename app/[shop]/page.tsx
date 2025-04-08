@@ -133,7 +133,7 @@ export default function ProfilePage({
   };
 
   const CACHE_KEY = "cachedProducts";
-  // const CACHE_EXPIRATION_MS = 5 * 60 * 1000; // 5 minutes
+  // const CACHE_EXPIRATION_MS = 2 * 60 * 1000; // 2 minutes
 
   const getProducts = async () => {
     if (isFetching) return;

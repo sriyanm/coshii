@@ -2,91 +2,151 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Store,
-  Search,
-  PlusSquare,
-  Shirt,
-  Settings,
+  // Store,
+  // Search,
+  // PlusSquare,
+  // Shirt,
+  // Settings,
   X,
   Heart,
   MessageSquare,
   UserPlus,
 } from "lucide-react";
-import type { NavigationItem } from "../types";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/app/lib/client/firebase";
+import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { Notification, NotificationType } from "../types";
 
-const navigation: NavigationItem[] = [
-  { name: "Shop", icon: Store, href: "/yourstore" },
-  { name: "Search", icon: Search, href: "/search" },
-  { name: "New Product", icon: PlusSquare, href: "/add-product" },
-  { name: "Backrooms", icon: Shirt, href: "/inventory" },
-  { name: "Settings", icon: Settings, href: "/settings" },
-];
+// const notifications: Notification[] = [
+//   {
+//     id: "1",
+//     type: "like",
+//     user: {
+//       name: "Sarah",
+//       avatar: "/placeholder.svg",
+//     },
+//     target: "Million Glaze Vase",
+//     timestamp: "14h",
+//   },
+//   {
+//     id: "2",
+//     type: "comment",
+//     user: {
+//       name: "Emma",
+//       avatar: "/placeholder.svg",
+//     },
+//     content: "Lovely work, babes<3",
+//     target: "Glass Chandelier Sculpture",
+//     timestamp: "2h",
+//   },
+//   {
+//     id: "3",
+//     type: "follow",
+//     user: {
+//       name: "Jessy K",
+//       avatar: "/placeholder.svg",
+//     },
+//     timestamp: "3d",
+//   },
+//   {
+//     id: "4",
+//     type: "post",
+//     user: {
+//       name: "Elizabeth",
+//       avatar: "/placeholder.svg",
+//     },
+//     content: "Set of 5 ceramic plates",
+//     timestamp: "2h",
+//     thumbnail: "/placeholder.svg",
+//   },
+// ];
 
-type NotificationType = "like" | "comment" | "follow" | "post";
+export default function Notifs() {
+  const [notifs, setNotifs] = useState<Notification[]>([]);
+  // const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const auth = getAuth();
 
-interface Notification {
-  id: string;
-  type: NotificationType;
-  user: {
-    name: string;
-    avatar: string;
-  };
-  content?: string;
-  target?: string;
-  timestamp: string;
-  thumbnail?: string;
-}
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
 
-const notifications: Notification[] = [
-  {
-    id: "1",
-    type: "like",
-    user: {
-      name: "Sarah",
-      avatar: "/placeholder.svg",
-    },
-    target: "Million Glaze Vase",
-    timestamp: "14h",
-  },
-  {
-    id: "2",
-    type: "comment",
-    user: {
-      name: "Emma",
-      avatar: "/placeholder.svg",
-    },
-    content: "Lovely work, babes<3",
-    target: "Glass Chandelier Sculpture",
-    timestamp: "2h",
-  },
-  {
-    id: "3",
-    type: "follow",
-    user: {
-      name: "Jessy K",
-      avatar: "/placeholder.svg",
-    },
-    timestamp: "3d",
-  },
-  {
-    id: "4",
-    type: "post",
-    user: {
-      name: "Elizabeth",
-      avatar: "/placeholder.svg",
-    },
-    content: "Set of 5 ceramic plates",
-    timestamp: "2h",
-    thumbnail: "/placeholder.svg",
-  },
-];
+    return () => unsubscribe();
+  }, [auth]);
 
-export default function ShopPage() {
-  const [currentTab] = useState("Shop");
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!user) {
+        setNotifs([]);
+        // setIsLoading(false);
+        return;
+      }
+
+      try {
+        const notifsRef = collection(db, "notifications");
+        const q = query(notifsRef, where("toUser", "==", user.uid));
+
+        const querySnapshot = await getDocs(q);
+        const fetchedNotifs: Notification[] = [];
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          console.log("Notif data:", data);
+
+          // Check if mediaUrls exists and has valid entries
+          // const mediaUrl =
+          //   data.mediaUrls && data.mediaUrls.length > 0
+          //     ? data.mediaUrls[0]
+          //     : null;
+          // console.log("Using mediaUrl:", mediaUrl);
+
+          fetchedNotifs.push({
+            id: doc.id,
+            type: data.type || "",
+            user: {
+              name: data.fromUser || "",
+              avatar: "/placeholder.svg",
+            },
+            content: data.content || "",
+            target: data.target || "",
+            timestamp: data.timestamp || "",
+            thumbnail: data.thumbnail || "",
+          });
+
+          console.log(
+            "Fetched notification:",
+            data.type,
+            data.fromUser,
+            data.content,
+            data.target,
+            data.timestamp,
+            data.thumbnail,
+          );
+        });
+
+        // TODO: Sort notifs by earliest to latest timestamp
+        fetchedNotifs.sort((a, b) => {
+          if (a.timestamp && b.timestamp) {
+            return a.timestamp.localeCompare(b.timestamp);
+          }
+          return 0;
+        });
+
+        setNotifs(fetchedNotifs);
+      } catch (error) {
+        console.error("Error fetching notifs:", error);
+      } finally {
+        // setIsLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, [user]);
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
@@ -152,7 +212,7 @@ export default function ShopPage() {
         </div>
 
         <div className="divide-y">
-          {notifications.map((notification) => (
+          {notifs.map((notification) => (
             <div key={notification.id} className="flex gap-3 p-4">
               <Image
                 src={notification.user.avatar || "/placeholder.svg"}
@@ -187,21 +247,6 @@ export default function ShopPage() {
           ))}
         </div>
       </div>
-
-      <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
-        {navigation.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className={`flex flex-col items-center justify-center gap-1 ${
-              currentTab === item.name ? "text-black" : "text-black/50"
-            }`}
-          >
-            <item.icon /*className="h-6 w-6"*/ />
-            <span className="text-xs">{item.name}</span>
-          </Link>
-        ))}
-      </nav>
     </div>
   );
 }
