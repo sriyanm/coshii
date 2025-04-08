@@ -12,9 +12,15 @@ import Link from "next/link";
 // import { StringValidation } from "zod";
 import { Product, Shop, CartItem } from "../types/index";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  DocumentSnapshot,
+} from "firebase/firestore";
 import { db } from "@/app/lib/client/firebase";
-// import { CartItem } from "../components/CartItem";
+import { fetchProducts } from "../components/ProductServer";
 
 const navigation: NavigationItem[] = [
   { name: "Shop", icon: Store, href: "/yourstore" },
@@ -40,9 +46,13 @@ export default function ProfilePage({
   const [invalidShop, setInvalidShop] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const popupTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const lastProductRef = useRef<HTMLDivElement | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [itemCount, setItemCount] = useState<number>(0);
+  const [lastVisibleProduct, setLastVisibleProduct] =
+    useState<DocumentSnapshot | null>(null);
+  const [donePaginating, setDonePaginating] = useState<boolean>(false);
   const [shopData, setShopData] = useState<Shop>({
     createdAt: "",
     creatorId: "",
@@ -125,7 +135,7 @@ export default function ProfilePage({
   const CACHE_KEY = "cachedProducts";
   // const CACHE_EXPIRATION_MS = 5 * 60 * 1000; // 5 minutes
 
-  const fetchProducts = async () => {
+  const getProducts = async () => {
     if (isFetching) return;
 
     setIsFetching(true);
@@ -145,37 +155,18 @@ export default function ProfilePage({
       // }
 
       // Query products collection for products created by this shop's owner
-      const productsRef = collection(db, "products");
-      const q = query(
-        productsRef,
-        where("createdBy", "==", shopData.creatorId),
+      const {
+        products: newProducts,
+        lastVisible: newLastVisibleProduct,
+        done,
+      } = await fetchProducts(
+        shopData.creatorId,
+        shopData.shopName,
+        lastVisibleProduct,
       );
-      const querySnapshot = await getDocs(q);
-
-      const newProducts: Product[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        newProducts.push({
-          id: doc.id,
-          name: data.name || "",
-          price: data.price || 0,
-          images: data.mediaUrls || ["/tempImages/basket.jpeg"],
-          description: data.description || "",
-          stock: data.inventory || 0,
-          isListed: data.isListed ?? true,
-          tags: data.tags || [],
-          shopName: shopData.shopName,
-          sellerId: data.sellerId || "",
-        });
-      });
-
-      // Sort products by creation date if available, or name as fallback
-      newProducts.sort((a, b) => {
-        if (a.name && b.name) {
-          return a.name.localeCompare(b.name);
-        }
-        return 0;
-      });
+      setProducts((prevProducts) => [...prevProducts, ...newProducts]);
+      setLastVisibleProduct(newLastVisibleProduct);
+      setDonePaginating(done);
 
       // Add cache products in sessionStorage
       sessionStorage.setItem(
@@ -183,8 +174,7 @@ export default function ProfilePage({
         JSON.stringify({ products: newProducts, timestamp: Date.now() }),
       );
 
-      setProducts(newProducts);
-      console.log("products:", newProducts);
+      console.log("products:", products);
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -192,13 +182,33 @@ export default function ProfilePage({
     }
   };
 
-  // Remove the infinite scroll observer effect
+  // Initial product fetch
   useEffect(() => {
     if (shopData.creatorId) {
-      fetchProducts();
+      getProducts();
     }
   }, [shopData.creatorId]);
 
+  // Fetch more products if reached bottom
+  useEffect(() => {
+    if (observerRef.current) observerRef.current.disconnect();
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetching && !donePaginating) {
+          getProducts();
+        }
+      },
+      { threshold: 1.0 },
+    );
+
+    const target = document.querySelector("#load-more-trigger");
+    if (target) observerRef.current.observe(target);
+
+    return () => observerRef.current?.disconnect();
+  }, [products, isFetching]);
+
+  // Popup if try to buy own product
   useEffect(() => {
     return () => {
       if (popupTimerRef.current) {
@@ -387,14 +397,9 @@ export default function ProfilePage({
             <p>Sorry, you cant add your own products to your cart</p>
           </div>
         )}
-
-        {/* Conditionally render the NavigationBar
-          {sellerView && (
-            <div className="fixed bottom-0 z-10 w-full">
-              <NavigationBar />
-            </div>
-          )} */}
       </div>
+
+      <div id="load-more-trigger" className="h-4 w-full"></div>
 
       {/* Bottom Navigation */}
       {!buyerView && (
@@ -418,25 +423,3 @@ export default function ProfilePage({
     </div>
   );
 }
-
-/*
-
-Notes: 
-If you're the seller:
- - Extra Pencil for editing
-- Notifications in the top right
-
-
-Top Down View:
-- Profile Component:
-  - Top Right Button
-    - Seller: Notificatoin
-    - Buyer: Cart
-  - Next to Name Button:
-    - Seller: Edit Profile
-- Nav Bar:
-  - Seller: Has it
-  - Buyer: Nope
-
-
-*/

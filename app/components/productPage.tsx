@@ -98,7 +98,7 @@ export function ProductPage({
         onScroll={handleScroll}
       >
         {media.map((item, index) =>
-          item.endsWith(".mp4") ? (
+          item.endsWith(".mp4") || item.endsWith(".mov") ? (
             <div key={index} className="relative inline-block size-full">
               <video
                 ref={index === currentIndex ? videoRef : null}
