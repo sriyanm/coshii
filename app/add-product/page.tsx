@@ -14,6 +14,7 @@ import {
   useState,
   useEffect,
   useRef,
+  // act,
 } from "react";
 import { Input } from "../components/ui/input";
 import { useSearchParams } from "next/navigation";
@@ -176,15 +177,38 @@ function MediaPicker({
   handleFileUpload,
   mediaUrls,
   isUploading,
+  setIsUploading,
+  setMediaUrls,
 }: {
   handleFileUpload: (file: File) => Promise<string | undefined>;
   mediaUrls: string[];
   isUploading: boolean;
+  setIsUploading: (isUploading: boolean) => void;
+  setMediaUrls: (mediaUrls: string[]) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  // Update container width on mount and resize
+  useEffect(() => {
+    const updateWidth = () => {
+      if (scrollContainerRef.current) {
+        setContainerWidth(scrollContainerRef.current.clientWidth);
+      }
+    };
+
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
 
   const handleClick = () => {
-    fileInputRef.current?.click();
+    if (mediaUrls.length === 0) {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -192,19 +216,76 @@ function MediaPicker({
     if (files && files.length > 0) {
       console.log("File selected:", files[0].name);
       try {
+        setIsUploading(true);
         const result = await handleFileUpload(files[0]);
         console.log("Upload result:", result);
+        setActiveIndex(mediaUrls.length - 1);
       } catch (error) {
         console.error("Error in handleFileChange:", error);
       }
     }
   };
 
+  const handleRemoveMedia = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newMediaUrls = [...mediaUrls];
+    newMediaUrls.splice(index, 1);
+    setMediaUrls(newMediaUrls);
+    if (activeIndex >= newMediaUrls.length) {
+      setActiveIndex(Math.max(0, newMediaUrls.length - 1));
+    }
+    console.log("Removed media at index:", index);
+  };
+
+  const handleEditMedia = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveIndex(index);
+    setIsEditMode(true);
+    console.log("Edit media at index:", index);
+  };
+
+  const addMoreMedia = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    fileInputRef.current?.click();
+    console.log("Add more media");
+  };
+
+  // Handle scroll snap and update active index
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!scrollContainerRef.current || containerWidth === 0) return;
+
+      const scrollLeft = scrollContainerRef.current.scrollLeft;
+      const itemWidth = containerWidth;
+      const newIndex = Math.round(scrollLeft / itemWidth);
+
+      if (newIndex !== activeIndex && newIndex < mediaUrls.length) {
+        setActiveIndex(newIndex);
+      }
+    };
+
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener("scroll", handleScroll);
+      return () => scrollContainer.removeEventListener("scroll", handleScroll);
+    }
+  }, [activeIndex, mediaUrls.length, containerWidth]);
+
+  // Scroll to active index when it changes
+  useEffect(() => {
+    if (scrollContainerRef.current && !isEditMode && containerWidth > 0) {
+      scrollContainerRef.current.scrollTo({
+        left: activeIndex * containerWidth,
+        behavior: "smooth",
+      });
+    }
+  }, [activeIndex, isEditMode, containerWidth]);
+
+  // Calculate if we should show the plus button inline
+  const showPlusInline = false;
+
   return (
-    <div
-      className="mx-auto mb-auto mt-5 flex h-[500px] w-80 cursor-pointer flex-col items-center justify-center rounded-lg bg-black/20 px-8 text-white/90 hover:bg-black/30"
-      onClick={handleClick}
-    >
+    <div className="flex flex-col">
       <input
         type="file"
         ref={fileInputRef}
@@ -212,72 +293,246 @@ function MediaPicker({
         accept="image/*,video/*"
         className="hidden"
       />
-      {mediaUrls.length > 0 ? (
-        <div className="relative size-full">
-          {mediaUrls.map((url, index) => {
-            const fileExtension = url
-              .split(".")
-              .pop()
-              ?.toLowerCase()
-              .split("?")[0];
-            console.log("File extension:", fileExtension);
-            console.log("File URL:", url);
-            const isVideo = fileExtension === "mp4" || fileExtension === "mov";
 
-            const isImage =
-              fileExtension === "jpg" ||
-              fileExtension === "jpeg" ||
-              fileExtension === "png" ||
-              fileExtension === "gif" ||
-              fileExtension === "bmp";
+      {/* Container for media and plus button */}
+      <div className="relative">
+        {/* Horizontal scrollable container */}
+        <div
+          ref={scrollContainerRef}
+          className="scrollbar-hide relative flex w-full snap-x snap-mandatory overflow-x-auto"
+          style={{
+            scrollSnapType: "x mandatory",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
+          {/* Media items */}
+          {mediaUrls.length > 0 ? (
+            <>
+              {mediaUrls.map((url, index) => {
+                const fileExtension = url
+                  .split(".")
+                  .pop()
+                  ?.toLowerCase()
+                  .split("?")[0];
+                const isVideo =
+                  fileExtension === "mp4" || fileExtension === "mov";
+                const isImage =
+                  fileExtension === "jpg" ||
+                  fileExtension === "jpeg" ||
+                  fileExtension === "png" ||
+                  fileExtension === "gif" ||
+                  fileExtension === "bmp";
 
-            if (isVideo) {
-              return (
-                <div key={index} className="video-container">
-                  <video
-                    src={url}
-                    autoPlay
-                    loop
-                    // muted={false}
-                    playsInline
-                    className="inline-block size-full rounded-lg object-cover"
-                    // onClick={togglePlayPause}
-                  />
-                  <source src={url} type={`video/${fileExtension}`} />
+                return (
+                  <div
+                    key={index}
+                    className="relative mr-4 shrink-0 snap-center"
+                    style={{
+                      width: showPlusInline ? "calc(100% - 80px)" : "100%",
+                      height: "500px",
+                    }}
+                  >
+                    <div className="relative size-full cursor-pointer rounded-lg bg-black/20 hover:bg-black/30">
+                      {isVideo ? (
+                        <div className="video-container size-full">
+                          <video
+                            src={url || "/placeholder.svg"}
+                            autoPlay
+                            loop
+                            playsInline
+                            className="inline-block size-full rounded-lg object-cover"
+                          />
+                          <source src={url} type={`video/${fileExtension}`} />
+                        </div>
+                      ) : isImage ? (
+                        <div className="relative size-full">
+                          <Image
+                            src={url || "/placeholder.svg"}
+                            alt="Uploaded media"
+                            fill
+                            className="rounded-lg object-cover"
+                          />
+                        </div>
+                      ) : null}
+
+                      {/* Edit button (pencil icon) */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-2 size-8 rounded-full bg-black/30 p-1.5 text-white hover:bg-black/50"
+                        onClick={(e) => handleEditMedia(index, e)}
+                      >
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="size-full"
+                        >
+                          <path
+                            d="M17 3C17.2626 2.73735 17.5744 2.52901 17.9176 2.38687C18.2608 2.24473 18.6286 2.17157 19 2.17157C19.3714 2.17157 19.7392 2.24473 20.0824 2.38687C20.4256 2.52901 20.7374 2.73735 21 3C21.2626 3.26264 21.471 3.57444 21.6131 3.9176C21.7553 4.26077 21.8284 4.62856 21.8284 5C21.8284 5.37143 21.7553 5.73923 21.6131 6.08239C21.471 6.42555 21.2626 6.73735 21 7L7.5 20.5L2 22L3.5 16.5L17 3Z"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </Button>
+
+                      {/* Delete button (trash icon) - at bottom left */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute bottom-2 left-2 size-8 rounded-full bg-black/30 p-1.5 text-white hover:bg-black/50"
+                        onClick={(e) => handleRemoveMedia(index, e)}
+                      >
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="size-full"
+                        >
+                          <path
+                            d="M3 6H5H21"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Add more button - always at the end */}
+              {!showPlusInline && (
+                <div
+                  className="flex shrink-0 snap-center items-center justify-center"
+                  style={{ width: "100%", height: "500px" }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-14 rounded-full border-8 border-black/50 p-0"
+                    onClick={addMoreMedia}
+                  >
+                    <Plus className="text-black" />
+                  </Button>
                 </div>
-              );
-            }
-
-            if (isImage) {
-              return (
-                <Image
-                  key={index}
-                  src={url}
-                  alt="Uploaded media"
-                  fill
-                  className="object-contain"
-                />
-              );
-            }
-            alert("File type not supported");
-            console.error("Unsupported file type:", fileExtension);
-            return null;
-          })}
+              )}
+            </>
+          ) : isUploading ? (
+            <div
+              className="flex shrink-0 snap-center"
+              style={{ width: "100%", height: "500px" }}
+            >
+              <div className="flex size-full flex-col items-center justify-center rounded-lg bg-black/20">
+                <div className="animate-pulse">
+                  <ImagePlus className="size-10 text-white/90" />
+                </div>
+                <p className="text-wrap text-center text-xl text-white/90">
+                  Uploading...
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="flex shrink-0 snap-center"
+              style={{ width: "100%", height: "500px" }}
+              onClick={handleClick}
+            >
+              <div className="flex size-full cursor-pointer flex-col items-center justify-center rounded-lg bg-black/20 px-8 hover:bg-black/30">
+                <ImagePlus className="size-10 text-white/90" />
+                <p className="text-wrap text-center text-xl text-white/90">
+                  Add up to 60 seconds of video or photo
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-      ) : isUploading ? (
-        <>
-          <div className="animate-pulse">
-            <ImagePlus className="size-10" />
+
+        {/* Plus button inline for single image case */}
+        {showPlusInline && mediaUrls.length > 0 && (
+          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-14 rounded-full border-2 border-black/30 p-0"
+              onClick={addMoreMedia}
+            >
+              <Plus className="size-8 text-black/70" />
+            </Button>
           </div>
-          <p className="text-wrap text-center text-xl">Uploading...</p>
-        </>
-      ) : (
-        <>
-          <ImagePlus className="size-10" />
-          <p className="text-wrap text-center text-xl">
-            Add up to 60 seconds of video or photo
-          </p>
-        </>
+        )}
+      </div>
+
+      {/* Dot indicators */}
+      {mediaUrls.length > 1 && (
+        <div className="mt-4 flex justify-center">
+          <div className="flex space-x-2">
+            {mediaUrls.map((_, index) => (
+              <button
+                key={index}
+                className={`size-2 rounded-full ${activeIndex === index ? "bg-black" : "bg-black/30"}`}
+                onClick={() => {
+                  setActiveIndex(index);
+                  // Force scroll to the correct position
+                  if (scrollContainerRef.current && containerWidth > 0) {
+                    scrollContainerRef.current.scrollTo({
+                      left: index * containerWidth,
+                      behavior: "smooth",
+                    });
+                  }
+                }}
+                aria-label={`Go to image ${index + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Only show "Press and hold to reorder" when in edit mode */}
+      {isEditMode && mediaUrls.length > 0 && (
+        <p className="mt-2 text-center text-sm text-black/70">
+          Press and hold to reorder
+        </p>
+      )}
+
+      {/* Edit mode overlay - would be implemented in a real app */}
+      {isEditMode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg bg-white p-4">
+            <h3 className="mb-4 text-lg font-bold">Edit Image</h3>
+            {/* Crop tool would go here */}
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsEditMode(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  console.log("Save cropped image");
+                  setIsEditMode(false);
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -625,6 +880,8 @@ export default function AddProductPage() {
         handleFileUpload={handleFileUpload}
         mediaUrls={mediaUrls}
         isUploading={isUploading}
+        setIsUploading={setIsUploading}
+        setMediaUrls={setMediaUrls}
       />
     );
   } else if (page == Page.DESCRIPTION) {
