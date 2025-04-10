@@ -17,18 +17,30 @@ const PAGE_SIZE = 5;
 export const fetchProducts = async (
   shopID: string,
   shopName: string,
+  tag: string,
   lastVisible: DocumentSnapshot | null,
 ) => {
   try {
     const productsRef = collection(db, "products");
     let done = false;
 
-    let q = query(
-      productsRef,
-      where("createdBy", "==", shopID),
-      orderBy("createdAt", "desc"),
-      limit(PAGE_SIZE),
-    );
+    let q;
+    if (tag != "All") {
+      q = query(
+        productsRef,
+        where("createdBy", "==", shopID),
+        where("tags", "array-contains", tag), // checks if `tags` array has `tag`
+        orderBy("createdAt", "desc"),
+        limit(PAGE_SIZE),
+      );
+    } else {
+      q = query(
+        productsRef,
+        where("createdBy", "==", shopID),
+        orderBy("createdAt", "desc"),
+        limit(PAGE_SIZE),
+      );
+    }
 
     // If there's a lastVisible, apply startAfter for pagination
     if (lastVisible) {
@@ -51,7 +63,7 @@ export const fetchProducts = async (
         id: doc.id,
         name: data.name || "",
         price: data.price || 0,
-        images: data.mediaUrls || ["/tempImages/basket.jpeg"],
+        images: data.mediaUrls || ["/tempImages/blank.jpg"],
         description: data.description || "",
         stock: data.inventory || 0,
         isListed: data.isListed ?? true,

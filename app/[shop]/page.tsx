@@ -162,6 +162,7 @@ export default function ProfilePage({
       } = await fetchProducts(
         shopData.creatorId,
         shopData.shopName,
+        selectedCategory,
         lastVisibleProduct,
       );
       setProducts((prevProducts) => [...prevProducts, ...newProducts]);
@@ -187,7 +188,7 @@ export default function ProfilePage({
     if (shopData.creatorId) {
       getProducts();
     }
-  }, [shopData.creatorId]);
+  }, [shopData.creatorId, selectedCategory]);
 
   // Fetch more products if reached bottom
   useEffect(() => {
@@ -372,23 +373,30 @@ export default function ProfilePage({
 
         {/* Product Pages */}
         <div className="mb-16 space-y-6 pt-2">
-          {products.map((product, index) => (
-            <ProductPage
-              key={product.id}
-              media={product.images}
-              caption={product.description || ""}
-              productName={product.name}
-              price={`\$${product.price}`}
-              onAddToCart={() => handleAddToCart(product)}
-              onLike={() => console.log("Liked")}
-              onComment={() => console.log("Commented")}
-              onShare={() => console.log("Shared")}
-              buyerView={buyerView}
-              isPremium={shopData.isPremium}
-              id={`product-${product.id}`}
-              ref={index === products.length - 1 ? lastProductRef : null}
-            />
-          ))}
+          {products
+            .filter((product) => {
+              return (
+                selectedCategory === "All" ||
+                (product.tags && product.tags.includes(selectedCategory))
+              );
+            })
+            .map((product, index) => (
+              <ProductPage
+                key={product.id}
+                media={product.images}
+                caption={product.description || ""}
+                productName={product.name}
+                price={`\$${product.price}`}
+                onAddToCart={() => handleAddToCart(product)}
+                onLike={() => console.log("Liked")}
+                onComment={() => console.log("Commented")}
+                onShare={() => console.log("Shared")}
+                buyerView={buyerView}
+                isPremium={shopData.isPremium}
+                id={`product-${product.id}`}
+                ref={index === products.length - 1 ? lastProductRef : null}
+              />
+            ))}
         </div>
 
         {/* Pop-up Message if adding own product to cart */}
