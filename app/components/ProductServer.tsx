@@ -1,7 +1,9 @@
 import {
   collection,
   query,
+  doc,
   where,
+  getDoc,
   getDocs,
   orderBy,
   limit,
@@ -18,6 +20,7 @@ export const fetchProducts = async (
   shopID: string,
   shopName: string,
   tag: string,
+  bonusProductId: string | null,
   lastVisible: DocumentSnapshot | null,
 ) => {
   try {
@@ -72,6 +75,34 @@ export const fetchProducts = async (
         sellerId: data.sellerId || "",
       });
     });
+
+    // If a bonusProductId is provided, fetch that product
+    if (bonusProductId) {
+      console.log("BONUS", bonusProductId);
+      const bonusProductRef = doc(db, "products", bonusProductId); // Fetch by document ID
+      const bonusProductSnapshot = await getDoc(bonusProductRef);
+      if (bonusProductSnapshot.exists()) {
+        // If the bonus product exists, format it similarly to the fetched products
+        const bonusProductData = bonusProductSnapshot.data();
+        const bonusProduct: Product = {
+          id: bonusProductSnapshot.id,
+          name: bonusProductData.name || "",
+          price: bonusProductData.price || 0,
+          images: bonusProductData.mediaUrls || ["/tempImages/blank.jpg"],
+          description: bonusProductData.description || "",
+          stock: bonusProductData.inventory || 0,
+          isListed: bonusProductData.isListed ?? true,
+          tags: bonusProductData.tags || [],
+          shopName: shopName,
+          sellerId: bonusProductData.sellerId || "",
+        };
+
+        // Ensure the bonus product isn't already in the list
+        if (!newProducts.some((product) => product.id === bonusProductId)) {
+          newProducts.unshift(bonusProduct); // Add the bonus product at the start of the list
+        }
+      }
+    }
 
     console.log("newProds", newProducts);
 

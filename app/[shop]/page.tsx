@@ -41,10 +41,12 @@ export default function ProfilePage({
   const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
+  const [stickied, setStickied] = useState(false); //track if we have already scrolled to a sticky product
   const [sellerView, setSellerView] = useState(false);
   const [buyerView, setBuyerView] = useState(true);
   const [invalidShop, setInvalidShop] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
   const popupTimerRef = useRef<NodeJS.Timeout | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastProductRef = useRef<HTMLDivElement | null>(null);
@@ -87,9 +89,27 @@ export default function ProfilePage({
     setShopData(updatedShopData);
   };
 
+  const handleShare = (product: Product) => {
+    const productLink = `${process.env.NEXT_PUBLIC_BASE_URL}/${shopData.username}#product-${product.id}`;
+    console.log("Share clicked");
+
+    // Copy the URL to the clipboard
+    navigator.clipboard
+      .writeText(productLink)
+      .then(() => {
+        setShowPopup(true);
+        setPopupMessage(`Product link for ${product.name} copied to clipboard`);
+        setTimeout(() => setShowPopup(false), 3000);
+      })
+      .catch((error) => {
+        console.error("Failed to copy text: ", error);
+      });
+  };
+
   const handleAddToCart = (product: Product) => {
     if (sellerView) {
       setShowPopup(true);
+      setPopupMessage("Sorry, you cant add your own products to your cart");
 
       if (popupTimerRef.current) {
         clearTimeout(popupTimerRef.current);
@@ -135,7 +155,7 @@ export default function ProfilePage({
   const CACHE_KEY = "cachedProducts";
   // const CACHE_EXPIRATION_MS = 2 * 60 * 1000; // 2 minutes
 
-  const getProducts = async () => {
+  const getProducts = async (sharedProductId: string | null = null) => {
     if (isFetching) return;
 
     setIsFetching(true);
@@ -163,9 +183,17 @@ export default function ProfilePage({
         shopData.creatorId,
         shopData.shopName,
         selectedCategory,
+        sharedProductId,
         lastVisibleProduct,
       );
-      setProducts((prevProducts) => [...prevProducts, ...newProducts]);
+      setProducts((prevProducts) => {
+        // Filter out any products in newProducts that are already in prevProducts (possibly due to sticky links)
+        const filteredNewProducts = newProducts.filter(
+          (newProduct) =>
+            !prevProducts.some((product) => product.id === newProduct.id),
+        );
+        return [...prevProducts, ...filteredNewProducts];
+      });
       setLastVisibleProduct(newLastVisibleProduct);
       setDonePaginating(done);
 
@@ -186,7 +214,13 @@ export default function ProfilePage({
   // Initial product fetch
   useEffect(() => {
     if (shopData.creatorId) {
-      getProducts();
+      const hash = window.location.hash; // Get the current URL hash
+      let productId = null;
+      if (hash) {
+        productId = hash.substring(9); // Remove the '#product-' from the hash
+        console.log("Parsed product in link", productId);
+      }
+      getProducts(productId);
     }
   }, [shopData.creatorId, selectedCategory]);
 
@@ -265,7 +299,7 @@ export default function ProfilePage({
   }, []);
 
   // Sticky link
-  useEffect(() => {
+  const handleStickyLink = () => {
     const hash = window.location.hash; // Get the current URL hash
     if (hash) {
       const productId = hash.substring(1); // Remove the '#' from the hash
@@ -275,9 +309,20 @@ export default function ProfilePage({
       if (productElement) {
         productElement.scrollIntoView({
           behavior: "smooth",
-          block: "start",
+          block: "center",
         });
+        setStickied(true);
       }
+    }
+  };
+
+  useEffect(() => {
+    handleStickyLink();
+  }, [shopData.creatorId, selectedCategory]);
+
+  useEffect(() => {
+    if (!stickied) {
+      handleStickyLink();
     }
   }, [products]);
 
@@ -390,7 +435,7 @@ export default function ProfilePage({
                 onAddToCart={() => handleAddToCart(product)}
                 onLike={() => console.log("Liked")}
                 onComment={() => console.log("Commented")}
-                onShare={() => console.log("Shared")}
+                onShare={() => handleShare(product)}
                 buyerView={buyerView}
                 isPremium={shopData.isPremium}
                 id={`product-${product.id}`}
@@ -402,7 +447,7 @@ export default function ProfilePage({
         {/* Pop-up Message if adding own product to cart */}
         {showPopup && (
           <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-white p-4 shadow-lg">
-            <p>Sorry, you cant add your own products to your cart</p>
+            {popupMessage}
           </div>
         )}
       </div>
