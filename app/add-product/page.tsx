@@ -192,6 +192,16 @@ function MediaPicker({
   const [isEditMode, setIsEditMode] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
 
+  // Image editing state
+  const [imageEdits, setImageEdits] = useState<
+    { scale: number; x: number; y: number }[]
+  >([]);
+  const [currentScale, setCurrentScale] = useState(1);
+  const [currentPosition, setCurrentPosition] = useState({ x: 0, y: 0 });
+
+  // Debug state
+  const [debugInfo, setDebugInfo] = useState("");
+
   // Update container width on mount and resize
   useEffect(() => {
     const updateWidth = () => {
@@ -204,6 +214,34 @@ function MediaPicker({
     window.addEventListener("resize", updateWidth);
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
+
+  // Initialize image edits when media URLs change
+  useEffect(() => {
+    // Initialize edits for new images
+    if (mediaUrls.length > imageEdits.length) {
+      setImageEdits((prev) => [
+        ...prev,
+        ...Array(mediaUrls.length - prev.length).fill({ scale: 1, x: 0, y: 0 }),
+      ]);
+    }
+  }, [mediaUrls, imageEdits.length]);
+
+  // Set current edit values when entering edit mode
+  useEffect(() => {
+    if (isEditMode && imageEdits[activeIndex]) {
+      setCurrentScale(imageEdits[activeIndex].scale);
+      setCurrentPosition({
+        x: imageEdits[activeIndex].x,
+        y: imageEdits[activeIndex].y,
+      });
+      console.log(
+        "Entering edit mode for image",
+        activeIndex,
+        "with edits:",
+        imageEdits[activeIndex],
+      );
+    }
+  }, [isEditMode, activeIndex, imageEdits]);
 
   const handleClick = () => {
     if (mediaUrls.length === 0) {
@@ -219,7 +257,7 @@ function MediaPicker({
         setIsUploading(true);
         const result = await handleFileUpload(files[0]);
         console.log("Upload result:", result);
-        setActiveIndex(mediaUrls.length - 1);
+        setActiveIndex(mediaUrls.length); // Set to the newly added image
       } catch (error) {
         console.error("Error in handleFileChange:", error);
       }
@@ -231,6 +269,12 @@ function MediaPicker({
     const newMediaUrls = [...mediaUrls];
     newMediaUrls.splice(index, 1);
     setMediaUrls(newMediaUrls);
+
+    // Also remove from edits
+    const newImageEdits = [...imageEdits];
+    newImageEdits.splice(index, 1);
+    setImageEdits(newImageEdits);
+
     if (activeIndex >= newMediaUrls.length) {
       setActiveIndex(Math.max(0, newMediaUrls.length - 1));
     }
@@ -241,7 +285,25 @@ function MediaPicker({
     e.stopPropagation();
     setActiveIndex(index);
     setIsEditMode(true);
-    console.log("Edit media at index:", index);
+    console.log("Edit mode activated for image", index);
+  };
+
+  const handleDoneEditing = () => {
+    // Save the current edits
+    const newImageEdits = [...imageEdits];
+    newImageEdits[activeIndex] = {
+      scale: currentScale,
+      x: currentPosition.x,
+      y: currentPosition.y,
+    };
+    setImageEdits(newImageEdits);
+    setIsEditMode(false);
+    console.log(
+      "Saved edits for image",
+      activeIndex,
+      ":",
+      newImageEdits[activeIndex],
+    );
   };
 
   const addMoreMedia = (e: React.MouseEvent) => {
@@ -250,13 +312,66 @@ function MediaPicker({
     console.log("Add more media");
   };
 
+  // Simple drag implementation
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!isEditMode) return;
+
+    e.preventDefault();
+    console.log("Mouse down at", e.clientX, e.clientY);
+    setDebugInfo(`Mouse down at ${e.clientX}, ${e.clientY}`);
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startPosX = currentPosition.x;
+    const startPosY = currentPosition.y;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const dx = moveEvent.clientX - startX;
+      const dy = moveEvent.clientY - startY;
+
+      // Limit movement based on scale
+      const maxOffset = (currentScale - 1) * 100;
+      const newX = Math.min(maxOffset, Math.max(-maxOffset, startPosX + dx));
+      const newY = Math.min(maxOffset, Math.max(-maxOffset, startPosY + dy));
+
+      setCurrentPosition({ x: newX, y: newY });
+      setDebugInfo(`Dragging to ${newX.toFixed(0)}, ${newY.toFixed(0)}`);
+      console.log("Mouse move to", newX, newY);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      console.log("Mouse up, drag ended");
+      setDebugInfo(
+        `Drag ended at ${currentPosition.x.toFixed(0)}, ${currentPosition.y.toFixed(0)}`,
+      );
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  // Simple zoom implementation
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!isEditMode) return;
+
+    e.preventDefault();
+    const delta = e.deltaY * -0.01;
+    const newScale = Math.min(3, Math.max(1, currentScale + delta));
+    setCurrentScale(newScale);
+    console.log("Wheel delta:", delta, "New scale:", newScale);
+    setDebugInfo(`Scale: ${newScale.toFixed(1)} (delta: ${delta.toFixed(2)})`);
+  };
+
   // Handle scroll snap and update active index
   useEffect(() => {
     const handleScroll = () => {
       if (!scrollContainerRef.current || containerWidth === 0) return;
 
       const scrollLeft = scrollContainerRef.current.scrollLeft;
-      const itemWidth = containerWidth;
+      // Calculate the item width based on the container width and the preview size
+      const itemWidth = containerWidth * 0.85 + 16; // 85% of container width + margin
       const newIndex = Math.round(scrollLeft / itemWidth);
 
       if (newIndex !== activeIndex && newIndex < mediaUrls.length) {
@@ -274,15 +389,18 @@ function MediaPicker({
   // Scroll to active index when it changes
   useEffect(() => {
     if (scrollContainerRef.current && !isEditMode && containerWidth > 0) {
+      // Calculate the item width based on the container width and the preview size
+      const itemWidth = containerWidth * 0.85 + 16; // 85% of container width + margin
+
       scrollContainerRef.current.scrollTo({
-        left: activeIndex * containerWidth,
+        left: activeIndex * itemWidth,
         behavior: "smooth",
       });
     }
   }, [activeIndex, isEditMode, containerWidth]);
 
-  // Calculate if we should show the plus button inline
-  const showPlusInline = false;
+  // Check if current image is the last one
+  const isLastImage = activeIndex === mediaUrls.length - 1;
 
   return (
     <div className="flex flex-col">
@@ -299,7 +417,7 @@ function MediaPicker({
         {/* Horizontal scrollable container */}
         <div
           ref={scrollContainerRef}
-          className="scrollbar-hide relative flex w-full snap-x snap-mandatory overflow-x-auto"
+          className={`scrollbar-hide relative flex w-full snap-x snap-mandatory overflow-x-auto ${isEditMode ? "pointer-events-none" : ""}`}
           style={{
             scrollSnapType: "x mandatory",
             WebkitOverflowScrolling: "touch",
@@ -325,18 +443,36 @@ function MediaPicker({
                   fileExtension === "gif" ||
                   fileExtension === "bmp";
 
+                const isActive = index === activeIndex;
+                const edit = imageEdits[index] || { scale: 1, x: 0, y: 0 };
+                const scale =
+                  isActive && isEditMode ? currentScale : edit.scale;
+                const posX =
+                  isActive && isEditMode ? currentPosition.x : edit.x;
+                const posY =
+                  isActive && isEditMode ? currentPosition.y : edit.y;
+
                 return (
                   <div
                     key={index}
                     className="relative mr-4 shrink-0 snap-center"
                     style={{
-                      width: showPlusInline ? "calc(100% - 80px)" : "100%",
+                      width: "85%", // Make image width smaller to show preview of next image
                       height: "500px",
                     }}
                   >
-                    <div className="relative size-full cursor-pointer rounded-lg bg-black/20 hover:bg-black/30">
+                    <div
+                      className={`relative size-full cursor-pointer overflow-hidden rounded-lg bg-black/20 hover:bg-black/30 ${isActive && isEditMode ? "editing" : ""}`}
+                    >
                       {isVideo ? (
-                        <div className="video-container size-full">
+                        <div
+                          className="video-container size-full"
+                          style={{
+                            transform: `translate(${posX}px, ${posY}px) scale(${scale})`,
+                            transformOrigin: "center",
+                            transition: "transform 0.1s ease-out",
+                          }}
+                        >
                           <video
                             src={url || "/placeholder.svg"}
                             autoPlay
@@ -347,98 +483,111 @@ function MediaPicker({
                           <source src={url} type={`video/${fileExtension}`} />
                         </div>
                       ) : isImage ? (
-                        <div className="relative size-full">
-                          <Image
+                        <div
+                          className="relative size-full"
+                          style={{
+                            transform: `translate(${posX}px, ${posY}px) scale(${scale})`,
+                            transformOrigin: "center",
+                            transition: "transform 0.1s ease-out",
+                          }}
+                          onMouseDown={
+                            isActive && isEditMode ? handleMouseDown : undefined
+                          }
+                          onWheel={
+                            isActive && isEditMode ? handleWheel : undefined
+                          }
+                        >
+                          <img
                             src={url || "/placeholder.svg"}
                             alt="Uploaded media"
-                            fill
-                            className="rounded-lg object-cover"
+                            className="absolute size-full rounded-lg object-cover"
+                            draggable="false"
                           />
                         </div>
                       ) : null}
 
+                      {/* Grid overlay for edit mode */}
+                      {isActive && isEditMode && (
+                        <div className="pointer-events-none absolute inset-0">
+                          {/* Vertical lines */}
+                          <div className="absolute left-1/3 top-0 h-full w-px bg-white/50"></div>
+                          <div className="absolute left-2/3 top-0 h-full w-px bg-white/50"></div>
+
+                          {/* Horizontal lines */}
+                          <div className="absolute left-0 top-1/3 h-px w-full bg-white/50"></div>
+                          <div className="absolute left-0 top-2/3 h-px w-full bg-white/50"></div>
+                        </div>
+                      )}
+
                       {/* Edit button (pencil icon) */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-2 size-8 rounded-full bg-black/30 p-1.5 text-white hover:bg-black/50"
-                        onClick={(e) => handleEditMedia(index, e)}
-                      >
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="size-full"
+                      {!isEditMode && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-2 top-2 size-8 rounded-full bg-black/30 p-1.5 text-white hover:bg-black/50"
+                          onClick={(e) => handleEditMedia(index, e)}
                         >
-                          <path
-                            d="M17 3C17.2626 2.73735 17.5744 2.52901 17.9176 2.38687C18.2608 2.24473 18.6286 2.17157 19 2.17157C19.3714 2.17157 19.7392 2.24473 20.0824 2.38687C20.4256 2.52901 20.7374 2.73735 21 3C21.2626 3.26264 21.471 3.57444 21.6131 3.9176C21.7553 4.26077 21.8284 4.62856 21.8284 5C21.8284 5.37143 21.7553 5.73923 21.6131 6.08239C21.471 6.42555 21.2626 6.73735 21 7L7.5 20.5L2 22L3.5 16.5L17 3Z"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </Button>
+                          <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="size-full"
+                          >
+                            <path
+                              d="M17 3C17.2626 2.73735 17.5744 2.52901 17.9176 2.38687C18.2608 2.24473 18.6286 2.17157 19 2.17157C19.3714 2.17157 19.7392 2.24473 20.0824 2.38687C20.4256 2.52901 20.7374 2.73735 21 3C21.2626 3.26264 21.471 3.57444 21.6131 3.9176C21.7553 4.26077 21.8284 4.62856 21.8284 5C21.8284 5.37143 21.7553 5.73923 21.6131 6.08239C21.471 6.42555 21.2626 6.73735 21 7L7.5 20.5L2 22L3.5 16.5L17 3Z"
+                              stroke="white"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </Button>
+                      )}
 
                       {/* Delete button (trash icon) - at bottom left */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute bottom-2 left-2 size-8 rounded-full bg-black/30 p-1.5 text-white hover:bg-black/50"
-                        onClick={(e) => handleRemoveMedia(index, e)}
-                      >
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="size-full"
+                      {!isEditMode && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute bottom-2 left-2 size-8 rounded-full bg-black/30 p-1.5 text-white hover:bg-black/50"
+                          onClick={(e) => handleRemoveMedia(index, e)}
                         >
-                          <path
-                            d="M3 6H5H21"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </Button>
+                          <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="size-full"
+                          >
+                            <path
+                              d="M3 6H5H21"
+                              stroke="white"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z"
+                              stroke="white"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );
               })}
-
-              {/* Add more button - always at the end */}
-              {!showPlusInline && (
-                <div
-                  className="flex shrink-0 snap-center items-center justify-center"
-                  style={{ width: "100%", height: "500px" }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-14 rounded-full border-8 border-black/50 p-0"
-                    onClick={addMoreMedia}
-                  >
-                    <Plus className="text-black" />
-                  </Button>
-                </div>
-              )}
             </>
           ) : isUploading ? (
             <div
               className="flex shrink-0 snap-center"
-              style={{ width: "100%", height: "500px" }}
+              style={{ width: "85%", height: "500px", marginRight: "16px" }}
             >
               <div className="flex size-full flex-col items-center justify-center rounded-lg bg-black/20">
                 <div className="animate-pulse">
@@ -452,7 +601,7 @@ function MediaPicker({
           ) : (
             <div
               className="flex shrink-0 snap-center"
-              style={{ width: "100%", height: "500px" }}
+              style={{ width: "85%", height: "500px", marginRight: "16px" }}
               onClick={handleClick}
             >
               <div className="flex size-full cursor-pointer flex-col items-center justify-center rounded-lg bg-black/20 px-8 hover:bg-black/30">
@@ -465,75 +614,138 @@ function MediaPicker({
           )}
         </div>
 
-        {/* Plus button inline for single image case */}
-        {showPlusInline && mediaUrls.length > 0 && (
-          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+        {/* Plus button in the sliver for the last image */}
+        {mediaUrls.length > 0 && isLastImage && !isEditMode && (
+          <div className="absolute right-0 top-1/2 z-10 -translate-y-1/2">
             <Button
               variant="ghost"
               size="icon"
-              className="size-14 rounded-full border-2 border-black/30 p-0"
+              className="size-14 rounded-full border-8 border-black/50 p-0"
               onClick={addMoreMedia}
             >
-              <Plus className="size-8 text-black/70" />
+              <Plus className="text-black" />
             </Button>
           </div>
         )}
       </div>
 
-      {/* Dot indicators */}
-      {mediaUrls.length > 1 && (
-        <div className="mt-4 flex justify-center">
-          <div className="flex space-x-2">
-            {mediaUrls.map((_, index) => (
-              <button
-                key={index}
-                className={`size-2 rounded-full ${activeIndex === index ? "bg-black" : "bg-black/30"}`}
-                onClick={() => {
-                  setActiveIndex(index);
-                  // Force scroll to the correct position
-                  if (scrollContainerRef.current && containerWidth > 0) {
-                    scrollContainerRef.current.scrollTo({
-                      left: index * containerWidth,
-                      behavior: "smooth",
-                    });
-                  }
-                }}
-                aria-label={`Go to image ${index + 1}`}
-              />
-            ))}
+      {/* Debug info */}
+      {isEditMode && (
+        <div className="rounded mt-2 bg-black/10 p-2 text-center text-sm text-black/90">
+          <strong>Debug:</strong>{" "}
+          {debugInfo || "Click and drag to move. Use mouse wheel to zoom."}
+        </div>
+      )}
+
+      {/* Edit controls */}
+      {isEditMode && (
+        <div className="mt-4 flex justify-center space-x-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Zoom
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="3"
+              step="0.1"
+              value={currentScale}
+              onChange={(e) => {
+                const newScale = Number.parseFloat(e.target.value);
+                setCurrentScale(newScale);
+                setDebugInfo(`Scale set to ${newScale.toFixed(1)}`);
+              }}
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Position X
+            </label>
+            <input
+              type="range"
+              min={-100}
+              max={100}
+              value={currentPosition.x}
+              onChange={(e) => {
+                const x = Number.parseInt(e.target.value);
+                setCurrentPosition((prev) => ({ ...prev, x }));
+                setDebugInfo(`Position X set to ${x}`);
+              }}
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Position Y
+            </label>
+            <input
+              type="range"
+              min={-100}
+              max={100}
+              value={currentPosition.y}
+              onChange={(e) => {
+                const y = Number.parseInt(e.target.value);
+                setCurrentPosition((prev) => ({ ...prev, y }));
+                setDebugInfo(`Position Y set to ${y}`);
+              }}
+              className="w-full"
+            />
           </div>
         </div>
       )}
 
-      {/* Only show "Press and hold to reorder" when in edit mode */}
-      {isEditMode && mediaUrls.length > 0 && (
-        <p className="mt-2 text-center text-sm text-black/70">
-          Press and hold to reorder
-        </p>
-      )}
+      {/* Fixed bottom section for buttons and text */}
+      <div className="relative mt-4 h-16">
+        {/* Dot indicators */}
+        {mediaUrls.length > 1 && !isEditMode && (
+          <div className="flex justify-center">
+            <div className="flex space-x-2">
+              {mediaUrls.map((_, index) => (
+                <button
+                  key={index}
+                  className={`size-2 rounded-full ${activeIndex === index ? "bg-black" : "bg-black/30"}`}
+                  onClick={() => {
+                    setActiveIndex(index);
+                    // Force scroll to the correct position
+                    if (scrollContainerRef.current && containerWidth > 0) {
+                      // Calculate the item width based on the container width and the preview size
+                      const itemWidth = containerWidth * 0.85 + 16; // 85% of container width + margin
 
-      {/* Edit mode overlay - would be implemented in a real app */}
-      {isEditMode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-4">
-            <h3 className="mb-4 text-lg font-bold">Edit Image</h3>
-            {/* Crop tool would go here */}
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsEditMode(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  console.log("Save cropped image");
-                  setIsEditMode(false);
-                }}
-              >
-                Save
-              </Button>
+                      scrollContainerRef.current.scrollTo({
+                        left: index * itemWidth,
+                        behavior: "smooth",
+                      });
+                    }
+                  }}
+                  aria-label={`Go to image ${index + 1}`}
+                />
+              ))}
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Only show "Press and hold to reorder" when in edit mode */}
+        {isEditMode && mediaUrls.length > 0 && (
+          <p className="absolute inset-x-0 top-0 text-center text-sm text-black/70">
+            Press and hold to reorder
+          </p>
+        )}
+
+        {/* Done button for edit mode */}
+        {isEditMode && (
+          <div className="absolute inset-x-0 bottom-0 flex justify-center">
+            <Button
+              className="rounded-full bg-white px-8 py-2 text-lg font-semibold text-black shadow-md"
+              onClick={handleDoneEditing}
+            >
+              Done
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
