@@ -102,7 +102,7 @@ function SocialLinksBar({
 
   return (
     <div className="flex justify-center gap-4">
-      {socialLinks.map(({ platform, url }) => (
+      {socialLinks?.map(({ platform, url }) => (
         <Link
           key={platform}
           href={url}
