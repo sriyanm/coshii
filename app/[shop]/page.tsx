@@ -199,20 +199,20 @@ export default function ProfilePage({
       });
       setLastVisibleProduct(newLastVisibleProduct);
       setDonePaginating(done);
-
-      // Add cache products in sessionStorage
-      sessionStorage.setItem(
-        CACHE_KEY,
-        JSON.stringify({ products: products, timestamp: Date.now() }),
-      );
-
-      console.log("products:", products);
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
       setIsFetching(false);
     }
   };
+
+  // Add cache products in sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({ products: products, timestamp: Date.now() }),
+    );
+  }, [products]);
 
   // Initial product fetch
   useEffect(() => {
