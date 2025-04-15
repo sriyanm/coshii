@@ -152,27 +152,30 @@ export default function ProfilePage({
     console.log("Account Id: ", "acct_1R1Yp7E2rsuqp9lw"); //TODO: this is hardcoded
   };
 
-  const CACHE_KEY = "cachedProducts";
-  // const CACHE_EXPIRATION_MS = 2 * 60 * 1000; // 2 minutes
+  const CACHE_KEY = `cachedProducts-${shopData.username}`;
+  const CACHE_EXPIRATION_MS = 2 * 60 * 1000; // 2 minutes
 
-  const getProducts = async (sharedProductId: string | null = null) => {
+  const getProducts = async (
+    sharedProductId: string | null = null,
+    bottom: boolean = false,
+  ) => {
     if (isFetching) return;
 
     setIsFetching(true);
 
     try {
-      // const cachedData = sessionStorage.getItem(CACHE_KEY);
+      const cachedData = sessionStorage.getItem(CACHE_KEY);
 
-      // if (cachedData) {
-      //   const { products: cachedProducts, timestamp } = JSON.parse(cachedData);
-      //   // Use cached data if it's still valid
-      //   if (Date.now() - timestamp < CACHE_EXPIRATION_MS) {
-      //     console.log("Using cached product data.");
-      //     setProducts(cachedProducts);
-      //     setIsFetching(false);
-      //     return;
-      //   }
-      // }
+      if (cachedData && !bottom) {
+        const { products: cachedProducts, timestamp } = JSON.parse(cachedData);
+        // Use cached data if it's still valid
+        if (Date.now() - timestamp < CACHE_EXPIRATION_MS) {
+          console.log("Using cached product data.", cachedProducts);
+          setProducts(cachedProducts);
+          setIsFetching(false);
+          return;
+        }
+      }
 
       // Query products collection for products created by this shop's owner
       const {
@@ -200,7 +203,7 @@ export default function ProfilePage({
       // Add cache products in sessionStorage
       sessionStorage.setItem(
         CACHE_KEY,
-        JSON.stringify({ products: newProducts, timestamp: Date.now() }),
+        JSON.stringify({ products: products, timestamp: Date.now() }),
       );
 
       console.log("products:", products);
@@ -231,7 +234,7 @@ export default function ProfilePage({
     observerRef.current = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !isFetching && !donePaginating) {
-          getProducts();
+          getProducts(undefined, true);
         }
       },
       { threshold: 1.0 },
