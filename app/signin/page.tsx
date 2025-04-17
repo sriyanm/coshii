@@ -3,20 +3,40 @@
 import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
 import { GoogleSigninButton } from "@/app/components/GoogleSigninButton";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFirebaseAuth } from "@/app/hooks/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/app/lib/client/firebase";
+
 export default function SignInPage() {
   const { user, isLoading } = useFirebaseAuth();
-
   const router = useRouter();
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      router.push("/yourstore");
-    }
-  }, [user, router]);
+    const fetchShopAndRedirect = async () => {
+      if (!user || redirecting) return;
 
-  if (isLoading) {
+      const q = query(
+        collection(db, "shops"),
+        where("creatorId", "==", user.uid),
+      );
+
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const shopDoc = querySnapshot.docs[0].data();
+        const shopHandle = shopDoc.username;
+        setRedirecting(true);
+        router.push(`/${shopHandle}`);
+      } else {
+        console.warn("No shop found for this user.");
+      }
+    };
+
+    fetchShopAndRedirect();
+  }, [user, router, redirecting]);
+
+  if (isLoading || redirecting) {
     return <div>Loading...</div>;
   }
 

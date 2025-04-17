@@ -24,6 +24,7 @@ import { db, auth } from "@/app/lib/client/firebase";
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
 import { GoogleSigninButton } from "@/app/components/GoogleSigninButton";
+import { useRouter } from "next/navigation";
 
 // import { set } from "zod";
 
@@ -100,6 +101,7 @@ export default function OnboardingPage() {
 }
 
 function IntroPage(setPage: Dispatch<SetStateAction<Page>>) {
+  const router = useRouter();
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-8">
       <div className="flex-1"></div>
@@ -122,6 +124,16 @@ function IntroPage(setPage: Dispatch<SetStateAction<Page>>) {
       >
         Get Started
       </Button>
+
+      <p className="mt-4 text-sm text-white">
+        Already have an account?{" "}
+        <button
+          onClick={() => router.push("/signin")}
+          className="font-semibold underline underline-offset-2"
+        >
+          Log in
+        </button>
+      </p>
     </div>
   );
 }
@@ -340,7 +352,11 @@ function SignInPage(
             Let&#39;s set up your account!
           </h1>
         </div>
-        <GoogleSigninButton />
+        <GoogleSigninButton //TOOD: should check if already account associated with email
+          onSuccess={() => {
+            setPage(Page.PHONE);
+          }}
+        />
         <MagicLinkSigninForm />
         <Button
           id="recaptcha-element"
