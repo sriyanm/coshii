@@ -27,7 +27,7 @@ export function OrderDetailsView({ order, onBack }: OrderDetailsViewProps) {
               className="flex items-center gap-4 rounded-lg bg-[#D9D9D9]/50 p-4"
             >
               <Image
-                src={item.product.image || "/placeholder.svg"}
+                src={item.product.images[0] || "/placeholder.svg"}
                 alt={item.product.name}
                 width={64}
                 height={64}

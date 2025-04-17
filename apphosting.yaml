@@ -11,8 +11,10 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: "temporal-falcon-430320-g5"
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: "temporal-falcon-430320-g5.appspot.com"
+    value: "gs://temporal-falcon-430320-g5.firebasestorage.app"
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     value: "1052688491967"
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:1052688491967:web:86d24377eda19c65bd6d0a"
+  - variable: TEST_STRIPE_SECRET_KEY
+    secret: projects/temporal-falcon-430320-g5/secrets/TEST_STRIPE_SECRET_KEY/versions/2

@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import InventoryInput from "@/app/components/inventory-input";
 import MoneyInput, { MoneyInputValues } from "@/app/components/money-input";
 import { Button } from "@/app/components/ui/button";
@@ -20,7 +21,14 @@ import { Input } from "../components/ui/input";
 import { useSearchParams } from "next/navigation";
 import { Facebook, Share2 } from "lucide-react";
 import Image from "next/image";
-import { collection, addDoc } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
 import { useFirebaseAuth, useProductMediaUpload } from "@/app/hooks/firebase";
 
@@ -36,12 +44,6 @@ interface Tag {
   name: string;
   color: string;
 }
-
-const defaultTags: Tag[] = [
-  { id: "1", name: "Ceramic Pieces", color: "rgb(220, 252, 231)" },
-  { id: "2", name: "Cups", color: "rgb(254, 215, 170)" },
-  { id: "3", name: "Plates", color: "rgb(233, 213, 255)" },
-];
 
 function Container({
   backgroundImage,
@@ -755,6 +757,10 @@ interface ProductDescriptionProps {
   setName: (name: string) => void;
   description: string;
   setDescription: (description: string) => void;
+  selectedTags: Tag[];
+  setSelectedTags: React.Dispatch<React.SetStateAction<Tag[]>>;
+  defaultTags: Tag[];
+  setDefaultTags: React.Dispatch<React.SetStateAction<Tag[]>>;
 }
 
 function ProductDescription({
@@ -762,9 +768,37 @@ function ProductDescription({
   setName,
   description,
   setDescription,
+  selectedTags,
+  setSelectedTags,
+  defaultTags,
+  setDefaultTags,
 }: ProductDescriptionProps) {
   const [isTagsOpen, setIsTagsOpen] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [newTagName, setNewTagName] = useState("");
+  const [isAddingTag, setIsAddingTag] = useState(false);
+
+  const tagWrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        tagWrapperRef.current &&
+        !tagWrapperRef.current.contains(event.target as Node)
+      ) {
+        setIsTagsOpen(false);
+      }
+    }
+
+    if (isTagsOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isTagsOpen]);
 
   const toggleTag = (tag: Tag) => {
     setSelectedTags((prev) =>
@@ -777,20 +811,22 @@ function ProductDescription({
   return (
     <div className="flex grow flex-col items-start justify-start">
       {/* Wrapper for 'Item Name' and 'Tags' */}
-      <div className="mt-0 flex w-full max-w-[calc(100%-2rem)] items-center gap-4">
-        {/* 'Item Name' input field */}
-        <Input
-          placeholder={name}
-          className="border-0 bg-transparent px-0 text-xl font-bold text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+      <div className="mt-0 flex w-full max-w-[calc(100%-2rem)] items-center">
+        {/* Growable wrapper around the 'Item Name' input */}
+        <div className="grow">
+          <Input
+            placeholder={"Item Name"}
+            className="w-full border-0 bg-transparent px-0 py-2 text-xl font-bold text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
 
         {/* 'Tags' button, only show when the dropdown is closed */}
         {!isTagsOpen && (
           <Button
             variant="outline"
-            className="ml-auto block bg-white/90 hover:bg-white/95"
+            className="ml-4 bg-white/90 hover:bg-white/95"
             onClick={() => setIsTagsOpen(true)}
           >
             Tags
@@ -798,70 +834,79 @@ function ProductDescription({
         )}
 
         {/* Dropdown for tags selection, show when the button is clicked */}
-        {isTagsOpen && (
-          <div className="right-0 mt-2 w-full rounded-md shadow-lg">
-            <div className="p-4">
-              <div className="flex flex-nowrap gap-2 overflow-x-auto">
-                {" "}
-                {/* Prevent wrap and allow scrolling */}
-                {defaultTags.map((tag) => {
-                  const isSelected = selectedTags.some((t) => t.id === tag.id);
-                  return (
-                    <Button
-                      key={tag.id}
-                      variant="outline"
-                      className="rounded-full px-2 py-1 transition-all duration-200" // No extra padding
-                      style={{
-                        backgroundColor: tag.color,
-                        boxShadow: isSelected
-                          ? "0 4px 12px rgba(0,0,0,0.15)"
-                          : "none",
-                        filter: isSelected ? "saturate(1.2)" : "saturate(1)",
-                        border: "none", // Remove border
+        <div ref={tagWrapperRef} className="relative">
+          {isTagsOpen && (
+            <div className="z-100000 fixed right-5 top-2 mt-12 w-full max-w-xs rounded-md">
+              <div className="p-4">
+                <div className="flex flex-nowrap gap-2 overflow-x-auto p-2">
+                  {defaultTags.map((tag) => {
+                    const isSelected = selectedTags.some(
+                      (t) => t.id === tag.id,
+                    );
+                    return (
+                      <Button
+                        key={tag.id}
+                        variant="outline"
+                        className="rounded-full px-2 py-1 transition-all duration-200"
+                        style={{
+                          backgroundColor: tag.color,
+                          boxShadow: "none",
+                          filter: isSelected ? "saturate(2)" : "saturate(1)",
+                          border: isSelected
+                            ? "2px solid rgba(0,0,0,0.6)"
+                            : "2px solid transparent",
+                        }}
+                        onClick={() => toggleTag(tag)}
+                      >
+                        {tag.name}
+                      </Button>
+                    );
+                  })}
+
+                  {isAddingTag ? (
+                    <input
+                      type="text"
+                      autoFocus
+                      value={newTagName}
+                      onChange={(e) => setNewTagName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && newTagName.trim() !== "") {
+                          const newTag = {
+                            id: Date.now().toString(),
+                            name: newTagName.trim(),
+                            color: `hsl(${Math.floor(Math.random() * 360)}, 100%, 90%)`, // Random background color
+                          };
+                          setDefaultTags([...defaultTags, newTag]);
+                          toggleTag(newTag);
+                          setNewTagName("");
+                          setIsAddingTag(false);
+                        } else if (e.key === "Escape") {
+                          setNewTagName("");
+                          setIsAddingTag(false);
+                        }
                       }}
-                      onClick={() => toggleTag(tag)}
+                      className="rounded-full border px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      style={{ minWidth: "6rem" }}
+                    />
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="rounded-full"
+                      onClick={() => setIsAddingTag(true)}
                     >
-                      {tag.name}
+                      <Plus className="size-4" />
                     </Button>
-                  );
-                })}
-                <Button
-                  variant="outline"
-                  className="rounded-full"
-                  onClick={() => {
-                    console.log("Add new tag");
-                  }}
-                >
-                  <Plus className="size-4" />
-                </Button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Display selected tags
-      {selectedTags.length > 0 && (
-        <div className="left-4 right-4 top-16 flex flex-wrap gap-2">
-          {selectedTags.map((tag) => (
-            <div
-              key={tag.id}
-              className="rounded-full px-4 py-1 text-sm"
-              style={{
-                backgroundColor: tag.color,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                filter: "saturate(1.2)",
-              }}
-            >
-              {tag.name}
-            </div>
-          ))}
+          )}
         </div>
-      )} */}
       </div>
 
       {/* Textarea for description */}
       <Textarea
-        placeholder={description}
+        placeholder={"Write a short description of your product..."}
         className="grow border-0 bg-transparent px-0 text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
@@ -984,7 +1029,7 @@ function SuccessPage() {
             variant="onboarding"
             className="rounded-full bg-white px-8 py-2 text-lg font-semibold text-black shadow-md"
           >
-            <Link href="/yourstore">View Shop</Link>
+            <Link href="/">View Shop</Link>
           </Button>
           <Button
             asChild
@@ -999,7 +1044,7 @@ function SuccessPage() {
   );
 }
 
-export default function AddProductPage() {
+function AddProductContent() {
   const searchParams = useSearchParams();
   const initialPage = Number(searchParams.get("page")) || Page.MEDIA;
 
@@ -1008,11 +1053,54 @@ export default function AddProductPage() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState<number>(0);
   const [inventory, setInventory] = useState<number>(1);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   const { user } = useFirebaseAuth();
   const mediaUpload = useProductMediaUpload();
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+
+  const [defaultTags, setDefaultTags] = useState<Tag[]>([]); // For what ui displays
+  const [ogTags, setOgTags] = useState<Tag[]>([]); // For backend updates
+
+  useEffect(() => {
+    const fetchTagsFromShop = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const shopsRef = collection(db, "shops");
+      const q = query(shopsRef, where("creatorId", "==", user.uid));
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        const shopData = snapshot.docs[0].data();
+        const categories: string[] = shopData.categories || [];
+
+        // Exclude "All" (case-insensitive, if needed)
+        console.log("categories", categories);
+        const filteredCategories = categories.filter(
+          (category) => category.toLowerCase() !== "all",
+        );
+
+        console.log("filtered categories", filteredCategories);
+
+        const hueStep = 45; // You can adjust this for tighter or looser spacing
+        const generatedTags: Tag[] = filteredCategories.map(
+          (category, index) => ({
+            id: (index + 1).toString(),
+            name: category,
+            color: `hsl(${(index * hueStep) % 360}, 100%, 90%)`, // evenly spaced hues
+          }),
+        );
+
+        setDefaultTags(generatedTags);
+        setOgTags(generatedTags);
+        console.log("got OG:", ogTags);
+      }
+    };
+
+    fetchTagsFromShop();
+  }, [user]);
 
   const handlePost = async () => {
     try {
@@ -1028,6 +1116,7 @@ export default function AddProductPage() {
         name,
         description,
         price,
+        tags: selectedTags.map((tag) => tag.name),
         inventory,
         mediaUrls,
         isListed: true,
@@ -1035,6 +1124,38 @@ export default function AddProductPage() {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+
+      // Check for new tags that are not in the original tags
+      const oldTags = ogTags.map((tag) => tag.name);
+      const newTags = selectedTags
+        .map((tag) => tag.name)
+        .filter((tagName) => !oldTags.includes(tagName));
+
+      console.log("To update tags", oldTags, newTags);
+      console.log(
+        "selected tags",
+        selectedTags.map((tag) => tag.name),
+      );
+
+      if (newTags.length > 0) {
+        const shopsRef = collection(db, "shops");
+        const q = query(
+          shopsRef,
+          where("creatorId", "==", auth.currentUser.uid),
+        );
+        const snapshot = await getDocs(q);
+
+        if (!snapshot.empty) {
+          const shopDoc = snapshot.docs[0];
+          const updatedCategories = ["All", ...oldTags, ...newTags];
+          console.log("updatedcategories", updatedCategories);
+
+          // Update the categories field with the new tags
+          await updateDoc(shopDoc.ref, {
+            categories: updatedCategories,
+          });
+        }
+      }
 
       console.log("Product created successfully");
       setPage(Page.SUCCESS);
@@ -1106,6 +1227,10 @@ export default function AddProductPage() {
         setName={setName}
         description={description}
         setDescription={setDescription}
+        selectedTags={selectedTags}
+        setSelectedTags={setSelectedTags}
+        defaultTags={defaultTags}
+        setDefaultTags={setDefaultTags}
       />
     );
   } else if (page == Page.PRICE) {
@@ -1139,5 +1264,13 @@ export default function AddProductPage() {
         onPost={handlePost}
       />
     </Container>
+  );
+}
+
+export default function AddProductPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddProductContent />
+    </Suspense>
   );
 }

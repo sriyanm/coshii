@@ -11,4 +11,11 @@ NODE_BIN_PATH="$NVM_DIR/versions/node/$NODE_VERSION/bin"
 # Export the current version in your path for husky to find.
 export PATH="$NODE_BIN_PATH:$PATH"
 
+# Run build check
+echo "Running build check..."
+pnpm build || (echo "Build failed, please fix build errors before committing" && exit 1)
+
+# If build passes, continue with lint-staged
+npx lint-staged
+
 npx lint-staged

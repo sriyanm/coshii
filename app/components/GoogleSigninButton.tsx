@@ -4,9 +4,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
 import { Button } from "@/app/components/ui/button";
 import { useSignInWithGoogle } from "@/app/hooks/firebase";
 import { AlertCircle } from "lucide-react";
+import { User } from "firebase/auth";
 
-export function GoogleSigninButton() {
-  const signInWithGoogleMutation = useSignInWithGoogle();
+type GoogleSignInButtonProps = {
+  onSuccess?: (data: { user: User; isNewUser: boolean }) => void;
+};
+
+export function GoogleSigninButton({ onSuccess }: GoogleSignInButtonProps) {
+  const signInWithGoogleMutation = useSignInWithGoogle({ onSuccess });
 
   const handleGoogleSignin = () => {
     signInWithGoogleMutation.mutate();

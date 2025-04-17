@@ -169,8 +169,11 @@ export function usePhoneNumberConfirmationResult() {
   });
 }
 
-export function useSignInWithGoogle() {
-  const router = useRouter();
+export function useSignInWithGoogle({
+  onSuccess,
+}: {
+  onSuccess?: (data: { user: User; isNewUser: boolean }) => void;
+}) {
   return useMutation({
     mutationKey: ["signInWithGoogle"],
     mutationFn: async () => {
@@ -191,7 +194,7 @@ export function useSignInWithGoogle() {
     },
     onSuccess: (data) => {
       console.log("signed in with Google", data);
-      router.push("/");
+      onSuccess?.(data);
     },
     onError: (error) => {
       console.error("failed to sign in with Google:", error.message);

@@ -31,7 +31,7 @@ const stripePromise = loadStripe(
 );
 
 const navigation: NavigationItem[] = [
-  { name: "Shop", icon: Store, href: "/yourstore" },
+  { name: "Shop", icon: Store, href: "/" },
   { name: "Search", icon: Search, href: "/search" },
   { name: "New Product", icon: PlusSquare, href: "/add-product" },
   { name: "Backrooms", icon: Shirt, href: "/inventory" },
