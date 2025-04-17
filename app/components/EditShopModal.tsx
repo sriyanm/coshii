@@ -25,7 +25,6 @@ export default function EditShopModal({
   const [shopInfo, setShopInfo] = React.useState<Shop>({
     createdAt: "",
     creatorId: "",
-    creatorName: "",
     profilePic: "",
     shopName: "",
     username: "",

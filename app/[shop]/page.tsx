@@ -58,7 +58,6 @@ export default function ProfilePage({
   const [shopData, setShopData] = useState<Shop>({
     createdAt: "",
     creatorId: "",
-    creatorName: "",
     profilePic: "",
     shopName: "",
     username: "",

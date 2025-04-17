@@ -488,14 +488,15 @@ function OnboardingPhoneOtpPage(
         // Create shop document
         const shopRef = collection(db, "shops");
         await addDoc(shopRef, {
-          creatorId: auth.currentUser.uid,
-          shopName: shopName,
+          categories: ["All"],
           createdAt: new Date(),
-          username: shopHandle,
+          creatorId: auth.currentUser.uid,
           description: shopDescription,
-          isPremium: "true",
-          profilePic: "/tempImages/basketWeaver.jpg",
           email: auth.currentUser.email,
+          isPremium: false,
+          profilePic: "/tempImages/basketWeaver.jpg",
+          shopName: shopName,
+          username: shopHandle,
         });
 
         // Update user document with shop name and phone number
