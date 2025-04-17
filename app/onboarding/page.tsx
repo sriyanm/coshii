@@ -23,6 +23,9 @@ import {
 import { db, auth } from "@/app/lib/client/firebase";
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
+import { GoogleSigninButton } from "@/app/components/GoogleSigninButton";
+import { useRouter } from "next/navigation";
+
 // import { set } from "zod";
 
 enum Page {
@@ -44,7 +47,7 @@ export default function OnboardingPage() {
   const [page, setPage] = useState(Page.INTRO);
   const [shopName, setShopName] = useState("");
   const [shopHandle, setShopHandle] = useState("");
-  const [shopBio, setShopBio] = useState("");
+  const [shopDescription, setShopDescription] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
   const signInMutation = useSignInWithPhoneNumber("recaptcha-element");
@@ -66,8 +69,8 @@ export default function OnboardingPage() {
     return OnboardingMoreDetailsPage(
       setPage,
       signInMutation,
-      shopBio,
-      setShopBio,
+      shopDescription,
+      setShopDescription,
     );
   } else if (page == Page.SIGNIN) {
     return SignInPage(setPage, signInMutation);
@@ -87,15 +90,18 @@ export default function OnboardingPage() {
       confirmationResultMutation,
       shopName,
       phoneNumber,
+      shopDescription,
+      shopHandle,
     );
   } else if (page == Page.FINISH) {
-    return OnboardingFinishPage(shopName);
+    return OnboardingFinishPage(shopHandle);
   } else {
     throw Error("unknown page");
   }
 }
 
 function IntroPage(setPage: Dispatch<SetStateAction<Page>>) {
+  const router = useRouter();
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-8">
       <div className="flex-1"></div>
@@ -118,6 +124,16 @@ function IntroPage(setPage: Dispatch<SetStateAction<Page>>) {
       >
         Get Started
       </Button>
+
+      <p className="mt-4 text-sm text-white">
+        Already have an account?{" "}
+        <button
+          onClick={() => router.push("/signin")}
+          className="font-semibold underline underline-offset-2"
+        >
+          Log in
+        </button>
+      </p>
     </div>
   );
 }
@@ -144,13 +160,14 @@ function OnboardingDetailsPage(
 
   const handleContinue = async () => {
     try {
-      // Update the phone number in users collection first
-      if (auth.currentUser) {
-        const userDocRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userDocRef, {
-          // TODO: update shop name and shop handle, check if handle exists
-        });
-      }
+      // // Update the phone number in users collection first
+      // if (auth.currentUser) {
+      //   const userDocRef = doc(db, "users", auth.currentUser.uid);
+      //   await updateDoc(userDocRef, {
+      //     // TODO: update shop name and shop handle, check if handle exists
+      //     shopName: shopName,
+      //   });
+      // }
       // Development bypass for SMS verification
       // console.log("SMS Handler Called with phone number:", phoneNumber);
       setPage(Page.MOREDETAILS);
@@ -236,8 +253,8 @@ function OnboardingDetailsPage(
 function OnboardingMoreDetailsPage(
   setPage: Dispatch<SetStateAction<Page>>,
   signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
-  shopBio: string,
-  setShopBio: Dispatch<SetStateAction<string>>,
+  shopDescription: string,
+  setShopDescription: Dispatch<SetStateAction<string>>,
 ) {
   const getButtonText = () => {
     if (signInMutation.isPending) {
@@ -252,12 +269,13 @@ function OnboardingMoreDetailsPage(
   const handleContinue = async () => {
     try {
       // Update the phone number in users collection first
-      if (auth.currentUser) {
-        const userDocRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userDocRef, {
-          // TODO: update shop bio
-        });
-      }
+      // if (auth.currentUser) {
+      //   const userDocRef = doc(db, "users", auth.currentUser.uid);
+      //   await updateDoc(userDocRef, {
+      //     // TODO: update shop bio
+      //     phoneNumber: phoneNumber,
+      //   });
+      // }
       // Development bypass for SMS verification
       // console.log("SMS Handler Called with phone number:", phoneNumber);
       // window.location.href = "/signin";
@@ -291,8 +309,8 @@ function OnboardingMoreDetailsPage(
         <textarea
           id="bio"
           placeholder="Handmade ceramics from my studio in Los Angeles. DM me on Insta with any questions!"
-          onChange={(e) => setShopBio(e.currentTarget.value)}
-          value={shopBio}
+          onChange={(e) => setShopDescription(e.currentTarget.value)}
+          value={shopDescription}
           className="text-md h-48 w-96 resize-none rounded-lg border p-4"
         />
       </div>
@@ -301,7 +319,7 @@ function OnboardingMoreDetailsPage(
         className="mt-auto px-36 py-6 text-lg"
         variant="onboarding"
         onClick={handleContinue}
-        disabled={signInMutation.isPending || !shopBio}
+        disabled={signInMutation.isPending || !shopDescription}
       >
         {getButtonText()}
       </Button>
@@ -334,7 +352,11 @@ function SignInPage(
             Let&#39;s set up your account!
           </h1>
         </div>
-        {/* TODO: google sign in here */}
+        <GoogleSigninButton //TOOD: should check if already account associated with email
+          onSuccess={() => {
+            setPage(Page.PHONE);
+          }}
+        />
         <MagicLinkSigninForm />
         <Button
           id="recaptcha-element"
@@ -372,12 +394,12 @@ function PhoneNumberPage(
   const handleContinue = async () => {
     try {
       // Update the phone number in users collection first
-      if (auth.currentUser) {
-        const userDocRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userDocRef, {
-          phoneNumber: phoneNumber,
-        });
-      }
+      // if (auth.currentUser) {
+      //   const userDocRef = doc(db, "users", auth.currentUser.uid);
+      //   await updateDoc(userDocRef, {
+      //     phoneNumber: phoneNumber,
+      //   });
+      // }
       // Development bypass for SMS verification
       // console.log("SMS Handler Called with phone number:", phoneNumber);
       setPage(Page.OTP);
@@ -388,7 +410,7 @@ function PhoneNumberPage(
       });
       */
     } catch (error) {
-      console.error("Error updating phone number:", error);
+      console.error("Error:", error);
     }
   };
   return (
@@ -448,6 +470,8 @@ function OnboardingPhoneOtpPage(
   >,
   shopName: string,
   phoneNumber: string,
+  shopDescription: string,
+  shopHandle: string,
 ) {
   const getButtonText = () => {
     if (confirmationResultMutation.isPending) {
@@ -464,15 +488,25 @@ function OnboardingPhoneOtpPage(
         // Create shop document
         const shopRef = collection(db, "shops");
         await addDoc(shopRef, {
-          creatorId: auth.currentUser.uid,
-          shopName: shopName,
+          categories: ["All"],
           createdAt: new Date(),
+          creatorId: auth.currentUser.uid,
+          description: shopDescription,
+          email: auth.currentUser.email,
+          isPremium: false,
+          profilePic: "/tempImages/basketWeaver.jpg",
+          shopName: shopName,
+          username: shopHandle,
         });
 
-        // Update user document with shop name
+        // Update user document with shop name and phone number
         const userDocRef = doc(db, "users", auth.currentUser.uid);
+        console.log(
+          "Updating phone number (temporarily b/c otp does not work) in user document",
+        );
         await updateDoc(userDocRef, {
           shopName: shopName,
+          phoneNumber: phoneNumber,
         });
 
         console.log("Shop created and user updated successfully");
@@ -557,7 +591,7 @@ function OnboardingPhoneOtpPage(
   );
 }
 
-function OnboardingFinishPage(shopName: string) {
+function OnboardingFinishPage(shopHandle: string) {
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-between bg-gradient-to-b from-red-500 to-red-200 p-8">
       <div className="flex flex-col items-center justify-between">
@@ -573,7 +607,7 @@ function OnboardingFinishPage(shopName: string) {
           <Link href="/add-product">Add a piece</Link>
         </Button>
         <Button className="px-8 py-6 text-lg" variant="onboardingSecondary">
-          <Link href={`/${shopName}`}>Take me to my shop</Link>
+          <Link href={`/${shopHandle}`}>Take me to my shop</Link>
         </Button>
       </div>
     </div>

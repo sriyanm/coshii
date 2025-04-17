@@ -24,10 +24,10 @@ export function Toggle({
         fontFamily: font,
         whiteSpace: "nowrap", // Prevent line breaks for horizontal scroll
         scrollBehavior: "smooth", // Smooth scrolling
-        justifyContent: options.length <= 3 ? "center" : "flex-start", // Center if there are few options
+        justifyContent: options?.length <= 3 ? "center" : "flex-start", // Center if there are few options
       }}
     >
-      {options.map((option) => (
+      {options?.map((option) => (
         <button
           key={option}
           className={`rounded-[6px] px-5 transition-colors duration-200 ease-in-out ${borderBox ? "border" : ""} ${

@@ -16,7 +16,6 @@ export interface Product {
 export interface Shop {
   createdAt: string;
   creatorId: string;
-  creatorName: string;
   shopName: string;
   username: string;
   email: string;

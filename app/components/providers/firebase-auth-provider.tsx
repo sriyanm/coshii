@@ -37,6 +37,7 @@ export const FirebaseAuthProvider = ({
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
         // Update user document in Firestore
+        console.log("User is signed in or refresh:", authUser);
         await setDoc(
           doc(db, "users", authUser.uid),
           {

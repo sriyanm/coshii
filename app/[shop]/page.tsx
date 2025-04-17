@@ -12,12 +12,18 @@ import Link from "next/link";
 // import { StringValidation } from "zod";
 import { Product, Shop, CartItem } from "../types/index";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  DocumentSnapshot,
+} from "firebase/firestore";
 import { db } from "@/app/lib/client/firebase";
-// import { CartItem } from "../components/CartItem";
+import { fetchProducts } from "../components/ProductServer";
 
 const navigation: NavigationItem[] = [
-  { name: "Shop", icon: Store, href: "/yourstore" },
+  { name: "Shop", icon: Store, href: "/" },
   { name: "Search", icon: Search, href: "/search" },
   { name: "New Product", icon: PlusSquare, href: "/add-product" },
   { name: "Backrooms", icon: Shirt, href: "/inventory" },
@@ -35,18 +41,23 @@ export default function ProfilePage({
   const [isFetching, setIsFetching] = useState(false);
   const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
+  const [stickied, setStickied] = useState(false); //track if we have already scrolled to a sticky product
   const [sellerView, setSellerView] = useState(false);
   const [buyerView, setBuyerView] = useState(true);
   const [invalidShop, setInvalidShop] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
   const popupTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const lastProductRef = useRef<HTMLDivElement | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [itemCount, setItemCount] = useState<number>(0);
+  const [lastVisibleProduct, setLastVisibleProduct] =
+    useState<DocumentSnapshot | null>(null);
+  const [donePaginating, setDonePaginating] = useState<boolean>(false);
   const [shopData, setShopData] = useState<Shop>({
     createdAt: "",
     creatorId: "",
-    creatorName: "",
     profilePic: "",
     shopName: "",
     username: "",
@@ -77,9 +88,27 @@ export default function ProfilePage({
     setShopData(updatedShopData);
   };
 
+  const handleShare = (product: Product) => {
+    const productLink = `${process.env.NEXT_PUBLIC_BASE_URL}/${shopData.username}#product-${product.id}`;
+    console.log("Share clicked");
+
+    // Copy the URL to the clipboard
+    navigator.clipboard
+      .writeText(productLink)
+      .then(() => {
+        setShowPopup(true);
+        setPopupMessage(`Product link for ${product.name} copied to clipboard`);
+        setTimeout(() => setShowPopup(false), 3000);
+      })
+      .catch((error) => {
+        console.error("Failed to copy text: ", error);
+      });
+  };
+
   const handleAddToCart = (product: Product) => {
     if (sellerView) {
       setShowPopup(true);
+      setPopupMessage("Sorry, you cant add your own products to your cart");
 
       if (popupTimerRef.current) {
         clearTimeout(popupTimerRef.current);
@@ -122,10 +151,13 @@ export default function ProfilePage({
     console.log("Account Id: ", "acct_1R1Yp7E2rsuqp9lw"); //TODO: this is hardcoded
   };
 
-  const CACHE_KEY = "cachedProducts";
+  const CACHE_KEY = `cachedProducts-${shopData.username}`;
   const CACHE_EXPIRATION_MS = 2 * 60 * 1000; // 2 minutes
 
-  const fetchProducts = async () => {
+  const getProducts = async (
+    sharedProductId: string | null = null,
+    bottom: boolean = false,
+  ) => {
     if (isFetching) return;
 
     setIsFetching(true);
@@ -133,11 +165,11 @@ export default function ProfilePage({
     try {
       const cachedData = sessionStorage.getItem(CACHE_KEY);
 
-      if (cachedData) {
+      if (cachedData && !bottom) {
         const { products: cachedProducts, timestamp } = JSON.parse(cachedData);
         // Use cached data if it's still valid
         if (Date.now() - timestamp < CACHE_EXPIRATION_MS) {
-          console.log("Using cached product data.");
+          console.log("Using cached product data.", cachedProducts);
           setProducts(cachedProducts);
           setIsFetching(false);
           return;
@@ -145,46 +177,27 @@ export default function ProfilePage({
       }
 
       // Query products collection for products created by this shop's owner
-      const productsRef = collection(db, "products");
-      const q = query(
-        productsRef,
-        where("createdBy", "==", shopData.creatorId),
+      const {
+        products: newProducts,
+        lastVisible: newLastVisibleProduct,
+        done,
+      } = await fetchProducts(
+        shopData.creatorId,
+        shopData.shopName,
+        selectedCategory,
+        sharedProductId,
+        lastVisibleProduct,
       );
-      const querySnapshot = await getDocs(q);
-
-      const newProducts: Product[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        newProducts.push({
-          id: doc.id,
-          name: data.name || "",
-          price: data.price || 0,
-          images: data.mediaUrls || ["/tempImages/basket.jpeg"],
-          description: data.description || "",
-          stock: data.inventory || 0,
-          isListed: data.isListed ?? true,
-          tags: data.tags || [],
-          shopName: shopData.shopName,
-          sellerId: data.sellerId || "",
-        });
+      setProducts((prevProducts) => {
+        // Filter out any products in newProducts that are already in prevProducts (possibly due to sticky links)
+        const filteredNewProducts = newProducts.filter(
+          (newProduct) =>
+            !prevProducts.some((product) => product.id === newProduct.id),
+        );
+        return [...prevProducts, ...filteredNewProducts];
       });
-
-      // Sort products by creation date if available, or name as fallback
-      newProducts.sort((a, b) => {
-        if (a.name && b.name) {
-          return a.name.localeCompare(b.name);
-        }
-        return 0;
-      });
-
-      // Add cache products in sessionStorage
-      sessionStorage.setItem(
-        CACHE_KEY,
-        JSON.stringify({ products: newProducts, timestamp: Date.now() }),
-      );
-
-      setProducts(newProducts);
-      console.log("products:", newProducts);
+      setLastVisibleProduct(newLastVisibleProduct);
+      setDonePaginating(done);
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -192,13 +205,47 @@ export default function ProfilePage({
     }
   };
 
-  // Remove the infinite scroll observer effect
+  // Add cache products in sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({ products: products, timestamp: Date.now() }),
+    );
+  }, [products]);
+
+  // Initial product fetch
   useEffect(() => {
     if (shopData.creatorId) {
-      fetchProducts();
+      const hash = window.location.hash; // Get the current URL hash
+      let productId = null;
+      if (hash) {
+        productId = hash.substring(9); // Remove the '#product-' from the hash
+        console.log("Parsed product in link", productId);
+      }
+      getProducts(productId);
     }
-  }, [shopData.creatorId]);
+  }, [shopData.creatorId, selectedCategory]);
 
+  // Fetch more products if reached bottom
+  useEffect(() => {
+    if (observerRef.current) observerRef.current.disconnect();
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetching && !donePaginating) {
+          getProducts(undefined, true);
+        }
+      },
+      { threshold: 1.0 },
+    );
+
+    const target = document.querySelector("#load-more-trigger");
+    if (target) observerRef.current.observe(target);
+
+    return () => observerRef.current?.disconnect();
+  }, [products, isFetching]);
+
+  // Popup if try to buy own product
   useEffect(() => {
     return () => {
       if (popupTimerRef.current) {
@@ -254,7 +301,7 @@ export default function ProfilePage({
   }, []);
 
   // Sticky link
-  useEffect(() => {
+  const handleStickyLink = () => {
     const hash = window.location.hash; // Get the current URL hash
     if (hash) {
       const productId = hash.substring(1); // Remove the '#' from the hash
@@ -264,9 +311,20 @@ export default function ProfilePage({
       if (productElement) {
         productElement.scrollIntoView({
           behavior: "smooth",
-          block: "start",
+          block: "center",
         });
+        setStickied(true);
       }
+    }
+  };
+
+  useEffect(() => {
+    handleStickyLink();
+  }, [shopData.creatorId, selectedCategory]);
+
+  useEffect(() => {
+    if (!stickied) {
+      handleStickyLink();
     }
   }, [products]);
 
@@ -362,39 +420,41 @@ export default function ProfilePage({
 
         {/* Product Pages */}
         <div className="mb-16 space-y-6 pt-2">
-          {products.map((product, index) => (
-            <ProductPage
-              key={product.id}
-              media={product.images}
-              caption={product.description || ""}
-              productName={product.name}
-              price={`\$${product.price}`}
-              onAddToCart={() => handleAddToCart(product)}
-              onLike={() => console.log("Liked")}
-              onComment={() => console.log("Commented")}
-              onShare={() => console.log("Shared")}
-              buyerView={buyerView}
-              isPremium={shopData.isPremium}
-              id={`product-${product.id}`}
-              ref={index === products.length - 1 ? lastProductRef : null}
-            />
-          ))}
+          {products
+            .filter((product) => {
+              return (
+                selectedCategory === "All" ||
+                (product.tags && product.tags.includes(selectedCategory))
+              );
+            })
+            .map((product, index) => (
+              <ProductPage
+                key={product.id}
+                media={product.images}
+                caption={product.description || ""}
+                productName={product.name}
+                price={`\$${product.price}`}
+                onAddToCart={() => handleAddToCart(product)}
+                onLike={() => console.log("Liked")}
+                onComment={() => console.log("Commented")}
+                onShare={() => handleShare(product)}
+                buyerView={buyerView}
+                isPremium={shopData.isPremium}
+                id={`product-${product.id}`}
+                ref={index === products.length - 1 ? lastProductRef : null}
+              />
+            ))}
         </div>
 
         {/* Pop-up Message if adding own product to cart */}
         {showPopup && (
           <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-white p-4 shadow-lg">
-            <p>Sorry, you cant add your own products to your cart</p>
+            {popupMessage}
           </div>
         )}
-
-        {/* Conditionally render the NavigationBar
-          {sellerView && (
-            <div className="fixed bottom-0 z-10 w-full">
-              <NavigationBar />
-            </div>
-          )} */}
       </div>
+
+      <div id="load-more-trigger" className="h-4 w-full"></div>
 
       {/* Bottom Navigation */}
       {!buyerView && (
@@ -418,25 +478,3 @@ export default function ProfilePage({
     </div>
   );
 }
-
-/*
-
-Notes: 
-If you're the seller:
- - Extra Pencil for editing
-- Notifications in the top right
-
-
-Top Down View:
-- Profile Component:
-  - Top Right Button
-    - Seller: Notificatoin
-    - Buyer: Cart
-  - Next to Name Button:
-    - Seller: Edit Profile
-- Nav Bar:
-  - Seller: Has it
-  - Buyer: Nope
-
-
-*/
