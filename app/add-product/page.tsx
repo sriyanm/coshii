@@ -319,8 +319,8 @@ function MediaPicker({
     if (!isEditMode) return;
 
     e.preventDefault();
-    console.log("Mouse down at", e.clientX, e.clientY);
-    setDebugInfo(`Mouse down at ${e.clientX}, ${e.clientY}`);
+    console.log("Mouse down detected at", e.clientX, e.clientY);
+    setDebugInfo(`Mouse down detected. Drag to move.`);
 
     const startX = e.clientX;
     const startY = e.clientY;
@@ -328,26 +328,24 @@ function MediaPicker({
     const startPosY = currentPosition.y;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
+      console.log("Mouse move event", moveEvent.clientX, moveEvent.clientY);
       const dx = moveEvent.clientX - startX;
       const dy = moveEvent.clientY - startY;
 
       // Limit movement based on scale
-      const maxOffset = (currentScale - 1) * 100;
+      const maxOffset = (currentScale - 1) * 150; // Increased range for more movement
       const newX = Math.min(maxOffset, Math.max(-maxOffset, startPosX + dx));
       const newY = Math.min(maxOffset, Math.max(-maxOffset, startPosY + dy));
 
       setCurrentPosition({ x: newX, y: newY });
-      setDebugInfo(`Dragging to ${newX.toFixed(0)}, ${newY.toFixed(0)}`);
-      console.log("Mouse move to", newX, newY);
+      setDebugInfo(`Dragging: ${newX.toFixed(0)}, ${newY.toFixed(0)}`);
     };
 
     const handleMouseUp = () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
       console.log("Mouse up, drag ended");
-      setDebugInfo(
-        `Drag ended at ${currentPosition.x.toFixed(0)}, ${currentPosition.y.toFixed(0)}`,
-      );
+      setDebugInfo(`Click and drag to move. Scroll to zoom.`);
     };
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -359,11 +357,33 @@ function MediaPicker({
     if (!isEditMode) return;
 
     e.preventDefault();
-    const delta = e.deltaY * -0.01;
+
+    // Make zooming more responsive
+    const delta = e.deltaY * -0.005;
     const newScale = Math.min(3, Math.max(1, currentScale + delta));
+
+    // Apply zoom centered on cursor position
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Calculate normalized position (0-1)
+    const normX = mouseX / rect.width;
+    const normY = mouseY / rect.height;
+
+    // Calculate the focal point in image coordinates
+    const imgX = (normX - 0.5) * rect.width;
+    const imgY = (normY - 0.5) * rect.height;
+
+    // Adjust position to keep focal point under cursor
+    const scaleFactor = newScale / currentScale;
+    const newPosX = currentPosition.x + imgX * (1 - scaleFactor);
+    const newPosY = currentPosition.y + imgY * (1 - scaleFactor);
+
     setCurrentScale(newScale);
-    console.log("Wheel delta:", delta, "New scale:", newScale);
-    setDebugInfo(`Scale: ${newScale.toFixed(1)} (delta: ${delta.toFixed(2)})`);
+    setCurrentPosition({ x: newPosX, y: newPosY });
+
+    setDebugInfo(`Zoom: ${newScale.toFixed(2)}`);
   };
 
   // Handle scroll snap and update active index
@@ -403,6 +423,48 @@ function MediaPicker({
 
   // Check if current image is the last one
   const isLastImage = activeIndex === mediaUrls.length - 1;
+
+  // Add this touch handler function
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isEditMode) return;
+
+    console.log("Touch start detected");
+    setDebugInfo("Touch detected - drag to move");
+
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    const startY = touch.clientY;
+    const startPosX = currentPosition.x;
+    const startPosY = currentPosition.y;
+
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      const touchMove = moveEvent.touches[0];
+      const dx = touchMove.clientX - startX;
+      const dy = touchMove.clientY - startY;
+
+      // Limit movement based on scale
+      const maxOffset = (currentScale - 1) * 150;
+      const newX = Math.min(maxOffset, Math.max(-maxOffset, startPosX + dx));
+      const newY = Math.min(maxOffset, Math.max(-maxOffset, startPosY + dy));
+
+      setCurrentPosition({ x: newX, y: newY });
+      console.log("Touch move to", newX, newY);
+      setDebugInfo(`Moving: ${newX.toFixed(0)}, ${newY.toFixed(0)}`);
+
+      // Prevent default to avoid scrolling
+      moveEvent.preventDefault();
+    };
+
+    const handleTouchEnd = () => {
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
+      console.log("Touch ended");
+      setDebugInfo("Touch and drag to move. Pinch to zoom.");
+    };
+
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchend", handleTouchEnd);
+  };
 
   return (
     <div className="flex flex-col">
@@ -486,11 +548,11 @@ function MediaPicker({
                         </div>
                       ) : isImage ? (
                         <div
-                          className="relative size-full"
+                          className="relative size-full cursor-move touch-manipulation"
                           style={{
                             transform: `translate(${posX}px, ${posY}px) scale(${scale})`,
                             transformOrigin: "center",
-                            transition: "transform 0.1s ease-out",
+                            transition: "transform 0.05s ease-out", // Faster transition for more responsive feel
                           }}
                           onMouseDown={
                             isActive && isEditMode ? handleMouseDown : undefined
@@ -498,6 +560,16 @@ function MediaPicker({
                           onWheel={
                             isActive && isEditMode ? handleWheel : undefined
                           }
+                          onTouchStart={
+                            isActive && isEditMode
+                              ? handleTouchStart
+                              : undefined
+                          }
+                          onClick={() => {
+                            if (isActive && isEditMode) {
+                              console.log("Image clicked in edit mode");
+                            }
+                          }}
                         >
                           <img
                             src={url || "/placeholder.svg"}
@@ -633,71 +705,15 @@ function MediaPicker({
 
       {/* Debug info */}
       {isEditMode && (
-        <div className="rounded mt-2 bg-black/10 p-2 text-center text-sm text-black/90">
-          <strong>Debug:</strong>{" "}
-          {debugInfo || "Click and drag to move. Use mouse wheel to zoom."}
+        <div className="rounded mt-2 bg-black/20 p-3 text-center text-sm font-medium text-black">
+          <strong>Mac Trackpad:</strong> Click and drag with one finger to move.
+          Two-finger scroll to zoom.
+          <br />
+          <span className="text-xs">{debugInfo}</span>
         </div>
       )}
 
       {/* Edit controls */}
-      {isEditMode && (
-        <div className="mt-4 flex justify-center space-x-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Zoom
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="3"
-              step="0.1"
-              value={currentScale}
-              onChange={(e) => {
-                const newScale = Number.parseFloat(e.target.value);
-                setCurrentScale(newScale);
-                setDebugInfo(`Scale set to ${newScale.toFixed(1)}`);
-              }}
-              className="w-full"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Position X
-            </label>
-            <input
-              type="range"
-              min={-100}
-              max={100}
-              value={currentPosition.x}
-              onChange={(e) => {
-                const x = Number.parseInt(e.target.value);
-                setCurrentPosition((prev) => ({ ...prev, x }));
-                setDebugInfo(`Position X set to ${x}`);
-              }}
-              className="w-full"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Position Y
-            </label>
-            <input
-              type="range"
-              min={-100}
-              max={100}
-              value={currentPosition.y}
-              onChange={(e) => {
-                const y = Number.parseInt(e.target.value);
-                setCurrentPosition((prev) => ({ ...prev, y }));
-                setDebugInfo(`Position Y set to ${y}`);
-              }}
-              className="w-full"
-            />
-          </div>
-        </div>
-      )}
 
       {/* Fixed bottom section for buttons and text */}
       <div className="relative mt-4 h-16">
