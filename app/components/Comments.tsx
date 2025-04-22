@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { collection, addDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  addDoc,
+  getDocs,
+  updateDoc,
+  getDoc,
+  increment,
+} from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
 // Comment type definition
 interface Comment {
@@ -16,57 +24,77 @@ interface CommentsPopupProps {
   buyerView: boolean;
 }
 
-// Mock API functions <-- TODO: fetch from backend (note product id is passed from socialbar.tsx)
+// Fetching comments
 const fetchComments = async (productId: string): Promise<Comment[]> => {
-  return new Promise((resolve) =>
-    setTimeout(() => {
-      resolve([
-        {
-          text: "Great product!" + productId,
-          likes: 5,
-          owner: "Alice",
-          timestamp: "2024-12-15T10:00:00Z",
-        },
-        {
-          text: "Really loved it!",
-          likes: 3,
-          owner: "Bob",
-          timestamp: "2024-12-14T15:30:00Z",
-        },
-      ]);
-    }, 1000),
-  );
+  try {
+    const commentsRef = collection(db, "products", productId, "comments");
+    const snapshot = await getDocs(commentsRef);
+
+    if (snapshot.empty) {
+      console.log("empty");
+      return [];
+    }
+
+    const comments: Comment[] = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        text: data.text || "",
+        likes: data.likes || 0,
+        owner: data.owner || "Unknown",
+        timestamp: data.timestamp || new Date().toISOString(), // fallback
+      };
+    });
+
+    return comments;
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    return [];
+  }
 };
 
-//TODO: add to backend
+//
 const postComment = async (
   productId: string,
   commentText: string,
-): Promise<Comment[]> => {
-  return new Promise((resolve) =>
-    setTimeout(() => {
-      resolve([
-        {
-          text: "Great product!",
-          likes: 5,
-          owner: "Alice",
-          timestamp: "2024-12-15T10:00:00Z",
-        },
-        {
-          text: "Really loved it!",
-          likes: 3,
-          owner: "Bob",
-          timestamp: "2024-12-14T15:30:00Z",
-        },
-        {
-          text: commentText,
-          likes: 0,
-          owner: "You",
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-    }, 500),
-  );
+): Promise<Comment | null> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+
+    const comment: Comment = {
+      text: commentText,
+      likes: 0,
+      owner: user.displayName || user.email || "Anonymous",
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log("Posting", commentText, productId);
+
+    // Add comment
+    const commentsRef = collection(db, "products", productId, "comments");
+    await addDoc(commentsRef, comment);
+
+    // Increment comments count
+    const productRef = doc(db, "products", productId);
+    try {
+      await updateDoc(productRef, {
+        commentsCount: increment(1),
+      });
+    } catch {
+      // fallback if commentsCount doesn’t exist
+      const snap = await getDoc(productRef);
+      if (snap.exists()) {
+        await updateDoc(productRef, {
+          commentsCount: 1,
+        });
+      }
+    }
+
+    return comment;
+  } catch (error) {
+    console.error("Error posting comment:", error);
+    return null;
+  }
 };
 
 export function CommentsPopup({
@@ -98,8 +126,10 @@ export function CommentsPopup({
     if (newComment.trim()) {
       setLoading(true);
       try {
-        const updatedComments = await postComment(productId, newComment);
-        setComments(updatedComments);
+        const newComments = await postComment(productId, newComment);
+        if (newComments) {
+          setComments([...comments, newComments]);
+        }
         setNewComment("");
       } catch (error) {
         console.error("Failed to post comment:", error);

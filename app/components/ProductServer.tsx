@@ -73,6 +73,8 @@ export const fetchProducts = async (
         tags: data.tags || [],
         shopName: shopName,
         sellerId: data.sellerId || "",
+        likesCount: data.likesCount || 0,
+        commentsCount: data.commentsCount || 0,
       });
     });
 

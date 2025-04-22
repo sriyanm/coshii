@@ -14,6 +14,8 @@ interface ProductPageProps {
   onShare: () => void;
   buyerView: boolean;
   isPremium: boolean;
+  likesCount: number;
+  commentsCount: number;
   id: string;
 }
 
@@ -31,6 +33,8 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
       buyerView,
       isPremium,
       id,
+      likesCount,
+      commentsCount,
     },
     ref,
   ) => {
@@ -194,6 +198,9 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
               onComment={onComment}
               onShare={onShare}
               buyerView={buyerView}
+              likesCount={likesCount}
+              commentsCount={commentsCount}
+              productId={id.split("-")[1]} //Passed in id looks like: product-02rKSxlMzsLLfks7JZDm
             />
           </div>
         </div>
