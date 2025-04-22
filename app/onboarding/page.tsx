@@ -103,8 +103,10 @@ export default function OnboardingPage() {
 function IntroPage(setPage: Dispatch<SetStateAction<Page>>) {
   const router = useRouter();
   return (
-    <div className="mx-auto flex h-screen max-w-md flex-col items-center justify-between bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-6">
-      <div className="flex flex-col items-center text-center">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col items-center bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-8">
+      <div className="flex-1"></div>
+
+      <div className="flex w-full max-w-sm flex-col items-center px-6 text-center">
         <h1 className="mb-2 text-xl font-bold text-white">Welcome to</h1>
         <div className="mb-4 text-8xl font-bold text-white">Coshii</div>
         <p className="text-xl font-medium text-white">
@@ -112,25 +114,26 @@ function IntroPage(setPage: Dispatch<SetStateAction<Page>>) {
         </p>
       </div>
 
-      <div className="flex w-full flex-col items-center">
-        <Button
-          className="w-full py-4 text-lg"
-          variant="onboardingFirst"
-          onClick={() => setPage(Page.DETAILS)}
-        >
-          Get Started
-        </Button>
+      <div className="flex-1"></div>
+      <Button
+        className="px-28 py-6 text-lg"
+        variant="onboardingFirst"
+        onClick={function () {
+          setPage(Page.DETAILS);
+        }}
+      >
+        Get Started
+      </Button>
 
-        <p className="mt-4 text-sm text-white">
-          Already have an account?{" "}
-          <button
-            onClick={() => router.push("/signin")}
-            className="font-semibold underline underline-offset-2"
-          >
-            Log in
-          </button>
-        </p>
-      </div>
+      <p className="mt-4 text-sm text-white">
+        Already have an account?{" "}
+        <button
+          onClick={() => router.push("/signin")}
+          className="font-semibold underline underline-offset-2"
+        >
+          Log in
+        </button>
+      </p>
     </div>
   );
 }
