@@ -18,7 +18,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        onboardingFirst: "rounded-full bg-white text-black active:bg-white/90",
+        onboardingFirst:
+          "rounded-full bg-white text-gray-600 shadow-lg active:bg-white/90",
         onboarding:
           "rounded-full bg-white text-red-500 shadow-xl active:bg-white/90",
         onboardingSecondary:
