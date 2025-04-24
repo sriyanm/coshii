@@ -12,7 +12,7 @@ import { Label } from "@/app/components/ui/label";
 import { UseMutationResult } from "@tanstack/react-query";
 import { ConfirmationResult, UserCredential } from "firebase/auth";
 import Link from "next/link";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Suspense, Dispatch, SetStateAction, useState, useEffect } from "react";
 import PhoneInput, {
   isPossiblePhoneNumber,
 } from "react-phone-number-input/input";
@@ -24,7 +24,7 @@ import { db, auth } from "@/app/lib/client/firebase";
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
 import { GoogleSigninButton } from "@/app/components/GoogleSigninButton";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // import { set } from "zod";
 
@@ -44,6 +44,14 @@ type ConfirmationResultMutationParams = {
 };
 
 export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OnboardingContent />
+    </Suspense>
+  );
+}
+
+function OnboardingContent() {
   const [page, setPage] = useState(Page.INTRO);
   const [shopName, setShopName] = useState("");
   const [shopHandle, setShopHandle] = useState("");
@@ -52,55 +60,78 @@ export default function OnboardingPage() {
   const [otp, setOtp] = useState("");
   const signInMutation = useSignInWithPhoneNumber("recaptcha-element");
   const confirmationResultMutation = usePhoneNumberConfirmationResult();
-  if (page == Page.INTRO) {
-    return IntroPage(setPage);
-  } else if (page == Page.DETAILS) {
-    return OnboardingDetailsPage(
-      setPage,
-      shopName,
-      setShopName,
-      phoneNumber,
-      setPhoneNumber,
-      signInMutation,
-      shopHandle,
-      setShopHandle,
-    );
-  } else if (page == Page.MOREDETAILS) {
-    return OnboardingMoreDetailsPage(
-      setPage,
-      signInMutation,
-      shopDescription,
-      setShopDescription,
-    );
-  } else if (page == Page.SIGNIN) {
-    return SignInPage(setPage, signInMutation);
-  } else if (page == Page.PHONE) {
-    return PhoneNumberPage(
-      setPage,
-      signInMutation,
-      phoneNumber,
-      setPhoneNumber,
-    );
-  } else if (page == Page.OTP) {
-    return OnboardingPhoneOtpPage(
-      setPage,
-      otp,
-      setOtp,
-      signInMutation,
-      confirmationResultMutation,
-      shopName,
-      phoneNumber,
-      shopDescription,
-      shopHandle,
-    );
-  } else if (page == Page.FINISH) {
-    return OnboardingFinishPage(shopHandle);
-  } else {
-    throw Error("unknown page");
-  }
+
+  const searchParams = useSearchParams();
+  const pageParam = searchParams.get("page");
+  const router = useRouter();
+
+  useEffect(() => {
+    if (pageParam) {
+      const pageEnum = parseInt(pageParam, 10);
+      if (Object.values(Page).includes(pageEnum)) {
+        setPage(pageEnum as Page); // Set the current page using the enum
+      }
+    } else {
+      setPage(Page.INTRO);
+    }
+  }, [pageParam]);
+
+  const handlePageChange = (nextPage: Page) => {
+    const validPage = Object.values(Page).includes(nextPage);
+    if (validPage) {
+      router.push(`/onboarding?page=${nextPage}`);
+    } else {
+      router.replace("/onboarding");
+    }
+  };
+
+  return (
+    <>
+      {page === Page.INTRO && IntroPage(handlePageChange)}
+      {page === Page.DETAILS &&
+        OnboardingDetailsPage(
+          handlePageChange,
+          shopName,
+          setShopName,
+          phoneNumber,
+          setPhoneNumber,
+          signInMutation,
+          shopHandle,
+          setShopHandle,
+        )}
+      {page === Page.MOREDETAILS &&
+        OnboardingMoreDetailsPage(
+          handlePageChange,
+          signInMutation,
+          shopDescription,
+          setShopDescription,
+        )}
+      {page === Page.SIGNIN && SignInPage(handlePageChange, signInMutation)}
+      {page === Page.PHONE &&
+        PhoneNumberPage(
+          handlePageChange,
+          signInMutation,
+          phoneNumber,
+          setPhoneNumber,
+        )}
+      {page === Page.OTP &&
+        OnboardingPhoneOtpPage(
+          handlePageChange,
+          otp,
+          setOtp,
+          signInMutation,
+          confirmationResultMutation,
+          shopName,
+          phoneNumber,
+          shopDescription,
+          shopHandle,
+        )}
+      {page === Page.FINISH && OnboardingFinishPage(shopHandle)}
+    </>
+  );
 }
 
-function IntroPage(setPage: Dispatch<SetStateAction<Page>>) {
+function IntroPage(setPage: (nextPage: Page) => void) {
   const router = useRouter();
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-8">
@@ -139,7 +170,7 @@ function IntroPage(setPage: Dispatch<SetStateAction<Page>>) {
 }
 
 function OnboardingDetailsPage(
-  setPage: Dispatch<SetStateAction<Page>>,
+  setPage: (nextPage: Page) => void,
   shopName: string,
   setShopName: Dispatch<SetStateAction<string>>,
   phoneNumber: string,
@@ -251,7 +282,7 @@ function OnboardingDetailsPage(
 }
 
 function OnboardingMoreDetailsPage(
-  setPage: Dispatch<SetStateAction<Page>>,
+  setPage: (nextPage: Page) => void,
   signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
   shopDescription: string,
   setShopDescription: Dispatch<SetStateAction<string>>,
@@ -328,7 +359,7 @@ function OnboardingMoreDetailsPage(
 }
 
 function SignInPage(
-  setPage: Dispatch<SetStateAction<Page>>,
+  setPage: (nextPage: Page) => void,
   signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
 ) {
   const getButtonText = () => {
@@ -376,7 +407,7 @@ function SignInPage(
 }
 
 function PhoneNumberPage(
-  setPage: Dispatch<SetStateAction<Page>>,
+  setPage: (nextPage: Page) => void,
   signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
   phoneNumber: string,
   setPhoneNumber: Dispatch<SetStateAction<string>>,
@@ -458,7 +489,7 @@ function PhoneNumberPage(
 }
 
 function OnboardingPhoneOtpPage(
-  setPage: Dispatch<SetStateAction<Page>>,
+  setPage: (nextPage: Page) => void,
   otp: string,
   setOtp: Dispatch<SetStateAction<string>>,
   signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
@@ -603,7 +634,7 @@ function OnboardingFinishPage(shopHandle: string) {
         </h1>
       </div>
       <div className="flex flex-col items-center justify-between">
-        <Button className="mb-1 px-8 py-6 text-lg" variant="onboarding">
+        <Button className="mb-1 px-8 py-6 text-lg" variant="onboardingThird">
           <Link href="/add-product">Add a piece</Link>
         </Button>
         <Button className="px-8 py-6 text-lg" variant="onboardingSecondary">
