@@ -9,7 +9,6 @@ import {
   Shirt,
   Settings,
   Clock,
-  Check,
 } from "lucide-react";
 import Link from "next/link";
 // import { Switch } from "../components/ui/switch";
@@ -372,21 +371,17 @@ export default function SettingsPage() {
           <div
             className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "free" ? "relative border-8 border-black" : ""}`}
           >
-            <h3 className="mb-2 text-lg font-bold">FREE PLAN</h3>
-            <ul className="space-y-1">
-              <li>- list products for sale easily</li>
-              <li>- interact with other sellers</li>
-              <li>-</li>
-            </ul>
-            {userProfile.plan === "free" && (
-              <div className="absolute right-6 top-6">
-                <Check className="size-16 text-[#C6A052]" />
-              </div>
-            )}
+            <div className="text-left">
+              <h3 className="mb-2 text-lg font-bold">FREE PLAN</h3>
+              <ul className="space-y-1">
+                <li>- list products for sale easily</li>
+                <li>- interact with other sellers</li>
+              </ul>
+            </div>
           </div>
 
           <button
-            className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "paid" ? "relative border-8 border-black" : ""}`}
+            className={`rounded-lg bg-gray-100 p-6 text-left ${userProfile.plan === "paid" ? "relative border-8 border-black" : ""}`}
             onClick={handleCheckoutClick} // On click, show the modal
           >
             <h3 className="mb-2 text-lg font-bold">
@@ -397,11 +392,6 @@ export default function SettingsPage() {
               <li>- enable full checkout experience for customers</li>
               <li>- keep track of sold inventory from backroom</li>
             </ul>
-            {userProfile.plan === "paid" && (
-              <div className="absolute right-6 top-6">
-                <Check className="size-16 text-[#C6A052]" />
-              </div>
-            )}
           </button>
 
           {userProfile.plan === "paid" && (
