@@ -5,7 +5,7 @@ import InventoryInput from "@/app/components/inventory-input";
 import MoneyInput, { MoneyInputValues } from "@/app/components/money-input";
 import { Button } from "@/app/components/ui/button";
 import { Textarea } from "@/app/components/ui/textarea";
-import { ArrowLeft, ArrowRight, ImagePlus, Wand, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, ImagePlus, Plus } from "lucide-react";
 import Link from "next/link";
 import {
   Dispatch,
@@ -929,9 +929,9 @@ function ProductDescription({
       />
 
       {/* AI suggestion button */}
-      <Button className="mb-2 h-6 text-sm" variant="addProduct">
+      {/* <Button className="mb-2 h-6 text-sm" variant="addProduct">
         Write with AI <Wand />
-      </Button>
+      </Button> */}
     </div>
   );
 }
@@ -1236,7 +1236,7 @@ function AddProductContent() {
   } else if (page == Page.DESCRIPTION) {
     previousPage = Page.MEDIA;
     nextPage = Page.PRICE;
-    backgroundImage = `url(/ajay-product.png)`;
+    backgroundImage = mediaUrls[0] ? `url(${mediaUrls[0]})` : ``;
     content = (
       <ProductDescription
         name={name}
@@ -1252,7 +1252,7 @@ function AddProductContent() {
   } else if (page == Page.PRICE) {
     previousPage = Page.DESCRIPTION;
     nextPage = Page.SUCCESS;
-    backgroundImage = `url(/ajay-product.png)`;
+    backgroundImage = mediaUrls[0] ? `url(${mediaUrls[0]})` : ``;
     content = (
       <PriceAndShipping
         price={price}
