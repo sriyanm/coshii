@@ -12,7 +12,7 @@ import {
   Check,
 } from "lucide-react";
 import Link from "next/link";
-import { Switch } from "../components/ui/switch";
+// import { Switch } from "../components/ui/switch";
 import type { NavigationItem } from "../types";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -66,8 +66,8 @@ export default function SettingsPage() {
     plan: "free",
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [binarySetting, setBinarySetting] = useState(false);
-  const [choiceOption, setChoiceOption] = useState("Option 1");
+  // const [binarySetting, setBinarySetting] = useState(false);
+  // const [choiceOption, setChoiceOption] = useState("Option 1");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -143,7 +143,9 @@ export default function SettingsPage() {
           <ChevronRight className="size-5 text-gray-400" />
         </button>
 
-        <button className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4">
+        {/* Placeholder fields */}
+
+        {/* <button className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4">
           <span className="font-bold">[Placeholder]</span>
           <ChevronRight className="size-5 text-gray-400" />
         </button>
@@ -151,7 +153,7 @@ export default function SettingsPage() {
         <button className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4">
           <span className="font-bold">[Placeholder]</span>
           <ChevronRight className="size-5 text-gray-400" />
-        </button>
+        </button> */}
 
         <SignoutButton />
       </div>
@@ -227,7 +229,9 @@ export default function SettingsPage() {
           <ChevronRight className="ml-auto size-5 text-gray-400" />
         </button>
 
-        <div className="flex items-center justify-between rounded-lg bg-gray-100 p-4">
+        {/* Placeholder fields */}
+
+        {/* <div className="flex items-center justify-between rounded-lg bg-gray-100 p-4">
           <div>
             <div className="text-sm font-bold">binary setting</div>
             <div className="text-sm text-gray-500">subtext</div>
@@ -257,7 +261,7 @@ export default function SettingsPage() {
               </button>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
