@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { CiBellOn } from "react-icons/ci"; // Import CiBellOn
 import { SiFacebook, SiX, SiInstagram } from "react-icons/si";
@@ -8,6 +9,15 @@ import { useState } from "react";
 import { Shop } from "../types/index";
 import Image from "next/image";
 import { JSX } from "react";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  deleteField,
+} from "firebase/firestore";
+import { db, auth } from "@/app/lib/client/firebase";
 
 // Subcomponent for Profile Header
 function ProfileHeader({
@@ -20,6 +30,91 @@ function ProfileHeader({
   onShopUpdate: (updatedShopData: Shop) => void;
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [loadingFollowStatus, setLoadingFollowStatus] = useState(true);
+  useEffect(() => {
+    const checkFollowing = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
+
+        const currentShopId = currentUser.uid;
+        const visitedShopId = shopData.creatorId;
+
+        if (currentShopId === visitedShopId) return;
+
+        const shopsRef = collection(db, "shops");
+        const snapshot = await getDocs(
+          query(shopsRef, where("creatorId", "==", currentShopId)),
+        );
+
+        if (!snapshot.empty) {
+          const currDoc = snapshot.docs[0];
+          const data = currDoc.data();
+          setIsFollowing(!!data.following?.[visitedShopId]);
+        }
+      } catch (error) {
+        console.error("Error checking follow status:", error);
+      } finally {
+        setLoadingFollowStatus(false);
+      }
+    };
+
+    checkFollowing();
+  }, [shopData.creatorId]);
+
+  const handleFollow = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        console.warn("User not authenticated.");
+        return;
+      }
+
+      const currentShopId = currentUser.uid;
+      const visitedShopId = shopData.creatorId;
+
+      const shopsRef = collection(db, "shops");
+
+      const currSnapshot = await getDocs(
+        query(shopsRef, where("creatorId", "==", currentShopId)),
+      );
+      const visitedSnapshot = await getDocs(
+        query(shopsRef, where("creatorId", "==", visitedShopId)),
+      );
+
+      if (currSnapshot.empty || visitedSnapshot.empty) {
+        console.warn("Could not find shop documents.");
+        return;
+      }
+
+      const currDoc = currSnapshot.docs[0];
+      const visitedDoc = visitedSnapshot.docs[0];
+
+      if (isFollowing) {
+        await updateDoc(currDoc.ref, {
+          [`following.${visitedShopId}`]: deleteField(),
+        });
+        await updateDoc(visitedDoc.ref, {
+          [`followers.${currentShopId}`]: deleteField(),
+        });
+      } else {
+        await updateDoc(visitedDoc.ref, {
+          [`followers.${currentShopId}`]: true,
+        });
+        await updateDoc(currDoc.ref, {
+          [`following.${visitedShopId}`]: true,
+        });
+      }
+
+      console.log(
+        `${currDoc.data().username} ${isFollowing ? "unfollowed" : "followed"} ${visitedDoc.data().username}`,
+      );
+      setIsFollowing(!isFollowing);
+    } catch (error) {
+      console.error("Error handling follow/unfollow:", error);
+    }
+  };
   return (
     <div className="relative p-5 text-center">
       {" "}
@@ -85,6 +180,14 @@ function ProfileHeader({
       {/* Username and Description */}
       <p className="text-gray-600">@{shopData.username}</p>
       <p className="mt-2 text-sm text-gray-500">{shopData.description}</p>
+      {!loadingFollowStatus && auth.currentUser?.uid !== shopData.creatorId && (
+        <button
+          className="mt-4 rounded-lg bg-[#FED15B] px-4 py-2 text-black"
+          onClick={handleFollow}
+        >
+          {isFollowing ? "Unfollow" : "Follow"}
+        </button>
+      )}
     </div>
   );
 }

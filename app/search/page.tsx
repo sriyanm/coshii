@@ -11,6 +11,7 @@ import { Input } from "../components/ui/input";
 import { collection, query, getDocs } from "firebase/firestore";
 import Fuse from "fuse.js";
 import { db } from "@/app/lib/client/firebase";
+import { auth } from "@/app/lib/client/firebase";
 
 // Types
 // interface Shop {
@@ -114,24 +115,20 @@ const navigation: NavigationItem[] = [
   { name: "Settings", icon: Settings, href: "/settings" },
 ];
 
-type View = "search" | "profile";
-
-// Update the UserSearchResult type to include id and all needed fields
-type UserSearchResult = {
+// Update the ShopSearchResult type to include id and all needed fields
+type ShopSearchResult = {
   id: string;
   email: string;
   shopName: string | null;
+  username: string | null;
+  creatorId: string | null;
   // You can add other fields as needed
 };
 
 export default function SearchPage() {
-  const [currentView, setCurrentView] = useState<View>("search");
-  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(
-    null,
-  );
   const [searchQuery, setSearchQuery] = useState("");
   const [currentTab] = useState("Search");
-  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<ShopSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   // Add this effect to handle debounced search
@@ -143,17 +140,6 @@ export default function SearchPage() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  // Update to handle clicking on a search result
-  const handleUserClick = (user: UserSearchResult) => {
-    setSelectedUser(user);
-    setCurrentView("profile");
-  };
-
-  const handleBack = () => {
-    setCurrentView("search");
-    setSelectedUser(null);
-  };
-
   const handleSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -162,7 +148,7 @@ export default function SearchPage() {
 
     setIsSearching(true);
     try {
-      const usersRef = collection(db, "users");
+      const shopsRef = collection(db, "shops");
 
       // Use the search term as is, without converting to lowercase
       const searchTerm = searchQuery;
@@ -170,29 +156,31 @@ export default function SearchPage() {
       console.log("Searching for:", searchTerm);
 
       // Try a more permissive query first
-      const q = query(usersRef);
+      const q = query(shopsRef);
 
       const querySnapshot = await getDocs(q);
       console.log("Total docs found:", querySnapshot.size);
 
-      const users: UserSearchResult[] = [];
+      const shops: ShopSearchResult[] = [];
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         console.log("Document data:", data);
 
-        // Check if shopName exists and contains search term (case insensitive)
-        if (data.shopName) {
-          users.push({
+        // Check if username exists and contains search term (case insensitive)
+        if (data.username) {
+          shops.push({
             id: doc.id,
             email: data.email || "",
             shopName: data.shopName || "",
+            username: data.username || "",
+            creatorId: data.creatorId || "",
           });
         }
       });
 
-      const fuse = new Fuse(users, {
-        keys: ["shopName", "email"],
+      const fuse = new Fuse(shops, {
+        keys: ["shopName", "username", "email"],
         threshold: 0.3, // Adjust for strictness
       });
 
@@ -201,7 +189,7 @@ export default function SearchPage() {
       console.log("Filtered results:", results.length);
       setSearchResults(results);
     } catch (error) {
-      console.error("Error searching users:", error);
+      console.error("Error searching shops:", error);
     } finally {
       setIsSearching(false);
     }
@@ -219,28 +207,38 @@ export default function SearchPage() {
           className="border-none bg-gray-100 pl-10"
         />
       </div>
-
+      {!searchQuery && (
+        <div className="justify-left flex flex-col items-start space-y-4 p-4 text-left">
+          <h2 className="text-lg font-semibold">Followers</h2>
+          {/* query and display followers */}
+          <h2 className="text-lg font-semibold">Following</h2>
+          {/* query and display following */}
+        </div>
+      )}
       {isSearching ? (
         <div className="flex justify-center p-4">
           <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
         </div>
       ) : (
         <div className="divide-y">
-          {searchResults.map((user) => (
-            <div
-              key={user.id}
-              className="cursor-pointer p-4 hover:bg-gray-50"
-              onClick={() => handleUserClick(user)}
-            >
-              <div className="font-medium">
-                {user.shopName || "No shop name"}
-              </div>
-              <div className="text-sm text-gray-500">{user.email}</div>
-            </div>
-          ))}
+          {searchResults.map(
+            (shop) =>
+              shop.creatorId !== auth.currentUser?.uid && (
+                <Link
+                  key={shop.id}
+                  href={`/${shop.username}`}
+                  className="block"
+                >
+                  <div className="cursor-pointer p-4 hover:bg-gray-50">
+                    <div className="font-medium">{shop.shopName}</div>
+                    <div className="text-sm text-gray-500">{shop.email}</div>
+                  </div>
+                </Link>
+              ),
+          )}
           {searchResults.length === 0 && searchQuery && (
             <div className="p-4 text-center text-gray-500">
-              No users found matching your search
+              No shops found matching your search.
             </div>
           )}
         </div>
@@ -248,34 +246,9 @@ export default function SearchPage() {
     </div>
   );
 
-  const renderProfileView = () => {
-    if (!selectedUser) return null;
-
-    return (
-      <div className="space-y-6">
-        <button
-          onClick={handleBack}
-          className="mb-4 flex items-center text-sm font-medium text-gray-600"
-        >
-          ← Back to search
-        </button>
-
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="mb-2 text-xl font-bold">
-            {selectedUser.shopName || "Shop"}
-          </h2>
-          <p className="text-gray-600">{selectedUser.email}</p>
-          {/* Add more user details here as needed */}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col bg-white">
-      <div className="flex-1 overflow-y-auto p-4">
-        {currentView === "search" ? renderSearchView() : renderProfileView()}
-      </div>
+      <div className="flex-1 overflow-y-auto p-4">{renderSearchView()}</div>
 
       <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
         {navigation.map((item) => (
