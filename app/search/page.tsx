@@ -8,104 +8,16 @@ import Link from "next/link";
 import { Store, SearchIcon, PlusSquare, Shirt, Settings } from "lucide-react";
 // import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { collection, query, getDocs } from "firebase/firestore";
+import { collection, query, getDocs, where } from "firebase/firestore";
 import Fuse from "fuse.js";
 import { db } from "@/app/lib/client/firebase";
 import { auth } from "@/app/lib/client/firebase";
-
-// Types
-// interface Shop {
-//   id: string;
-//   name: string;
-//   username: string;
-//   avatar: string;
-//   isFollowing?: boolean;
-//   isFollower?: boolean;
-// }
-
-// display all the shops based on search query real time
 
 interface NavigationItem {
   name: string;
   icon: React.ComponentType;
   href: string;
 }
-
-// Sample data
-// const shops: Shop[] = [
-//   {
-//     id: "1",
-//     name: "Elizabeth's Shop",
-//     username: "@elizabee2024",
-//     avatar: "/placeholder.svg",
-//     isFollowing: true,
-//     isFollower: true,
-//   },
-//   {
-//     id: "2",
-//     name: "Melissa Ceramics",
-//     username: "@melissacormicceramics",
-//     avatar: "/placeholder.svg",
-//     isFollowing: true,
-//     isFollower: true,
-//   },
-//   {
-//     id: "3",
-//     name: "PopShoes",
-//     username: "@popshoes",
-//     avatar: "/placeholder.svg",
-//     isFollowing: true,
-//     isFollower: true,
-//   },
-//   {
-//     id: "4",
-//     name: "Mark's Handrolls",
-//     username: "@handrolls",
-//     avatar: "/placeholder.svg",
-//     isFollowing: true,
-//     isFollower: false,
-//   },
-//   {
-//     id: "5",
-//     name: "millibooth",
-//     username: "@millibooth",
-//     avatar: "/placeholder.svg",
-//     isFollowing: true,
-//     isFollower: false,
-//   },
-//   {
-//     id: "6",
-//     name: "sriyan",
-//     username: "@sriyan",
-//     avatar: "/placeholder.svg",
-//     isFollowing: false,
-//     isFollower: false,
-//   },
-//   {
-//     id: "7",
-//     name: "ajay",
-//     username: "@ajay",
-//     avatar: "/placeholder.svg",
-//     isFollowing: false,
-//     isFollower: false,
-//   },
-//   {
-//     id: "8",
-//     name: "srikar",
-//     username: "@srikar",
-//     avatar: "/placeholder.svg",
-//     isFollowing: false,
-//     isFollower: false,
-//   },
-//   {
-//     id: "9",
-//     name: "priyanshu",
-//     username: "@priyanshu",
-//     avatar: "/placeholder.svg",
-//     isFollowing: false,
-//     isFollower: false,
-//   },
-// ];
 
 const navigation: NavigationItem[] = [
   { name: "Shop", icon: Store, href: "/" },
@@ -130,44 +42,126 @@ export default function SearchPage() {
   const [currentTab] = useState("Search");
   const [searchResults, setSearchResults] = useState<ShopSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [loadingFollowStatus, setLoadingFollowStatus] = useState(true);
+  const [followers, setFollowers] = useState<ShopSearchResult[]>([]);
+  const [following, setFollowing] = useState<ShopSearchResult[]>([]);
+  const [searchTriggered, setSearchTriggered] = useState(false);
 
-  // Add this effect to handle debounced search
   useEffect(() => {
+    let unsubscribed = false;
+
+    const fetchFollowersAndFollowing = async () => {
+      try {
+        const currentUser = auth.currentUser;
+
+        if (!currentUser) {
+          // Wait for auth to initialize
+          auth.onAuthStateChanged(async (user) => {
+            if (user && !unsubscribed) {
+              await fetchData(user.uid);
+            }
+          });
+        } else {
+          await fetchData(currentUser.uid);
+        }
+      } catch (error) {
+        console.error("Error fetching followers and following:", error);
+      }
+    };
+
+    const fetchData = async (currentShopId: string) => {
+      setLoadingFollowStatus(true);
+      const shopsRef = collection(db, "shops");
+
+      const snapshot = await getDocs(
+        query(shopsRef, where("creatorId", "==", currentShopId)),
+      );
+
+      if (snapshot.empty) {
+        setLoadingFollowStatus(false);
+        return;
+      }
+
+      const currDoc = snapshot.docs[0];
+      const data = currDoc.data();
+
+      const fetchChunkedShops = async (
+        ids: string[],
+      ): Promise<ShopSearchResult[]> => {
+        const result: ShopSearchResult[] = [];
+        for (let i = 0; i < ids.length; i += 10) {
+          const chunk = ids.slice(i, i + 10);
+          const chunkSnapshot = await getDocs(
+            query(shopsRef, where("creatorId", "in", chunk)),
+          );
+          chunkSnapshot.forEach((doc) => {
+            const shopData = doc.data();
+            result.push({
+              id: doc.id,
+              email: shopData.email || "",
+              shopName: shopData.shopName || "",
+              username: shopData.username || "",
+              creatorId: shopData.creatorId || "",
+            });
+          });
+        }
+        return result;
+      };
+
+      const followerIds = data.followers ? Object.keys(data.followers) : [];
+      const followingIds = data.following ? Object.keys(data.following) : [];
+
+      if (followerIds.length > 0) {
+        const followersData = await fetchChunkedShops(followerIds);
+        setFollowers(followersData);
+      }
+
+      if (followingIds.length > 0) {
+        const followingData = await fetchChunkedShops(followingIds);
+        setFollowing(followingData);
+      }
+
+      setLoadingFollowStatus(false);
+    };
+
+    fetchFollowersAndFollowing();
+
+    return () => {
+      unsubscribed = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      // Clear search results immediately if query is empty
+      setSearchResults([]);
+      setSearchTriggered(false);
+      return;
+    }
     const timeoutId = setTimeout(() => {
       handleSearch(searchQuery);
-    }, 300); // Wait 300ms after user stops typing before searching
-
+    }, 300);
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
   const handleSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) {
+      setSearchTriggered(false);
       setSearchResults([]);
       return;
     }
 
+    setSearchTriggered(true);
     setIsSearching(true);
     try {
       const shopsRef = collection(db, "shops");
 
-      // Use the search term as is, without converting to lowercase
-      const searchTerm = searchQuery;
-
-      console.log("Searching for:", searchTerm);
-
-      // Try a more permissive query first
       const q = query(shopsRef);
-
       const querySnapshot = await getDocs(q);
-      console.log("Total docs found:", querySnapshot.size);
 
       const shops: ShopSearchResult[] = [];
-
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        console.log("Document data:", data);
-
-        // Check if username exists and contains search term (case insensitive)
         if (data.username) {
           shops.push({
             id: doc.id,
@@ -181,12 +175,10 @@ export default function SearchPage() {
 
       const fuse = new Fuse(shops, {
         keys: ["shopName", "username", "email"],
-        threshold: 0.3, // Adjust for strictness
+        threshold: 0.3,
       });
 
       const results = fuse.search(searchQuery).map((result) => result.item);
-
-      console.log("Filtered results:", results.length);
       setSearchResults(results);
     } catch (error) {
       console.error("Error searching shops:", error);
@@ -207,14 +199,63 @@ export default function SearchPage() {
           className="border-none bg-gray-100 pl-10"
         />
       </div>
+
       {!searchQuery && (
-        <div className="justify-left flex flex-col items-start space-y-4 p-4 text-left">
+        <div className="justify-left flex flex-col space-y-4 p-4 text-left">
           <h2 className="text-lg font-semibold">Followers</h2>
-          {/* query and display followers */}
+          {loadingFollowStatus ? (
+            <div className="flex justify-center p-4">
+              <div className="size-6 animate-spin rounded-full border-b-2 border-gray-900" />
+            </div>
+          ) : followers.length === 0 ? (
+            <div className="px-4 text-start text-gray-500">
+              No followers found.
+            </div>
+          ) : (
+            <div className="divide-y">
+              {followers.map((shop) => (
+                <Link
+                  key={shop.id}
+                  href={`/${shop.username}`}
+                  className="block"
+                >
+                  <div className="cursor-pointer p-4 hover:bg-gray-50">
+                    <div className="font-medium">{shop.shopName}</div>
+                    <div className="text-sm text-gray-500">{shop.email}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
           <h2 className="text-lg font-semibold">Following</h2>
-          {/* query and display following */}
+          {loadingFollowStatus ? (
+            <div className="flex justify-center p-4">
+              <div className="size-6 animate-spin rounded-full border-b-2 border-gray-900" />
+            </div>
+          ) : following.length === 0 ? (
+            <div className="px-4 text-start text-gray-500">
+              No following found.
+            </div>
+          ) : (
+            <div className="divide-y">
+              {following.map((shop) => (
+                <Link
+                  key={shop.id}
+                  href={`/${shop.username}`}
+                  className="block"
+                >
+                  <div className="cursor-pointer p-4 hover:bg-gray-50">
+                    <div className="font-medium">{shop.shopName}</div>
+                    <div className="text-sm text-gray-500">{shop.email}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       )}
+
       {isSearching ? (
         <div className="flex justify-center p-4">
           <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
@@ -236,7 +277,7 @@ export default function SearchPage() {
                 </Link>
               ),
           )}
-          {searchResults.length === 0 && searchQuery && (
+          {searchResults.length === 0 && searchQuery && searchTriggered && (
             <div className="p-4 text-center text-gray-500">
               No shops found matching your search.
             </div>
