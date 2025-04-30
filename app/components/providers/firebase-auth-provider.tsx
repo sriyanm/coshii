@@ -28,9 +28,14 @@ export const FirebaseAuthProvider = ({
   });
 
   useEffect(() => {
-    navigator.serviceWorker
-      .register(new URL("../../service-worker.ts", import.meta.url))
-      .then((registration) => console.log(registration));
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register(new URL("../../service-worker.ts", import.meta.url))
+        .then((registration) => console.log("SW registered:", registration))
+        .catch((err) => console.error("SW registration failed:", err));
+    } else {
+      console.log("Service worker not supported in this environment.");
+    }
   }, []);
 
   useEffect(() => {

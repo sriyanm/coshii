@@ -106,7 +106,7 @@ function OnboardingContent() {
           shopDescription,
           setShopDescription,
         )}
-      {page === Page.SIGNIN && SignInPage(handlePageChange, signInMutation)}
+      {page === Page.SIGNIN && SignInPage(handlePageChange)}
       {page === Page.PHONE &&
         PhoneNumberPage(
           handlePageChange,
@@ -358,23 +358,7 @@ function OnboardingMoreDetailsPage(
   );
 }
 
-function SignInPage(
-  setPage: (nextPage: Page) => void,
-  signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
-) {
-  const getButtonText = () => {
-    if (signInMutation.isPending) {
-      return "Sending SMS...";
-    } else if (signInMutation.isError) {
-      return "Error! Try again";
-    } else {
-      return "Continue";
-    }
-  };
-
-  const handleContinue = () => {
-    setPage(Page.PHONE);
-  };
+function SignInPage(setPage: (nextPage: Page) => void) {
   return (
     <>
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
@@ -389,18 +373,6 @@ function SignInPage(
           }}
         />
         <MagicLinkSigninForm />
-        <Button
-          id="recaptcha-element"
-          className="mt-auto px-36 py-6 text-lg"
-          variant="onboarding"
-          onClick={handleContinue}
-          disabled={
-            signInMutation.isPending
-            // TOOD: signin not complete
-          }
-        >
-          {getButtonText()}
-        </Button>
       </div>
     </>
   );
