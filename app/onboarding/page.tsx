@@ -30,6 +30,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 enum Page {
   INTRO = 1,
+  NAME,
   DETAILS,
   MOREDETAILS,
   SIGNIN,
@@ -53,6 +54,7 @@ export default function OnboardingPage() {
 
 function OnboardingContent() {
   const [page, setPage] = useState(Page.INTRO);
+  const [creatorName, setCreatorName] = useState("");
   const [shopName, setShopName] = useState("");
   const [shopHandle, setShopHandle] = useState("");
   const [shopDescription, setShopDescription] = useState("");
@@ -88,6 +90,8 @@ function OnboardingContent() {
   return (
     <>
       {page === Page.INTRO && IntroPage(handlePageChange)}
+      {page === Page.NAME &&
+        NamePage(handlePageChange, creatorName, setCreatorName)}
       {page === Page.DETAILS &&
         OnboardingDetailsPage(
           handlePageChange,
@@ -125,6 +129,7 @@ function OnboardingContent() {
           phoneNumber,
           shopDescription,
           shopHandle,
+          creatorName,
         )}
       {page === Page.FINISH && OnboardingFinishPage(shopHandle)}
     </>
@@ -151,7 +156,7 @@ function IntroPage(setPage: (nextPage: Page) => void) {
           className="px-28 py-6 text-lg"
           variant="onboardingFirst"
           onClick={function () {
-            setPage(Page.DETAILS);
+            setPage(Page.NAME);
           }}
         >
           Get Started
@@ -166,6 +171,55 @@ function IntroPage(setPage: (nextPage: Page) => void) {
             Log in
           </button>
         </p>
+      </div>
+    </div>
+  );
+}
+
+function NamePage(
+  setPage: (nextPage: Page) => void,
+  creatorName: string,
+  setCreatorName: Dispatch<SetStateAction<string>>,
+) {
+  const getButtonText = () => {
+    return "Continue";
+  };
+
+  const handleContinue = async () => {
+    setPage(Page.DETAILS);
+  };
+
+  return (
+    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+      <div>
+        <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
+          Let&#39;s get some quick info!
+        </h1>
+      </div>
+      <div className="mb-5 mt-4 grid w-full max-w-sm items-center gap-1.5">
+        <Label htmlFor="shop-name" className="text-md text-left">
+          What is your name?
+        </Label>
+        <Input
+          id="shop-name"
+          placeholder=""
+          onChange={function (e) {
+            setCreatorName(e.currentTarget.value);
+          }}
+          value={creatorName}
+          className="h-12 w-96 p-4 text-xl"
+        />
+      </div>
+      <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
+        <Button
+          id="recaptcha-element"
+          className="mt-auto px-36 py-6 text-lg"
+          variant="onboarding"
+          onClick={handleContinue}
+          disabled={!creatorName}
+        >
+          {getButtonText()}
+        </Button>
       </div>
     </div>
   );
@@ -349,15 +403,17 @@ function OnboardingMoreDetailsPage(
           className="text-md h-48 w-96 resize-none rounded-lg border p-4"
         />
       </div>
-      <Button
-        id="recaptcha-element"
-        className="mt-auto px-36 py-6 text-lg"
-        variant="onboarding"
-        onClick={handleContinue}
-        disabled={signInMutation.isPending || !shopDescription}
-      >
-        {getButtonText()}
-      </Button>
+      <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
+        <Button
+          id="recaptcha-element"
+          className="mt-auto px-36 py-6 text-lg"
+          variant="onboarding"
+          onClick={handleContinue}
+          disabled={signInMutation.isPending || !shopDescription}
+        >
+          {getButtonText()}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -447,19 +503,21 @@ function PhoneNumberPage(
           disabled={signInMutation.isPending}
         />
       </div>
-      <Button
-        id="recaptcha-element"
-        className="mt-auto px-36 py-6 text-lg"
-        variant="onboarding"
-        onClick={handleContinue}
-        disabled={
-          signInMutation.isPending ||
-          !phoneNumber ||
-          !isPossiblePhoneNumber(phoneNumber)
-        }
-      >
-        {getButtonText()}
-      </Button>
+      <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
+        <Button
+          id="recaptcha-element"
+          className="mt-auto px-36 py-6 text-lg"
+          variant="onboarding"
+          onClick={handleContinue}
+          disabled={
+            signInMutation.isPending ||
+            !phoneNumber ||
+            !isPossiblePhoneNumber(phoneNumber)
+          }
+        >
+          {getButtonText()}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -479,6 +537,7 @@ function OnboardingPhoneOtpPage(
   phoneNumber: string,
   shopDescription: string,
   shopHandle: string,
+  creatorName: string = "",
 ) {
   const getButtonText = () => {
     if (confirmationResultMutation.isPending) {
@@ -508,12 +567,13 @@ function OnboardingPhoneOtpPage(
           following: {},
         });
 
-        // Update user document with shop name and phone number
+        // Update user document with creator name, shop name, phone number
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         console.log(
           "Updating phone number (temporarily b/c otp does not work) in user document",
         );
         await updateDoc(userDocRef, {
+          creatorName: creatorName,
           shopName: shopName,
           phoneNumber: phoneNumber,
         });
@@ -552,15 +612,16 @@ function OnboardingPhoneOtpPage(
         </InputOTP>
       </div>
       <div className="flex flex-col items-center justify-between">
-        <Button
-          className="px-8 py-6 text-lg"
-          variant="onboarding"
-          onClick={async function () {
-            // Development bypass
-            console.log("OTP Verification bypassed. Code entered:", otp);
-            await createShopAndContinue();
+        <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
+          <Button
+            className="px-8 py-6 text-lg"
+            variant="onboarding"
+            onClick={async function () {
+              // Development bypass
+              console.log("OTP Verification bypassed. Code entered:", otp);
+              await createShopAndContinue();
 
-            /* Production code - commented out for development
+              /* Production code - commented out for development
             if (!signInMutation.isSuccess) {
               throw Error("SMS sign-in code was not sent");
             }
@@ -573,28 +634,29 @@ function OnboardingPhoneOtpPage(
               },
             );
             */
-          }}
-          disabled={
-            otp.length != 6
-            /* Production checks - commented out for development
+            }}
+            disabled={
+              otp.length != 6
+              /* Production checks - commented out for development
             ||
             !signInMutation.isSuccess ||
             confirmationResultMutation.isPending
             */
-          }
-        >
-          {getButtonText()}
-        </Button>
-        <Button
-          className="px-8 py-6 text-lg"
-          variant="onboardingSecondary"
-          disabled={confirmationResultMutation.isPending}
-          onClick={function () {
-            setPage(Page.DETAILS);
-          }}
-        >
-          Back
-        </Button>
+            }
+          >
+            {getButtonText()}
+          </Button>
+          <Button
+            className="px-8 py-6 text-lg"
+            variant="onboardingSecondary"
+            disabled={confirmationResultMutation.isPending}
+            onClick={function () {
+              setPage(Page.DETAILS);
+            }}
+          >
+            Back
+          </Button>
+        </div>
       </div>
     </div>
   );
