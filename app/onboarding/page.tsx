@@ -146,25 +146,27 @@ function IntroPage(setPage: (nextPage: Page) => void) {
       </div>
 
       <div className="flex-1"></div>
-      <Button
-        className="px-28 py-6 text-lg"
-        variant="onboardingFirst"
-        onClick={function () {
-          setPage(Page.DETAILS);
-        }}
-      >
-        Get Started
-      </Button>
-
-      <p className="mt-4 text-sm text-white">
-        Already have an account?{" "}
-        <button
-          onClick={() => router.push("/signin")}
-          className="font-semibold underline underline-offset-2"
+      <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
+        <Button
+          className="px-28 py-6 text-lg"
+          variant="onboardingFirst"
+          onClick={function () {
+            setPage(Page.DETAILS);
+          }}
         >
-          Log in
-        </button>
-      </p>
+          Get Started
+        </Button>
+
+        <p className="mt-4 text-sm text-white">
+          Already have an account?{" "}
+          <button
+            onClick={() => router.push("/signin")}
+            className="font-semibold underline underline-offset-2"
+          >
+            Log in
+          </button>
+        </p>
+      </div>
     </div>
   );
 }
