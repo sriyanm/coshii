@@ -51,7 +51,9 @@ function ProfileHeader({
         if (!snapshot.empty) {
           const currDoc = snapshot.docs[0];
           const data = currDoc.data();
-          setIsFollowing(!!data.following?.[visitedShopId]);
+          setIsFollowing(
+            !!data.following?.[visitedShopId + "|" + shopData.username],
+          );
         }
       } catch (error) {
         console.error("Error checking follow status:", error);
@@ -80,7 +82,11 @@ function ProfileHeader({
         query(shopsRef, where("creatorId", "==", currentShopId)),
       );
       const visitedSnapshot = await getDocs(
-        query(shopsRef, where("creatorId", "==", visitedShopId)),
+        query(
+          shopsRef,
+          where("creatorId", "==", visitedShopId),
+          where("username", "==", shopData.username),
+        ),
       );
 
       if (currSnapshot.empty || visitedSnapshot.empty) {
@@ -93,17 +99,19 @@ function ProfileHeader({
 
       if (isFollowing) {
         await updateDoc(currDoc.ref, {
-          [`following.${visitedShopId}`]: deleteField(),
+          [`following.${visitedShopId + "|" + shopData.username}`]:
+            deleteField(),
         });
         await updateDoc(visitedDoc.ref, {
-          [`followers.${currentShopId}`]: deleteField(),
+          [`followers.${currentShopId + "|" + currDoc.data().username}`]:
+            deleteField(),
         });
       } else {
         await updateDoc(visitedDoc.ref, {
-          [`followers.${currentShopId}`]: true,
+          [`followers.${currentShopId + "|" + currDoc.data().username}`]: true,
         });
         await updateDoc(currDoc.ref, {
-          [`following.${visitedShopId}`]: true,
+          [`following.${visitedShopId + "|" + shopData.username}`]: true,
         });
       }
 
@@ -180,12 +188,13 @@ function ProfileHeader({
       {/* Username and Description */}
       <p className="text-gray-600">@{shopData.username}</p>
       <p className="mt-2 text-sm text-gray-500">{shopData.description}</p>
-      {!loadingFollowStatus && auth.currentUser?.uid !== shopData.creatorId && (
+      {auth.currentUser?.uid !== shopData.creatorId && (
         <button
           className="mt-4 rounded-lg bg-[#FED15B] px-4 py-2 text-black"
           onClick={handleFollow}
+          disabled={loadingFollowStatus}
         >
-          {isFollowing ? "Unfollow" : "Follow"}
+          {loadingFollowStatus ? "" : isFollowing ? "Unfollow" : "Follow"}
         </button>
       )}
     </div>

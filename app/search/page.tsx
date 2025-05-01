@@ -91,8 +91,14 @@ export default function SearchPage() {
         const result: ShopSearchResult[] = [];
         for (let i = 0; i < ids.length; i += 10) {
           const chunk = ids.slice(i, i + 10);
+          const creatorIds = chunk.map((id) => id.split("|")[0]);
+          const usernames = chunk.map((id) => id.split("|")[1]);
           const chunkSnapshot = await getDocs(
-            query(shopsRef, where("creatorId", "in", chunk)),
+            query(
+              shopsRef,
+              where("creatorId", "in", creatorIds),
+              where("username", "in", usernames),
+            ),
           );
           chunkSnapshot.forEach((doc) => {
             const shopData = doc.data();
