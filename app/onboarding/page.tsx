@@ -267,18 +267,20 @@ function OnboardingDetailsPage(
           className="h-12 w-96 p-4 text-xl"
         />
       </div>
-      <Button
-        id="recaptcha-element"
-        className="mt-auto px-36 py-6 text-lg"
-        variant="onboarding"
-        onClick={handleContinue}
-        disabled={
-          signInMutation.isPending || !shopName || !shopHandle
-          // TODO: or if handle already exists
-        }
-      >
-        {getButtonText()}
-      </Button>
+      <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
+        <Button
+          id="recaptcha-element"
+          className="mt-auto px-36 py-6 text-lg"
+          variant="onboarding"
+          onClick={handleContinue}
+          disabled={
+            signInMutation.isPending || !shopName || !shopHandle
+            // TODO: or if handle already exists
+          }
+        >
+          {getButtonText()}
+        </Button>
+      </div>
     </div>
   );
 }
