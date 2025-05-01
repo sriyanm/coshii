@@ -217,7 +217,7 @@ function OnboardingDetailsPage(
   };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
       <div>
         <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
           Let&#39;s get some quick info!
@@ -325,7 +325,7 @@ function OnboardingMoreDetailsPage(
   };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
       <div>
         <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
           Let&#39;s get some quick info!
@@ -363,7 +363,7 @@ function OnboardingMoreDetailsPage(
 function SignInPage(setPage: (nextPage: Page) => void) {
   return (
     <>
-      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+      <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
         <div>
           <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
             Let&#39;s set up your account!
@@ -419,7 +419,7 @@ function PhoneNumberPage(
     }
   };
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
       <div>
         <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
           Let&#39;s set up your account!
@@ -530,7 +530,7 @@ function OnboardingPhoneOtpPage(
   };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-between p-8">
+    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center justify-between p-8">
       <div className="flex flex-col items-center justify-between">
         <h1 className="mt-4 text-center text-2xl text-black">
           We&#39;ve sent a text message to {phoneNumber}
@@ -600,7 +600,7 @@ function OnboardingPhoneOtpPage(
 
 function OnboardingFinishPage(shopHandle: string) {
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-between bg-gradient-to-b from-red-500 to-red-200 p-8">
+    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center justify-between bg-gradient-to-b from-red-500 to-red-200 p-8">
       <div className="flex flex-col items-center justify-between">
         <h1 className="mt-8 text-left text-4xl text-white">
           Selling on Coshii is easy
