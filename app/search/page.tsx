@@ -12,6 +12,7 @@ import { collection, query, getDocs, where } from "firebase/firestore";
 import Fuse from "fuse.js";
 import { db } from "@/app/lib/client/firebase";
 import { auth } from "@/app/lib/client/firebase";
+import { Plus, Minus } from "lucide-react";
 
 interface NavigationItem {
   name: string;
@@ -46,6 +47,19 @@ export default function SearchPage() {
   const [followers, setFollowers] = useState<ShopSearchResult[]>([]);
   const [following, setFollowing] = useState<ShopSearchResult[]>([]);
   const [searchTriggered, setSearchTriggered] = useState(false);
+  const [showFollowers, setShowFollowers] = useState(true);
+  const [showFollowing, setShowFollowing] = useState(true);
+  // const [showMockButton, setShowMockButton] = useState(true);
+  // const [showMockButton2, setShowMockButton2] = useState(true);
+  // const generateMockShops = (count: number): ShopSearchResult[] => {
+  //   return Array.from({ length: count }, (_, i) => ({
+  //     id: `mock-id-${i}`,
+  //     email: `mockuser${i}@example.com`,
+  //     shopName: `Mock Shop ${i}`,
+  //     username: `mockuser${i}`,
+  //     creatorId: `creator-${i}`,
+  //   }));
+  // };
 
   useEffect(() => {
     let unsubscribed = false;
@@ -193,110 +207,171 @@ export default function SearchPage() {
     }
   };
 
-  const renderSearchView = () => (
-    <div className="space-y-6">
-      <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-gray-400" />
-        <Input
-          type="text"
-          placeholder="Search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="border-none bg-gray-100 pl-10"
-        />
+  const renderSearchView = () => {
+    return (
+      <div className="space-y-6">
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="border-none bg-gray-100 pl-10"
+          />
+        </div>
+
+        {!searchQuery && (
+          <div className="flex flex-col space-y-4 p-4">
+            {/* FOLLOWERS */}
+            <div>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Followers</h2>
+                <button
+                  className="text-sm text-blue-500 hover:underline"
+                  onClick={() => setShowFollowers((prev) => !prev)}
+                >
+                  {showFollowers ? (
+                    <Minus className="size-6" color="black" />
+                  ) : (
+                    <Plus className="size-6" color="black" />
+                  )}
+                </button>
+              </div>
+
+              {loadingFollowStatus ? (
+                <div className="flex justify-center">
+                  <div className="size-6 animate-spin rounded-full border-b-2 border-gray-900" />
+                </div>
+              ) : !showFollowers ? null : followers.length === 0 ? (
+                <div className="px-4 text-start text-gray-500">
+                  No followers found.
+                </div>
+              ) : (
+                <div className="max-h-64 divide-y overflow-y-auto rounded-md">
+                  {followers.map((shop) => (
+                    <Link
+                      key={shop.id}
+                      href={`/${shop.username}`}
+                      className="block"
+                    >
+                      <div className="cursor-pointer p-4 hover:bg-gray-50">
+                        <div className="font-medium">{shop.shopName}</div>
+                        <div className="text-sm text-gray-500">
+                          {shop.email}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* FOLLOWING */}
+            <div>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Following</h2>
+                <button
+                  className="text-sm text-blue-500 hover:underline"
+                  onClick={() => setShowFollowing((prev) => !prev)}
+                >
+                  {showFollowing ? (
+                    <Minus className="size-6" color="black" />
+                  ) : (
+                    <Plus className="size-6" color="black" />
+                  )}
+                </button>
+              </div>
+
+              {loadingFollowStatus ? (
+                <div className="flex justify-center">
+                  <div className="size-6 animate-spin rounded-full border-b-2 border-gray-900" />
+                </div>
+              ) : !showFollowing ? null : following.length === 0 ? (
+                <div className="px-4 text-start text-gray-500">
+                  No following found.
+                </div>
+              ) : (
+                <div className="max-h-64 divide-y overflow-y-auto rounded-md">
+                  {following.map((shop) => (
+                    <Link
+                      key={shop.id}
+                      href={`/${shop.username}`}
+                      className="block"
+                    >
+                      <div className="cursor-pointer p-4 hover:bg-gray-50">
+                        <div className="font-medium">{shop.shopName}</div>
+                        <div className="text-sm text-gray-500">
+                          {shop.email}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* SEARCH RESULTS */}
+        {isSearching ? (
+          <div className="flex justify-center p-4">
+            <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
+          </div>
+        ) : (
+          <div className="divide-y">
+            {searchResults.map(
+              (shop) =>
+                shop.creatorId !== auth.currentUser?.uid && (
+                  <Link
+                    key={shop.id}
+                    href={`/${shop.username}`}
+                    className="block"
+                  >
+                    <div className="cursor-pointer p-4 hover:bg-gray-50">
+                      <div className="font-medium">{shop.shopName}</div>
+                      <div className="text-sm text-gray-500">{shop.email}</div>
+                    </div>
+                  </Link>
+                ),
+            )}
+            {searchResults.length === 0 && searchQuery && searchTriggered && (
+              <div className="p-4 text-center text-gray-500">
+                No shops found matching your search.
+              </div>
+            )}
+          </div>
+        )}
       </div>
-
-      {!searchQuery && (
-        <div className="justify-left flex flex-col space-y-4 p-4 text-left">
-          <h2 className="text-lg font-semibold">Followers</h2>
-          {loadingFollowStatus ? (
-            <div className="flex justify-center p-4">
-              <div className="size-6 animate-spin rounded-full border-b-2 border-gray-900" />
-            </div>
-          ) : followers.length === 0 ? (
-            <div className="px-4 text-start text-gray-500">
-              No followers found.
-            </div>
-          ) : (
-            <div className="divide-y">
-              {followers.map((shop) => (
-                <Link
-                  key={shop.id}
-                  href={`/${shop.username}`}
-                  className="block"
-                >
-                  <div className="cursor-pointer p-4 hover:bg-gray-50">
-                    <div className="font-medium">{shop.shopName}</div>
-                    <div className="text-sm text-gray-500">{shop.email}</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          <h2 className="text-lg font-semibold">Following</h2>
-          {loadingFollowStatus ? (
-            <div className="flex justify-center p-4">
-              <div className="size-6 animate-spin rounded-full border-b-2 border-gray-900" />
-            </div>
-          ) : following.length === 0 ? (
-            <div className="px-4 text-start text-gray-500">
-              No following found.
-            </div>
-          ) : (
-            <div className="divide-y">
-              {following.map((shop) => (
-                <Link
-                  key={shop.id}
-                  href={`/${shop.username}`}
-                  className="block"
-                >
-                  <div className="cursor-pointer p-4 hover:bg-gray-50">
-                    <div className="font-medium">{shop.shopName}</div>
-                    <div className="text-sm text-gray-500">{shop.email}</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {isSearching ? (
-        <div className="flex justify-center p-4">
-          <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
-        </div>
-      ) : (
-        <div className="divide-y">
-          {searchResults.map(
-            (shop) =>
-              shop.creatorId !== auth.currentUser?.uid && (
-                <Link
-                  key={shop.id}
-                  href={`/${shop.username}`}
-                  className="block"
-                >
-                  <div className="cursor-pointer p-4 hover:bg-gray-50">
-                    <div className="font-medium">{shop.shopName}</div>
-                    <div className="text-sm text-gray-500">{shop.email}</div>
-                  </div>
-                </Link>
-              ),
-          )}
-          {searchResults.length === 0 && searchQuery && searchTriggered && (
-            <div className="p-4 text-center text-gray-500">
-              No shops found matching your search.
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col bg-white">
       <div className="flex-1 overflow-y-auto p-4">{renderSearchView()}</div>
+      {/* {showMockButton && (
+      <button
+          className="p-2 bg-blue-600 text-white rounded"
+          onClick={() => {
+            setFollowers(generateMockShops(50));
+            setShowMockButton(false);
+          }}
+        >
+          Load Mock Followers
+        </button>
+      )}
 
+      {showMockButton2 && (
+        <button
+          className="p-2 bg-blue-600 text-white rounded"
+          onClick={() => {
+            setFollowing(generateMockShops(50));
+            setShowMockButton2(false);
+          }}
+        >
+          Load Mock Following
+        </button>
+      )} */}
       <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
         {navigation.map((item) => (
           <Link
