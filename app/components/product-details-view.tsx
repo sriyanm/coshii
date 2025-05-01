@@ -60,11 +60,8 @@ export function ProductDetailsView({
           <ChevronLeft className="size-6" />
         </button>
         <div className="mt-5 flex items-center justify-end gap-2">
-          <span className="text-sm">{!isListed ? "Listed" : "Unlisted"}</span>
-          <Switch
-            checked={!isListed}
-            onCheckedChange={(newValue) => handleIsListedChange(!newValue)}
-          />
+          <span className="text-sm">{isListed ? "Listed" : "Unlisted"}</span>
+          <Switch checked={isListed} onCheckedChange={handleIsListedChange} />
         </div>
         <Image
           src={product.images[0] || "/ajay-product.png"}
