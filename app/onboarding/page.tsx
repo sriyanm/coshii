@@ -134,7 +134,7 @@ function OnboardingContent() {
 function IntroPage(setPage: (nextPage: Page) => void) {
   const router = useRouter();
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col items-center bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-8">
+    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-8">
       <div className="flex-1"></div>
 
       <div className="flex w-full max-w-sm flex-col items-center px-6 text-center">
