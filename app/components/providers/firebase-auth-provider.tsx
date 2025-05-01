@@ -50,8 +50,6 @@ export const FirebaseAuthProvider = ({
             email: authUser.email,
             updatedAt: new Date(),
             plan: "free",
-            followers: [],
-            following: [],
           },
           { merge: true },
         );

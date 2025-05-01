@@ -500,6 +500,8 @@ function OnboardingPhoneOtpPage(
           profilePic: "/tempImages/basketWeaver.jpg",
           shopName: shopName,
           username: shopHandle,
+          followers: {},
+          following: {},
         });
 
         // Update user document with shop name and phone number
