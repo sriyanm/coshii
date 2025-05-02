@@ -43,11 +43,11 @@ type View =
   | "subscription"
   | "editName"
   | "editPhone"
-  | "editEmail"
+  // | "editEmail"
   | "editShopName";
 
 interface UserProfile {
-  name?: string;
+  creatorName?: string;
   phoneNumber?: string;
   email: string;
   shopName?: string;
@@ -88,6 +88,7 @@ export default function SettingsPage() {
     if (!user) return;
 
     try {
+      // console.log("Updating user profile with:", updates);
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
         ...updates,
@@ -179,7 +180,7 @@ export default function SettingsPage() {
           <div className="flex w-full flex-col">
             <span className="text-left text-sm font-bold">Name</span>
             <span className="text-left text-base text-gray-900">
-              {userProfile.name}
+              {userProfile.creatorName}
             </span>
           </div>
 
@@ -201,20 +202,6 @@ export default function SettingsPage() {
         </button>
 
         <button
-          onClick={() => setCurrentView("editEmail")}
-          className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4"
-        >
-          <div className="flex w-full flex-col">
-            <span className="text-left text-sm font-bold">Email</span>
-            <span className="text-left text-base text-gray-900">
-              {userProfile.email}
-            </span>
-          </div>
-
-          <ChevronRight className="ml-auto size-5 text-gray-400" />
-        </button>
-
-        <button
           onClick={() => setCurrentView("editShopName")}
           className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4"
         >
@@ -227,6 +214,15 @@ export default function SettingsPage() {
 
           <ChevronRight className="ml-auto size-5 text-gray-400" />
         </button>
+
+        <div className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4">
+          <div className="flex w-full flex-col">
+            <span className="text-left text-sm font-bold">Email</span>
+            <span className="text-left text-base text-gray-900">
+              {userProfile.email}
+            </span>
+          </div>
+        </div>
 
         {/* Placeholder fields */}
 
@@ -442,6 +438,22 @@ export default function SettingsPage() {
     );
   };
 
+  const mapLabelToField = (field: string) => {
+    switch (field) {
+      case "Name":
+        return "creatorName";
+      case "Phone":
+        return "phoneNumber";
+      // case "Email":
+      //   return "email";
+      case "Shop Name":
+        return "shopName";
+      default:
+        console.error("Unknown field:", field);
+        return field;
+    }
+  };
+
   const renderEditView = (field: string, value: string) => (
     <div className="space-y-4">
       <div className="mx-3 flex items-center gap-2">
@@ -458,7 +470,7 @@ export default function SettingsPage() {
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               const updates = {
-                [field.toLowerCase()]: e.currentTarget.value,
+                [mapLabelToField(field)]: e.currentTarget.value,
               };
               updateUserProfile(updates);
             }
@@ -485,11 +497,11 @@ export default function SettingsPage() {
       case "subscription":
         return renderSubscriptionView();
       case "editName":
-        return renderEditView("Name", userProfile.name || "");
+        return renderEditView("Name", userProfile.creatorName || "");
       case "editPhone":
         return renderEditView("Phone", userProfile.phoneNumber || "");
-      case "editEmail":
-        return renderEditView("Email", userProfile.email);
+      // case "editEmail":
+      //   return renderEditView("Email", userProfile.email);
       case "editShopName":
         return renderEditView("Shop Name", userProfile.shopName || "");
       default:
