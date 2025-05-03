@@ -19,7 +19,15 @@ import {
   EmbeddedCheckout,
 } from "@stripe/react-stripe-js";
 import { useCallback, useRef, useState, useEffect } from "react";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  getDoc,
+  getDocs,
+  collection,
+  query,
+  where,
+} from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { SignoutButton } from "../components/SignoutButton";
@@ -101,6 +109,27 @@ export default function SettingsPage() {
     }
   };
 
+  const updateShopProfile = async (updates: Partial<UserProfile>) => {
+    if (!user) return;
+
+    try {
+      // console.log("Updating shop profile with:", updates);
+      const shopsRef = collection(db, "shops");
+      const q = query(shopsRef, where("creatorId", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        console.error("No shop found for the user");
+        return;
+      }
+      const doc = querySnapshot.docs[0];
+      await updateDoc(doc.ref, {
+        ...updates,
+      });
+    } catch (error) {
+      console.error("Error updating shop name in shop db:", error);
+    }
+  };
+
   const renderMainView = () => (
     <div className="space-y-4">
       <h1 className="mx-3 text-2xl font-bold">Settings</h1>
@@ -179,7 +208,7 @@ export default function SettingsPage() {
         >
           <div className="flex w-full flex-col">
             <span className="text-left text-sm font-bold">Name</span>
-            <span className="text-left text-base text-gray-900">
+            <span className="scrollbar-hide overflow-x-auto whitespace-nowrap text-left text-base text-gray-900">
               {userProfile.creatorName}
             </span>
           </div>
@@ -193,7 +222,7 @@ export default function SettingsPage() {
         >
           <div className="flex w-full flex-col">
             <span className="text-left text-sm font-bold">Phone Number</span>
-            <span className="text-left text-base text-gray-900">
+            <span className="scrollbar-hide overflow-x-auto whitespace-nowrap text-left text-base text-gray-900">
               {userProfile.phoneNumber}
             </span>
           </div>
@@ -207,7 +236,7 @@ export default function SettingsPage() {
         >
           <div className="flex w-full flex-col">
             <span className="text-left text-sm font-bold">Shop Name</span>
-            <span className="text-left text-base text-gray-900">
+            <span className="scrollbar-hide overflow-x-auto whitespace-nowrap text-left text-base text-gray-900">
               {userProfile.shopName}
             </span>
           </div>
@@ -218,7 +247,7 @@ export default function SettingsPage() {
         <div className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4">
           <div className="flex w-full flex-col">
             <span className="text-left text-sm font-bold">Email</span>
-            <span className="text-left text-base text-gray-900">
+            <span className="scrollbar-hide overflow-x-auto whitespace-nowrap text-left text-base text-gray-900">
               {userProfile.email}
             </span>
           </div>
@@ -472,6 +501,9 @@ export default function SettingsPage() {
               const updates = {
                 [mapLabelToField(field)]: e.currentTarget.value,
               };
+              if (field === "Shop Name") {
+                updateShopProfile(updates);
+              }
               updateUserProfile(updates);
             }
           }}
