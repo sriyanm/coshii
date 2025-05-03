@@ -939,7 +939,7 @@ function PhoneOtpPage(
             variant="onboardingSecondary"
             disabled={confirmationResultMutation.isPending}
             onClick={function () {
-              setPage(Page.SHOP_NAME_AND_HANDLE);
+              setPage(Page.PHONE);
             }}
           >
             Back
@@ -995,12 +995,16 @@ function OnboardingFinishPage(shopHandle: string) {
         </h1>
       </div>
       <div className="flex flex-col items-center justify-between">
-        <Button className="mb-1 px-8 py-6 text-lg" variant="onboardingThird">
-          <Link href="/add-product">Add a piece</Link>
-        </Button>
-        <Button className="px-8 py-6 text-lg" variant="onboardingSecondary">
-          <Link href={`/${shopHandle}`}>Take me to my shop</Link>
-        </Button>
+        <div className="fixed bottom-12 mx-auto w-full max-w-md py-4 text-center">
+          <Button className="mb-1 px-8 py-6 text-lg" variant="onboardingThird">
+            <Link href="/add-product">Add a piece</Link>
+          </Button>
+        </div>
+        <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
+          <Button className="px-8 py-6 text-lg" variant="onboardingSecondary">
+            <Link href={`/${shopHandle}`}>Take me to my shop</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
