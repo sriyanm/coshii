@@ -25,14 +25,18 @@ import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
 import { GoogleSigninButton } from "@/app/components/GoogleSigninButton";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useProfilePictureUpload } from "@/app/hooks/firebase";
+import { X } from "lucide-react";
 
 // import { set } from "zod";
 
 enum Page {
   INTRO = 1,
-  NAME,
-  DETAILS,
-  MOREDETAILS,
+  CREATOR_NAME,
+  SHOP_NAME_AND_HANDLE,
+  SHOP_BIO,
+  SHOP_PFP,
+  SOCIAL_MEDIA,
   SIGNIN,
   PHONE,
   OTP,
@@ -42,6 +46,12 @@ enum Page {
 type ConfirmationResultMutationParams = {
   confirmationResult: ConfirmationResult;
   code: string;
+};
+
+type SocialLink = {
+  platform: string;
+  url: string;
+  username: string;
 };
 
 export default function OnboardingPage() {
@@ -58,10 +68,18 @@ function OnboardingContent() {
   const [shopName, setShopName] = useState("");
   const [shopHandle, setShopHandle] = useState("");
   const [shopDescription, setShopDescription] = useState("");
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
   const signInMutation = useSignInWithPhoneNumber("recaptcha-element");
   const confirmationResultMutation = usePhoneNumberConfirmationResult();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [profilePictureDownloadURL, setProfilePictureDownloadURL] = useState<
+    string | null
+  >(null);
+  const profilePictureUpload = useProfilePictureUpload();
 
   const searchParams = useSearchParams();
   const pageParam = searchParams.get("page");
@@ -90,10 +108,10 @@ function OnboardingContent() {
   return (
     <>
       {page === Page.INTRO && IntroPage(handlePageChange)}
-      {page === Page.NAME &&
-        NamePage(handlePageChange, creatorName, setCreatorName)}
-      {page === Page.DETAILS &&
-        OnboardingDetailsPage(
+      {page === Page.CREATOR_NAME &&
+        CreatorNamePage(handlePageChange, creatorName, setCreatorName)}
+      {page === Page.SHOP_NAME_AND_HANDLE &&
+        ShopNameAndHandlePage(
           handlePageChange,
           shopName,
           setShopName,
@@ -103,13 +121,23 @@ function OnboardingContent() {
           shopHandle,
           setShopHandle,
         )}
-      {page === Page.MOREDETAILS &&
-        OnboardingMoreDetailsPage(
+      {page === Page.SHOP_BIO &&
+        ShopBioPage(
           handlePageChange,
           signInMutation,
           shopDescription,
           setShopDescription,
         )}
+      {page === Page.SHOP_PFP &&
+        ShopPfpPage(
+          handlePageChange,
+          selectedFile,
+          setSelectedFile,
+          previewUrl,
+          setPreviewUrl,
+        )}
+      {page === Page.SOCIAL_MEDIA &&
+        SocialMediaPage(handlePageChange, socialLinks, setSocialLinks)}
       {page === Page.SIGNIN && SignInPage(handlePageChange)}
       {page === Page.PHONE &&
         PhoneNumberPage(
@@ -119,7 +147,7 @@ function OnboardingContent() {
           setPhoneNumber,
         )}
       {page === Page.OTP &&
-        OnboardingPhoneOtpPage(
+        PhoneOtpPage(
           handlePageChange,
           otp,
           setOtp,
@@ -130,6 +158,16 @@ function OnboardingContent() {
           shopDescription,
           shopHandle,
           creatorName,
+          socialLinks,
+          selectedFile,
+          setSelectedFile,
+          previewUrl,
+          setPreviewUrl,
+          isUploading,
+          setIsUploading,
+          profilePictureDownloadURL,
+          setProfilePictureDownloadURL,
+          profilePictureUpload,
         )}
       {page === Page.FINISH && OnboardingFinishPage(shopHandle)}
     </>
@@ -142,7 +180,7 @@ function IntroPage(setPage: (nextPage: Page) => void) {
     <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-8">
       <div className="flex-1"></div>
 
-      <div className="flex w-full max-w-sm flex-col items-center px-6 text-center">
+      <div className="flex w-full min-w-72 max-w-sm flex-col items-center px-6 text-center">
         <h1 className="mb-2 text-xl font-bold text-white">Welcome to</h1>
         <div className="mb-4 text-8xl font-bold text-white">Coshii</div>
         <p className="text-xl font-medium text-white">
@@ -151,32 +189,35 @@ function IntroPage(setPage: (nextPage: Page) => void) {
       </div>
 
       <div className="flex-1"></div>
-      <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
-        <Button
-          className="px-28 py-6 text-lg"
-          variant="onboardingFirst"
-          onClick={function () {
-            setPage(Page.NAME);
-          }}
-        >
-          Get Started
-        </Button>
-
-        <p className="mt-4 text-sm text-white">
-          Already have an account?{" "}
-          <button
-            onClick={() => router.push("/signin")}
-            className="font-semibold underline underline-offset-2"
+      <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4 text-center">
+        <div className="flex justify-center">
+          <Button
+            className="w-full min-w-32 py-6 text-lg"
+            variant="onboardingFirst"
+            onClick={function () {
+              setPage(Page.CREATOR_NAME);
+            }}
           >
-            Log in
-          </button>
-        </p>
+            Get Started
+          </Button>
+        </div>
+        <div className="flex justify-center">
+          <p className="mt-4 text-sm text-white">
+            Already have an account?{" "}
+            <button
+              onClick={() => router.push("/signin")}
+              className="font-semibold underline underline-offset-2"
+            >
+              Log in
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
-function NamePage(
+function CreatorNamePage(
   setPage: (nextPage: Page) => void,
   creatorName: string,
   setCreatorName: Dispatch<SetStateAction<string>>,
@@ -186,7 +227,7 @@ function NamePage(
   };
 
   const handleContinue = async () => {
-    setPage(Page.DETAILS);
+    setPage(Page.SHOP_NAME_AND_HANDLE);
   };
 
   return (
@@ -207,25 +248,27 @@ function NamePage(
             setCreatorName(e.currentTarget.value);
           }}
           value={creatorName}
-          className="h-12 w-96 p-4 text-xl"
+          className="h-12 w-full p-4 text-xl"
         />
       </div>
-      <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
-        <Button
-          id="recaptcha-element"
-          className="mt-auto px-36 py-6 text-lg"
-          variant="onboarding"
-          onClick={handleContinue}
-          disabled={!creatorName}
-        >
-          {getButtonText()}
-        </Button>
+      <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4">
+        <div className="flex justify-center">
+          <Button
+            id="recaptcha-element"
+            className="w-full min-w-24 py-6 text-lg"
+            variant="onboarding"
+            onClick={handleContinue}
+            disabled={!creatorName}
+          >
+            {getButtonText()}
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
 
-function OnboardingDetailsPage(
+function ShopNameAndHandlePage(
   setPage: (nextPage: Page) => void,
   shopName: string,
   setShopName: Dispatch<SetStateAction<string>>,
@@ -257,7 +300,7 @@ function OnboardingDetailsPage(
       // }
       // Development bypass for SMS verification
       // console.log("SMS Handler Called with phone number:", phoneNumber);
-      setPage(Page.MOREDETAILS);
+      setPage(Page.SHOP_BIO);
 
       // Comment out the actual SMS verification for now
       /*
@@ -280,7 +323,7 @@ function OnboardingDetailsPage(
       {/* <div className="mt-4 rounded-full border border-gray-500 p-8">
         <Coshii className="fill-gray-500" width={175} height={175} />
       </div> */}
-      <div className="mb-5 mt-4 grid w-full max-w-sm items-center gap-1.5">
+      <div className="mb-5 mt-4 grid w-full max-w-sm items-center justify-center gap-1.5">
         <Label htmlFor="shop-name" className="text-md text-left">
           What will you call your shop? You can always change it later...
         </Label>
@@ -291,10 +334,10 @@ function OnboardingDetailsPage(
             setShopName(e.currentTarget.value);
           }}
           value={shopName}
-          className="h-12 w-96 p-4 text-xl"
+          className="h-12 w-full p-4 text-xl"
         />
       </div>
-      <div className="mt-4 grid w-full max-w-sm items-center gap-1.5">
+      <div className="mt-4 grid w-full max-w-sm items-center justify-center gap-1.5">
         <Label htmlFor="shop-handle" className="text-md text-left">
           Coshii is social. Pick a handle for your shop. This is like a handle
           on social media that others sellers can use to find and follow you.
@@ -318,28 +361,30 @@ function OnboardingDetailsPage(
             setShopHandle(e.currentTarget.value.replace(/^@/, "")); // Remove leading @ if present
           }}
           value={`@${shopHandle}`}
-          className="h-12 w-96 p-4 text-xl"
+          className="h-12 w-full p-4 text-xl"
         />
       </div>
-      <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
-        <Button
-          id="recaptcha-element"
-          className="mt-auto px-36 py-6 text-lg"
-          variant="onboarding"
-          onClick={handleContinue}
-          disabled={
-            signInMutation.isPending || !shopName || !shopHandle
-            // TODO: or if handle already exists
-          }
-        >
-          {getButtonText()}
-        </Button>
+      <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4 text-center">
+        <div className="flex justify-center">
+          <Button
+            id="recaptcha-element"
+            className="w-full min-w-24 py-6 text-lg"
+            variant="onboarding"
+            onClick={handleContinue}
+            disabled={
+              signInMutation.isPending || !shopName || !shopHandle
+              // TODO: or if handle already exists
+            }
+          >
+            {getButtonText()}
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
 
-function OnboardingMoreDetailsPage(
+function ShopBioPage(
   setPage: (nextPage: Page) => void,
   signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
   shopDescription: string,
@@ -368,7 +413,7 @@ function OnboardingMoreDetailsPage(
       // Development bypass for SMS verification
       // console.log("SMS Handler Called with phone number:", phoneNumber);
       // window.location.href = "/signin";
-      setPage(Page.SIGNIN);
+      setPage(Page.SHOP_PFP);
       // Comment out the actual SMS verification for now
       /*
       signInMutation.mutate(phoneNumber, {
@@ -390,7 +435,7 @@ function OnboardingMoreDetailsPage(
       {/* <div className="mt-4 rounded-full border border-gray-500 p-8">
         <Coshii className="fill-gray-500" width={175} height={175} />
       </div> */}
-      <div className="mb-5 mt-4 grid w-full max-w-sm items-center gap-1.5">
+      <div className="mb-5 mt-4 grid w-full max-w-sm items-center justify-center gap-1.5">
         <Label htmlFor="shop-bio" className="text-md mb-6 text-left">
           Write a short bio to describe what you sell, your vibe, or anything
           else you want to into your shop to people.
@@ -400,19 +445,252 @@ function OnboardingMoreDetailsPage(
           placeholder="Handmade ceramics from my studio in Los Angeles. DM me on Insta with any questions!"
           onChange={(e) => setShopDescription(e.currentTarget.value)}
           value={shopDescription}
-          className="text-md h-48 w-96 resize-none rounded-lg border p-4"
+          className="text-md h-48 w-full resize-none rounded-lg border p-4"
         />
       </div>
-      <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
-        <Button
-          id="recaptcha-element"
-          className="mt-auto px-36 py-6 text-lg"
-          variant="onboarding"
-          onClick={handleContinue}
-          disabled={signInMutation.isPending || !shopDescription}
+      <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4 text-center">
+        <div className="flex justify-center">
+          <Button
+            id="recaptcha-element"
+            className="w-full min-w-24 py-6 text-lg"
+            variant="onboarding"
+            onClick={handleContinue}
+            disabled={signInMutation.isPending || !shopDescription}
+          >
+            {getButtonText()}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ShopPfpPage(
+  setPage: (nextPage: Page) => void,
+  selectedFile: File | null,
+  setSelectedFile: Dispatch<SetStateAction<File | null>>,
+  previewUrl: string | null,
+  setPreviewUrl: Dispatch<SetStateAction<string | null>>,
+) {
+  const getButtonText = () => {
+    return "Continue";
+  };
+
+  const handleContinue = async () => {
+    setPage(Page.SOCIAL_MEDIA);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+      <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
+        Let&#39;s get some quick info!
+      </h1>
+
+      <div className="mb-5 mt-4 w-full max-w-sm text-center">
+        <Label htmlFor="profile-pic" className="text-md mb-2 block text-left">
+          Upload a profile picture for your shop. You can always change it
+          later...
+        </Label>
+
+        <div className="relative flex justify-center">
+          <label
+            htmlFor="profile-pic"
+            className="mt-10 flex size-40 cursor-pointer items-center justify-center rounded-full border border-gray-300 bg-white text-gray-400 hover:bg-gray-200"
+          >
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt="Profile preview"
+                className="size-full rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex size-full items-center justify-center">
+                <span className="translate-y-[-6%] text-center text-[8rem] leading-none">
+                  +
+                </span>
+              </div>
+            )}
+          </label>
+
+          {previewUrl && (
+            <button
+              onClick={() => {
+                setSelectedFile(null);
+                setPreviewUrl(null);
+              }}
+              className="absolute right-0 top-0 rounded-full bg-white p-1 shadow hover:bg-gray-100"
+              type="button"
+            >
+              <X className="size-4 text-gray-600" />
+            </button>
+          )}
+        </div>
+
+        <input
+          type="file"
+          id="profile-pic"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      </div>
+
+      <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4 text-center">
+        <div className="flex justify-center">
+          <Button
+            id="recaptcha-element"
+            className="w-full min-w-24 py-6 text-lg"
+            variant="onboarding"
+            onClick={handleContinue}
+            disabled={!selectedFile}
+          >
+            {getButtonText()}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SocialMediaPage(
+  setPage: (nextPage: Page) => void,
+  socialLinks: SocialLink[],
+  setSocialLinks: Dispatch<SetStateAction<SocialLink[]>>,
+) {
+  const getButtonText = () => {
+    return "Continue";
+  };
+
+  const handleContinue = async () => {
+    setPage(Page.SIGNIN);
+  };
+
+  const updateSocialLink = (
+    platform: string,
+    url: string,
+    username: string,
+  ) => {
+    setSocialLinks((prevLinks) => {
+      const updated = [...prevLinks];
+      const existingIndex = updated.findIndex(
+        (link) => link.platform === platform,
+      );
+
+      const newLink = {
+        platform,
+        url,
+        username,
+      };
+
+      if (existingIndex !== -1) {
+        updated[existingIndex] = newLink;
+      } else {
+        updated.push(newLink);
+      }
+
+      return updated;
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+      <div>
+        <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
+          Let&#39;s get some quick info!
+        </h1>
+      </div>
+      {/* <div className="mt-4 rounded-full border border-gray-500 p-8">
+        <Coshii className="fill-gray-500" width={175} height={175} />
+      </div> */}
+      <div className="mb-5 mt-4 grid w-full max-w-sm items-center justify-center gap-1.5">
+        <Label htmlFor="shop-social-media" className="text-md mb-6 text-left">
+          Do you want to add any of your social handles to your profile? You can
+          always add more later...
+        </Label>
+        <Label
+          htmlFor="shop-social-media-facebook"
+          className="text-md text-left"
         >
-          {getButtonText()}
-        </Button>
+          Facebook Username
+        </Label>
+        <Input
+          id="facebook"
+          placeholder=""
+          onChange={(e) =>
+            updateSocialLink(
+              "Facebook",
+              "https://facebook.com",
+              e.currentTarget.value.replace(/^@/, ""),
+            )
+          }
+          value={`@${
+            socialLinks.find((l) => l.platform === "Facebook")?.username || ""
+          }`}
+          className="h-12 w-full p-4 text-xl"
+        />
+        <Label
+          htmlFor="shop-social-media-twitter"
+          className="text-md text-left"
+        >
+          Twitter Username
+        </Label>
+        <Input
+          id="twitter"
+          placeholder=""
+          onChange={(e) =>
+            updateSocialLink(
+              "Twitter",
+              "https://twitter.com",
+              e.currentTarget.value.replace(/^@/, ""),
+            )
+          }
+          value={`@${
+            socialLinks.find((l) => l.platform === "Twitter")?.username || ""
+          }`}
+          className="h-12 w-full p-4 text-xl"
+        />
+        <Label
+          htmlFor="shop-social-media-instagram"
+          className="text-md text-left"
+        >
+          Instagram Username
+        </Label>
+        <Input
+          id="instagram"
+          placeholder=""
+          onChange={(e) =>
+            updateSocialLink(
+              "Instagram",
+              "https://instagram.com",
+              e.currentTarget.value.replace(/^@/, ""),
+            )
+          }
+          value={`@${
+            socialLinks.find((l) => l.platform === "Instagram")?.username || ""
+          }`}
+          className="h-12 w-full p-4 text-xl"
+        />
+      </div>
+      <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4 text-center">
+        <div className="flex justify-center">
+          <Button
+            id="recaptcha-element"
+            className="w-full min-w-24 py-6 text-lg"
+            variant="onboarding"
+            onClick={handleContinue}
+            disabled={false} // optional
+          >
+            {getButtonText()}
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -486,7 +764,7 @@ function PhoneNumberPage(
       {/* <div className="mt-4 rounded-full border border-gray-500 p-8">
         <Coshii className="fill-gray-500" width={175} height={175} />
       </div> */}
-      <div className="mb-5 mt-4 grid w-full max-w-sm items-center gap-1.5">
+      <div className="mb-5 mt-4 grid w-full max-w-sm items-center justify-center gap-1.5">
         <Label htmlFor="shop-name" className="text-md text-left">
           To verify its you, what is your phone number?
         </Label>
@@ -495,7 +773,7 @@ function PhoneNumberPage(
           country="US"
           international={false}
           placeholder="(656) 555-7536"
-          className="h-12 w-96 p-4 text-xl"
+          className="h-12 w-full p-4 text-xl"
           onChange={function (phoneNumber) {
             setPhoneNumber(phoneNumber || "");
           }}
@@ -503,26 +781,28 @@ function PhoneNumberPage(
           disabled={signInMutation.isPending}
         />
       </div>
-      <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
-        <Button
-          id="recaptcha-element"
-          className="mt-auto px-36 py-6 text-lg"
-          variant="onboarding"
-          onClick={handleContinue}
-          disabled={
-            signInMutation.isPending ||
-            !phoneNumber ||
-            !isPossiblePhoneNumber(phoneNumber)
-          }
-        >
-          {getButtonText()}
-        </Button>
+      <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4 text-center">
+        <div className="flex justify-center">
+          <Button
+            id="recaptcha-element"
+            className="w-full min-w-24 py-6 text-lg"
+            variant="onboarding"
+            onClick={handleContinue}
+            disabled={
+              signInMutation.isPending ||
+              !phoneNumber ||
+              !isPossiblePhoneNumber(phoneNumber)
+            }
+          >
+            {getButtonText()}
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
 
-function OnboardingPhoneOtpPage(
+function PhoneOtpPage(
   setPage: (nextPage: Page) => void,
   otp: string,
   setOtp: Dispatch<SetStateAction<string>>,
@@ -538,6 +818,16 @@ function OnboardingPhoneOtpPage(
   shopDescription: string,
   shopHandle: string,
   creatorName: string = "",
+  socialLinks: SocialLink[] = [],
+  selectedFile: File | null,
+  setSelectedFile: Dispatch<SetStateAction<File | null>>,
+  previewUrl: string | null,
+  setPreviewUrl: Dispatch<SetStateAction<string | null>>,
+  isUploading: boolean,
+  setIsUploading: Dispatch<SetStateAction<boolean>>,
+  profilePictureDownloadURL: string | null,
+  setProfilePictureDownloadURL: Dispatch<SetStateAction<string | null>>,
+  profilePictureUpload: ReturnType<typeof useProfilePictureUpload>,
 ) {
   const getButtonText = () => {
     if (confirmationResultMutation.isPending) {
@@ -548,9 +838,39 @@ function OnboardingPhoneOtpPage(
     return "Continue";
   };
 
+  const handleFileUpload = async (file: File): Promise<string | null> => {
+    if (!auth.currentUser) {
+      console.error("No authenticated user found");
+      return null;
+    }
+    setIsUploading(true);
+    console.log("Uploading file:", file);
+    try {
+      const profilePictureDownloadURL = await profilePictureUpload.mutateAsync({
+        file: file,
+        userId: auth.currentUser.uid,
+      });
+
+      setProfilePictureDownloadURL(profilePictureDownloadURL);
+      console.log("Uploaded to:", profilePictureDownloadURL);
+      return profilePictureDownloadURL;
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Upload failed. Please try again.");
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const createShopAndContinue = async () => {
     try {
       if (auth.currentUser) {
+        let profileURL = null;
+        if (selectedFile) {
+          profileURL = await handleFileUpload(selectedFile);
+        }
+
         // Create shop document
         const shopRef = collection(db, "shops");
         await addDoc(shopRef, {
@@ -560,11 +880,12 @@ function OnboardingPhoneOtpPage(
           description: shopDescription,
           email: auth.currentUser.email,
           isPremium: false,
-          profilePic: "/tempImages/basketWeaver.jpg",
+          profilePic: profileURL,
           shopName: shopName,
           username: shopHandle,
           followers: {},
           following: {},
+          socialLinks: socialLinks,
         });
 
         // Update user document with creator name, shop name, phone number
@@ -615,6 +936,16 @@ function OnboardingPhoneOtpPage(
         <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
           <Button
             className="px-8 py-6 text-lg"
+            variant="onboardingSecondary"
+            disabled={confirmationResultMutation.isPending}
+            onClick={function () {
+              setPage(Page.SHOP_NAME_AND_HANDLE);
+            }}
+          >
+            Back
+          </Button>
+          <Button
+            className="px-8 py-6 text-lg"
             variant="onboarding"
             onClick={async function () {
               // Development bypass
@@ -645,16 +976,6 @@ function OnboardingPhoneOtpPage(
             }
           >
             {getButtonText()}
-          </Button>
-          <Button
-            className="px-8 py-6 text-lg"
-            variant="onboardingSecondary"
-            disabled={confirmationResultMutation.isPending}
-            onClick={function () {
-              setPage(Page.DETAILS);
-            }}
-          >
-            Back
           </Button>
         </div>
       </div>
