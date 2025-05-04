@@ -115,19 +115,11 @@ function OnboardingContent() {
           handlePageChange,
           shopName,
           setShopName,
-          phoneNumber,
-          setPhoneNumber,
-          signInMutation,
           shopHandle,
           setShopHandle,
         )}
       {page === Page.SHOP_BIO &&
-        ShopBioPage(
-          handlePageChange,
-          signInMutation,
-          shopDescription,
-          setShopDescription,
-        )}
+        ShopBioPage(handlePageChange, shopDescription, setShopDescription)}
       {page === Page.SHOP_PFP &&
         ShopPfpPage(
           handlePageChange,
@@ -272,45 +264,15 @@ function ShopNameAndHandlePage(
   setPage: (nextPage: Page) => void,
   shopName: string,
   setShopName: Dispatch<SetStateAction<string>>,
-  phoneNumber: string,
-  setPhoneNumber: Dispatch<SetStateAction<string>>,
-  signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
   shopHandle: string,
   setShopHandle: Dispatch<SetStateAction<string>>,
 ) {
   const getButtonText = () => {
-    if (signInMutation.isPending) {
-      return "Sending SMS...";
-    } else if (signInMutation.isError) {
-      return "Error! Try again";
-    } else {
-      return "Continue";
-    }
+    return "Continue";
   };
 
   const handleContinue = async () => {
-    try {
-      // // Update the phone number in users collection first
-      // if (auth.currentUser) {
-      //   const userDocRef = doc(db, "users", auth.currentUser.uid);
-      //   await updateDoc(userDocRef, {
-      //     // TODO: update shop name and shop handle, check if handle exists
-      //     shopName: shopName,
-      //   });
-      // }
-      // Development bypass for SMS verification
-      // console.log("SMS Handler Called with phone number:", phoneNumber);
-      setPage(Page.SHOP_BIO);
-
-      // Comment out the actual SMS verification for now
-      /*
-      signInMutation.mutate(phoneNumber, {
-        onSuccess: () => setPage(Page.OTP)
-      });
-      */
-    } catch (error) {
-      console.error("Error updating user info:", error);
-    }
+    setPage(Page.SHOP_BIO);
   };
 
   return (
@@ -342,18 +304,6 @@ function ShopNameAndHandlePage(
           Coshii is social. Pick a handle for your shop. This is like a handle
           on social media that others sellers can use to find and follow you.
         </Label>
-        {/* <PhoneInput
-          id="phone-number"
-          country="US"
-          international={false}
-          placeholder="(656) 555-7536"
-          className="w-full"
-          onChange={function (phoneNumber) {
-            setPhoneNumber(phoneNumber || "");
-          }}
-          value={phoneNumber}
-          disabled={signInMutation.isPending}
-        /> */}
         <Input
           id="shop-name"
           placeholder="@Srikar"
@@ -372,7 +322,7 @@ function ShopNameAndHandlePage(
             variant="onboarding"
             onClick={handleContinue}
             disabled={
-              signInMutation.isPending || !shopName || !shopHandle
+              !shopName || !shopHandle
               // TODO: or if handle already exists
             }
           >
@@ -386,43 +336,15 @@ function ShopNameAndHandlePage(
 
 function ShopBioPage(
   setPage: (nextPage: Page) => void,
-  signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
   shopDescription: string,
   setShopDescription: Dispatch<SetStateAction<string>>,
 ) {
   const getButtonText = () => {
-    if (signInMutation.isPending) {
-      return "Sending SMS...";
-    } else if (signInMutation.isError) {
-      return "Error! Try again";
-    } else {
-      return "Continue";
-    }
+    return "Continue";
   };
 
   const handleContinue = async () => {
-    try {
-      // Update the phone number in users collection first
-      // if (auth.currentUser) {
-      //   const userDocRef = doc(db, "users", auth.currentUser.uid);
-      //   await updateDoc(userDocRef, {
-      //     // TODO: update shop bio
-      //     phoneNumber: phoneNumber,
-      //   });
-      // }
-      // Development bypass for SMS verification
-      // console.log("SMS Handler Called with phone number:", phoneNumber);
-      // window.location.href = "/signin";
-      setPage(Page.SHOP_PFP);
-      // Comment out the actual SMS verification for now
-      /*
-      signInMutation.mutate(phoneNumber, {
-        onSuccess: () => setPage(Page.OTP)
-      });
-      */
-    } catch (error) {
-      console.error("Error updating user info:", error);
-    }
+    setPage(Page.SHOP_PFP);
   };
 
   return (
@@ -455,7 +377,7 @@ function ShopBioPage(
             className="w-full min-w-24 py-6 text-lg"
             variant="onboarding"
             onClick={handleContinue}
-            disabled={signInMutation.isPending || !shopDescription}
+            disabled={!shopDescription}
           >
             {getButtonText()}
           </Button>
@@ -734,13 +656,6 @@ function PhoneNumberPage(
 
   const handleContinue = async () => {
     try {
-      // Update the phone number in users collection first
-      // if (auth.currentUser) {
-      //   const userDocRef = doc(db, "users", auth.currentUser.uid);
-      //   await updateDoc(userDocRef, {
-      //     phoneNumber: phoneNumber,
-      //   });
-      // }
       // Development bypass for SMS verification
       // console.log("SMS Handler Called with phone number:", phoneNumber);
       setPage(Page.OTP);
