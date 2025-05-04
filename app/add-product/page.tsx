@@ -56,17 +56,17 @@ function Container({
 }) {
   return backgroundImage ? (
     <div
-      className="mx-auto max-w-md bg-amber-400/75 bg-cover bg-blend-overlay"
+      className="fixed inset-0 mx-auto max-w-md bg-amber-400/75 bg-cover bg-blend-overlay"
       style={{
         backgroundImage,
       }}
     >
-      <div className="flex min-h-screen flex-col p-4 backdrop-blur-md">
+      <div className="fixed inset-0 flex min-h-screen flex-col p-4 backdrop-blur-md">
         {children}
       </div>
     </div>
   ) : nextPage ? (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-[#FED15B] p-4">
+    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col bg-[#FED15B] p-4">
       {children}
     </div>
   ) : (
@@ -110,53 +110,55 @@ function BottomNavigation({
   const searchParams = useSearchParams();
   const isEditing = searchParams.get("step") === "Update";
   return (
-    <div className="mt-2 flex flex-row items-center justify-end">
-      {previousPage && previousPage !== Page.PRICE && (
-        <Button
-          className="text-lg text-black/50"
-          variant="addProductSecondary"
-          onClick={function () {
-            setPage(previousPage);
-          }}
-        >
-          <ArrowLeft className="mr-1 size-4 text-black/50" /> Back
-        </Button>
-      )}
-      {nextPage && nextPage !== Page.SUCCESS ? (
-        <Button
-          className={"bg-white text-lg font-bold"}
-          variant="addProduct"
-          onClick={function () {
-            setPage(nextPage);
-          }}
-        >
-          Next <ArrowRight className="ml-1 size-4" />
-        </Button>
-      ) : nextPage && !isEditing ? (
-        <Button
-          className="bg-white text-lg font-bold"
-          variant="addProduct"
-          onClick={function () {
-            setPage(nextPage);
-            onPost();
-            console.log("post!");
-          }}
-        >
-          Post <ArrowRight className="ml-1 size-4" />
-        </Button>
-      ) : nextPage ? (
-        <Button
-          className="bg-white text-lg font-bold"
-          variant="addProduct"
-          onClick={function () {
-            // onPost;
-            console.log("update!");
-            window.location.href = "/inventory"; // TODO: temp fix
-          }}
-        >
-          Update <ArrowRight className="ml-1 size-4" />
-        </Button>
-      ) : null}
+    <div className="fixed bottom-0 left-0 w-full py-4 shadow-md">
+      <div className="mx-auto flex max-w-md flex-row justify-end gap-3 px-4">
+        {previousPage && previousPage !== Page.PRICE && (
+          <Button
+            className="text-lg text-black/50"
+            variant="addProductSecondary"
+            onClick={function () {
+              setPage(previousPage);
+            }}
+          >
+            <ArrowLeft className="mr-1 size-4 text-black/50" /> Back
+          </Button>
+        )}
+        {nextPage && nextPage !== Page.SUCCESS ? (
+          <Button
+            className={"bg-white text-lg font-bold"}
+            variant="addProduct"
+            onClick={function () {
+              setPage(nextPage);
+            }}
+          >
+            Next <ArrowRight className="ml-1 size-4" />
+          </Button>
+        ) : nextPage && !isEditing ? (
+          <Button
+            className="bg-white text-lg font-bold"
+            variant="addProduct"
+            onClick={function () {
+              setPage(nextPage);
+              onPost();
+              console.log("post!");
+            }}
+          >
+            Post <ArrowRight className="ml-1 size-4" />
+          </Button>
+        ) : nextPage ? (
+          <Button
+            className="bg-white text-lg font-bold"
+            variant="addProduct"
+            onClick={function () {
+              // onPost;
+              console.log("update!");
+              window.location.href = "/inventory"; // TODO: temp fix
+            }}
+          >
+            Update <ArrowRight className="ml-1 size-4" />
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }
