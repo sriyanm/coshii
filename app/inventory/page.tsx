@@ -234,6 +234,14 @@ export default function InventoryPage() {
     fetchProducts();
   }, [user]);
 
+  const handleProductUpdate = (updatedProduct: Product) => {
+    setProducts((prevProducts) =>
+      prevProducts.map((p) =>
+        p.id === updatedProduct.id ? updatedProduct : p,
+      ),
+    );
+  };
+
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setView("productDetails");
@@ -273,6 +281,7 @@ export default function InventoryPage() {
           <ProductDetailsView
             product={selectedProduct}
             onBack={handleBackClick}
+            onProductUpdate={handleProductUpdate}
           />
         ) : view === "orderDetails" && selectedOrder ? (
           <OrderDetailsView order={selectedOrder} onBack={handleBackClick} />
