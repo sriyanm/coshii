@@ -241,3 +241,40 @@ export function useProductMediaUpload() {
     },
   });
 }
+
+// Function to upload a file to Firebase Storage
+export async function uploadProfilePicture(
+  file: File,
+  userId: string,
+): Promise<string> {
+  // Create a storage reference with user ID and unique timestamp
+  const timestamp = Date.now();
+  const fileExtension = file.name.split(".").pop();
+  const storagePath = `shops/${userId}/${timestamp}.${fileExtension}`;
+  const storageRef = ref(storage, storagePath);
+
+  // Add metadata configuration with content type
+  const metadata = {
+    contentType: file.type,
+    customMetadata: {
+      origin: window.location.origin,
+    },
+  };
+
+  // Upload the file with metadata
+  await uploadBytes(storageRef, file, metadata);
+
+  // Get and return the download URL
+  const downloadURL = await getDownloadURL(storageRef);
+  return downloadURL;
+}
+
+// Hook to use the upload function with React
+export function useProfilePictureUpload() {
+  return useMutation({
+    mutationKey: ["uploadProfilePicture"],
+    mutationFn: async ({ file, userId }: { file: File; userId: string }) => {
+      return uploadProfilePicture(file, userId);
+    },
+  });
+}

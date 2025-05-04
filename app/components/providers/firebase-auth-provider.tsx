@@ -2,7 +2,7 @@
 
 import { auth, db } from "@/app/lib/client/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { createContext, ReactNode, useEffect, useState } from "react";
 
 type FirebaseAuthState = {
@@ -28,34 +28,46 @@ export const FirebaseAuthProvider = ({
   });
 
   useEffect(() => {
-    navigator.serviceWorker
-      .register(new URL("../../service-worker.ts", import.meta.url))
-      .then((registration) => console.log(registration));
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register(new URL("../../service-worker.ts", import.meta.url))
+        .then((registration) => console.log("SW registered:", registration))
+        .catch((err) => console.error("SW registration failed:", err));
+    } else {
+      console.log("Service worker not supported in this environment.");
+    }
   }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
-        // Update user document in Firestore
-        console.log("User is signed in or refresh:", authUser);
-        await setDoc(
-          doc(db, "users", authUser.uid),
-          {
-            phoneNumber: authUser.phoneNumber,
+        const userRef = doc(db, "users", authUser.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
             email: authUser.email,
-            updatedAt: new Date(),
             plan: "free",
-            followers: [],
-            following: [],
-          },
-          { merge: true },
-        );
+            createdAt: new Date(),
+          });
+        } else {
+          await updateDoc(userRef, {
+            updatedAt: new Date(),
+          });
+        }
+
+        setState((prevState) => ({
+          ...prevState,
+          isLoading: false,
+          user: authUser,
+        }));
+      } else {
+        setState((prevState) => ({
+          ...prevState,
+          isLoading: false,
+          user: null,
+        }));
       }
-      setState((prevState) => ({
-        ...prevState,
-        isLoading: false,
-        user: authUser,
-      }));
     });
     return () => unsubscribe();
   }, []);

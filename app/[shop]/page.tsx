@@ -440,6 +440,8 @@ export default function ProfilePage({
                 onShare={() => handleShare(product)}
                 buyerView={buyerView}
                 isPremium={shopData.isPremium}
+                likesCount={product.likesCount || 0}
+                commentsCount={product.commentsCount || 0}
                 id={`product-${product.id}`}
                 ref={index === products.length - 1 ? lastProductRef : null}
               />

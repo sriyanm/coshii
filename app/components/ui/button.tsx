@@ -19,11 +19,14 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         onboardingFirst:
-          "rounded-full bg-white text-gray-600 shadow-lg active:bg-white/90",
+          "w-full max-w-xs rounded-full bg-white px-6 text-gray-600 shadow-lg active:bg-white/90",
+        // "rounded-full bg-white text-gray-600 shadow-lg active:bg-white/90 w-full max-w-xs px-6",
         onboarding:
-          "rounded-full bg-white text-red-500 shadow-xl active:bg-white/90",
+          "rounded-full bg-[#F18A7C] text-white shadow-xl active:bg-white/90",
         onboardingSecondary:
           "rounded-full bg-transparent text-gray-400 active:bg-white/20",
+        onboardingThird:
+          "rounded-full bg-white text-red-500 shadow-xl active:bg-white/90",
         addProduct: "rounded-full bg-white/50 text-black active:bg-white/30",
         addProductSecondary:
           "rounded-full bg-transparent text-black/50 active:bg-white/10",

@@ -234,6 +234,14 @@ export default function InventoryPage() {
     fetchProducts();
   }, [user]);
 
+  const handleProductUpdate = (updatedProduct: Product) => {
+    setProducts((prevProducts) =>
+      prevProducts.map((p) =>
+        p.id === updatedProduct.id ? updatedProduct : p,
+      ),
+    );
+  };
+
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setView("productDetails");
@@ -273,6 +281,7 @@ export default function InventoryPage() {
           <ProductDetailsView
             product={selectedProduct}
             onBack={handleBackClick}
+            onProductUpdate={handleProductUpdate}
           />
         ) : view === "orderDetails" && selectedOrder ? (
           <OrderDetailsView order={selectedOrder} onBack={handleBackClick} />
@@ -359,21 +368,22 @@ export default function InventoryPage() {
           </div>
         )}
       </div>
-
-      <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
-        {navigation.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className={`flex flex-col items-center justify-center gap-1 ${
-              currentTab === item.name ? "text-black" : "text-black/50"
-            }`}
-          >
-            <item.icon /*className="h-6 w-6"*/ />
-            <span className="text-xs">{item.name}</span>
-          </Link>
-        ))}
-      </nav>
+      <div className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2">
+        <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
+          {navigation.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex flex-col items-center justify-center gap-1 ${
+                currentTab === item.name ? "text-black" : "text-black/50"
+              }`}
+            >
+              <item.icon /*className="h-6 w-6"*/ />
+              <span className="text-xs">{item.name}</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 }

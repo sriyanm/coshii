@@ -14,11 +14,13 @@ import { db } from "@/app/lib/client/firebase";
 interface ProductDetailsViewProps {
   product: Product;
   onBack: () => void;
+  onProductUpdate: (updatedProduct: Product) => void;
 }
 
 export function ProductDetailsView({
   product,
   onBack,
+  onProductUpdate,
 }: ProductDetailsViewProps) {
   const [isListed, setIsListed] = useState(product.isListed || false);
   const [stock, setStock] = useState(product.stock || 0);
@@ -43,6 +45,8 @@ export function ProductDetailsView({
         updatedAt: new Date(),
       });
       setIsListed(newValue);
+      const updatedProduct = { ...product, isListed: newValue };
+      onProductUpdate(updatedProduct);
     } catch (error) {
       console.error("Error updating product listed status:", error);
     }
@@ -60,11 +64,8 @@ export function ProductDetailsView({
           <ChevronLeft className="size-6" />
         </button>
         <div className="mt-5 flex items-center justify-end gap-2">
-          <span className="text-sm">{!isListed ? "Listed" : "Unlisted"}</span>
-          <Switch
-            checked={!isListed}
-            onCheckedChange={(newValue) => handleIsListedChange(!newValue)}
-          />
+          <span className="text-sm">{isListed ? "Listed" : "Unlisted"}</span>
+          <Switch checked={isListed} onCheckedChange={handleIsListedChange} />
         </div>
         <Image
           src={product.images[0] || "/ajay-product.png"}

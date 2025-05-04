@@ -9,10 +9,9 @@ import {
   Shirt,
   Settings,
   Clock,
-  Check,
 } from "lucide-react";
 import Link from "next/link";
-import { Switch } from "../components/ui/switch";
+// import { Switch } from "../components/ui/switch";
 import type { NavigationItem } from "../types";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -20,7 +19,15 @@ import {
   EmbeddedCheckout,
 } from "@stripe/react-stripe-js";
 import { useCallback, useRef, useState, useEffect } from "react";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  getDoc,
+  getDocs,
+  collection,
+  query,
+  where,
+} from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { SignoutButton } from "../components/SignoutButton";
@@ -44,11 +51,11 @@ type View =
   | "subscription"
   | "editName"
   | "editPhone"
-  | "editEmail"
+  // | "editEmail"
   | "editShopName";
 
 interface UserProfile {
-  name?: string;
+  creatorName?: string;
   phoneNumber?: string;
   email: string;
   shopName?: string;
@@ -66,8 +73,8 @@ export default function SettingsPage() {
     plan: "free",
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [binarySetting, setBinarySetting] = useState(false);
-  const [choiceOption, setChoiceOption] = useState("Option 1");
+  // const [binarySetting, setBinarySetting] = useState(false);
+  // const [choiceOption, setChoiceOption] = useState("Option 1");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -89,6 +96,7 @@ export default function SettingsPage() {
     if (!user) return;
 
     try {
+      // console.log("Updating user profile with:", updates);
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
         ...updates,
@@ -98,6 +106,27 @@ export default function SettingsPage() {
       setCurrentView("profile"); // Go back to profile view after update
     } catch (error) {
       console.error("Error updating profile:", error);
+    }
+  };
+
+  const updateShopProfile = async (updates: Partial<UserProfile>) => {
+    if (!user) return;
+
+    try {
+      // console.log("Updating shop profile with:", updates);
+      const shopsRef = collection(db, "shops");
+      const q = query(shopsRef, where("creatorId", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        console.error("No shop found for the user");
+        return;
+      }
+      const doc = querySnapshot.docs[0];
+      await updateDoc(doc.ref, {
+        ...updates,
+      });
+    } catch (error) {
+      console.error("Error updating shop name in shop db:", error);
     }
   };
 
@@ -143,7 +172,9 @@ export default function SettingsPage() {
           <ChevronRight className="size-5 text-gray-400" />
         </button>
 
-        <button className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4">
+        {/* Placeholder fields */}
+
+        {/* <button className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4">
           <span className="font-bold">[Placeholder]</span>
           <ChevronRight className="size-5 text-gray-400" />
         </button>
@@ -151,7 +182,7 @@ export default function SettingsPage() {
         <button className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4">
           <span className="font-bold">[Placeholder]</span>
           <ChevronRight className="size-5 text-gray-400" />
-        </button>
+        </button> */}
 
         <SignoutButton />
       </div>
@@ -177,8 +208,8 @@ export default function SettingsPage() {
         >
           <div className="flex w-full flex-col">
             <span className="text-left text-sm font-bold">Name</span>
-            <span className="text-left text-base text-gray-900">
-              {userProfile.name}
+            <span className="scrollbar-hide overflow-x-auto whitespace-nowrap text-left text-base text-gray-900">
+              {userProfile.creatorName}
             </span>
           </div>
 
@@ -191,22 +222,8 @@ export default function SettingsPage() {
         >
           <div className="flex w-full flex-col">
             <span className="text-left text-sm font-bold">Phone Number</span>
-            <span className="text-left text-base text-gray-900">
+            <span className="scrollbar-hide overflow-x-auto whitespace-nowrap text-left text-base text-gray-900">
               {userProfile.phoneNumber}
-            </span>
-          </div>
-
-          <ChevronRight className="ml-auto size-5 text-gray-400" />
-        </button>
-
-        <button
-          onClick={() => setCurrentView("editEmail")}
-          className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4"
-        >
-          <div className="flex w-full flex-col">
-            <span className="text-left text-sm font-bold">Email</span>
-            <span className="text-left text-base text-gray-900">
-              {userProfile.email}
             </span>
           </div>
 
@@ -219,7 +236,7 @@ export default function SettingsPage() {
         >
           <div className="flex w-full flex-col">
             <span className="text-left text-sm font-bold">Shop Name</span>
-            <span className="text-left text-base text-gray-900">
+            <span className="scrollbar-hide overflow-x-auto whitespace-nowrap text-left text-base text-gray-900">
               {userProfile.shopName}
             </span>
           </div>
@@ -227,7 +244,18 @@ export default function SettingsPage() {
           <ChevronRight className="ml-auto size-5 text-gray-400" />
         </button>
 
-        <div className="flex items-center justify-between rounded-lg bg-gray-100 p-4">
+        <div className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4">
+          <div className="flex w-full flex-col">
+            <span className="text-left text-sm font-bold">Email</span>
+            <span className="scrollbar-hide overflow-x-auto whitespace-nowrap text-left text-base text-gray-900">
+              {userProfile.email}
+            </span>
+          </div>
+        </div>
+
+        {/* Placeholder fields */}
+
+        {/* <div className="flex items-center justify-between rounded-lg bg-gray-100 p-4">
           <div>
             <div className="text-sm font-bold">binary setting</div>
             <div className="text-sm text-gray-500">subtext</div>
@@ -257,7 +285,7 @@ export default function SettingsPage() {
               </button>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -368,21 +396,17 @@ export default function SettingsPage() {
           <div
             className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "free" ? "relative border-8 border-black" : ""}`}
           >
-            <h3 className="mb-2 text-lg font-bold">FREE PLAN</h3>
-            <ul className="space-y-1">
-              <li>- list products for sale easily</li>
-              <li>- interact with other sellers</li>
-              <li>-</li>
-            </ul>
-            {userProfile.plan === "free" && (
-              <div className="absolute right-6 top-6">
-                <Check className="size-16 text-[#C6A052]" />
-              </div>
-            )}
+            <div className="text-left">
+              <h3 className="mb-2 text-lg font-bold">FREE PLAN</h3>
+              <ul className="space-y-1">
+                <li>- list products for sale easily</li>
+                <li>- interact with other sellers</li>
+              </ul>
+            </div>
           </div>
 
           <button
-            className={`rounded-lg bg-gray-100 p-6 ${userProfile.plan === "paid" ? "relative border-8 border-black" : ""}`}
+            className={`rounded-lg bg-gray-100 p-6 text-left ${userProfile.plan === "paid" ? "relative border-8 border-black" : ""}`}
             onClick={handleCheckoutClick} // On click, show the modal
           >
             <h3 className="mb-2 text-lg font-bold">
@@ -393,11 +417,6 @@ export default function SettingsPage() {
               <li>- enable full checkout experience for customers</li>
               <li>- keep track of sold inventory from backroom</li>
             </ul>
-            {userProfile.plan === "paid" && (
-              <div className="absolute right-6 top-6">
-                <Check className="size-16 text-[#C6A052]" />
-              </div>
-            )}
           </button>
 
           {userProfile.plan === "paid" && (
@@ -448,6 +467,22 @@ export default function SettingsPage() {
     );
   };
 
+  const mapLabelToField = (field: string) => {
+    switch (field) {
+      case "Name":
+        return "creatorName";
+      case "Phone":
+        return "phoneNumber";
+      // case "Email":
+      //   return "email";
+      case "Shop Name":
+        return "shopName";
+      default:
+        console.error("Unknown field:", field);
+        return field;
+    }
+  };
+
   const renderEditView = (field: string, value: string) => (
     <div className="space-y-4">
       <div className="mx-3 flex items-center gap-2">
@@ -464,8 +499,11 @@ export default function SettingsPage() {
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               const updates = {
-                [field.toLowerCase()]: e.currentTarget.value,
+                [mapLabelToField(field)]: e.currentTarget.value,
               };
+              if (field === "Shop Name") {
+                updateShopProfile(updates);
+              }
               updateUserProfile(updates);
             }
           }}
@@ -491,11 +529,11 @@ export default function SettingsPage() {
       case "subscription":
         return renderSubscriptionView();
       case "editName":
-        return renderEditView("Name", userProfile.name || "");
+        return renderEditView("Name", userProfile.creatorName || "");
       case "editPhone":
         return renderEditView("Phone", userProfile.phoneNumber || "");
-      case "editEmail":
-        return renderEditView("Email", userProfile.email);
+      // case "editEmail":
+      //   return renderEditView("Email", userProfile.email);
       case "editShopName":
         return renderEditView("Shop Name", userProfile.shopName || "");
       default:
@@ -511,20 +549,22 @@ export default function SettingsPage() {
       <div className="flex-1 overflow-y-auto p-4">{renderContent()}</div> */}
 
       {/* Bottom Navigation */}
-      <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
-        {navigation.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className={`flex flex-col items-center justify-center gap-1 ${
-              currentTab === item.name ? "text-black" : "text-black/50"
-            }`}
-          >
-            <item.icon /*className="h-6 w-6"*/ />
-            <span className="text-xs">{item.name}</span>
-          </Link>
-        ))}
-      </nav>
+      <div className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2">
+        <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
+          {navigation.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex flex-col items-center justify-center gap-1 ${
+                currentTab === item.name ? "text-black" : "text-black/50"
+              }`}
+            >
+              <item.icon /*className="h-6 w-6"*/ />
+              <span className="text-xs">{item.name}</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 }

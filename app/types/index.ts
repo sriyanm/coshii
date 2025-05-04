@@ -11,6 +11,8 @@ export interface Product {
   tags?: string[];
   shopName?: string;
   sellerId: string;
+  likesCount?: number;
+  commentsCount?: number;
 }
 
 export interface Shop {

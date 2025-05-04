@@ -87,7 +87,7 @@ export default function EditShopModal({
 
   // Get the Instagram username from socialLinks if it exists
   const instagramUsername =
-    shopInfo.socialLinks.find((link) => link.platform === "Instagram")
+    shopInfo.socialLinks?.find((link) => link.platform === "Instagram")
       ?.username || "";
 
   return (

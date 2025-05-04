@@ -14,6 +14,8 @@ interface ProductPageProps {
   onShare: () => void;
   buyerView: boolean;
   isPremium: boolean;
+  likesCount: number;
+  commentsCount: number;
   id: string;
 }
 
@@ -31,6 +33,8 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
       buyerView,
       isPremium,
       id,
+      likesCount,
+      commentsCount,
     },
     ref,
   ) => {
@@ -99,7 +103,7 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
         {/* Media Scrollable Container */}
         <div
           ref={scrollContainerRef}
-          className="size-full overflow-x-auto scroll-smooth whitespace-nowrap rounded-lg"
+          className="relative size-full overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap rounded-lg"
           onScroll={handleScroll}
         >
           {media.map((item, index) =>
@@ -139,13 +143,16 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
                 </button>
               </div>
             ) : (
-              <Image
-                key={index}
-                fill
-                src={item}
-                alt={`${productName} - media ${index + 1}`}
-                className="inline-block size-full rounded-lg object-cover"
-              />
+              <div key={index} className="relative inline-block size-full">
+                <Image
+                  key={index}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  src={item}
+                  alt={`${productName} - media ${index + 1}`}
+                  className="inline-block size-full rounded-lg object-cover"
+                />
+              </div>
             ),
           )}
         </div>
@@ -194,6 +201,9 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
               onComment={onComment}
               onShare={onShare}
               buyerView={buyerView}
+              likesCount={likesCount}
+              commentsCount={commentsCount}
+              productId={id.split("-")[1]} //Passed in id looks like: product-02rKSxlMzsLLfks7JZDm
             />
           </div>
         </div>
