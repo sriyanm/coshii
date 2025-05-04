@@ -60,7 +60,7 @@ function Container({
 }) {
   return backgroundImage ? (
     <div
-      className="fixed inset-0 mx-auto max-w-md bg-amber-400/75 bg-cover bg-blend-overlay"
+      className="mx-auto max-w-md bg-amber-400/75 bg-cover bg-blend-overlay"
       style={{
         backgroundImage,
       }}
@@ -70,7 +70,7 @@ function Container({
       </div>
     </div>
   ) : nextPage ? (
-    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col bg-[#FED15B] p-4">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-[#FED15B] p-4">
       {children}
     </div>
   ) : (
