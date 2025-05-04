@@ -65,7 +65,7 @@ function Container({
         backgroundImage,
       }}
     >
-      <div className="fixed inset-0 flex min-h-screen flex-col p-4 backdrop-blur-md">
+      <div className="flex min-h-screen flex-col p-4 backdrop-blur-md">
         {children}
       </div>
     </div>
