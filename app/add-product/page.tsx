@@ -30,7 +30,11 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
-import { useFirebaseAuth, useProductMediaUpload } from "@/app/hooks/firebase";
+import {
+  useFirebaseAuth,
+  useProductMediaUpload,
+  useProductMediaDelete,
+} from "@/app/hooks/firebase";
 
 enum Page {
   MEDIA = 1,
@@ -183,12 +187,17 @@ function MediaPicker({
   isUploading,
   setIsUploading,
   setMediaUrls,
+  deleteMedia,
 }: {
   handleFileUpload: (file: File) => Promise<string | undefined>;
   mediaUrls: string[];
   isUploading: boolean;
   setIsUploading: (isUploading: boolean) => void;
   setMediaUrls: (mediaUrls: string[]) => void;
+  deleteMedia: (
+    url: string,
+    options?: { onSuccess?: () => void; onError?: (error: Error) => void },
+  ) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -270,6 +279,20 @@ function MediaPicker({
 
   const handleRemoveMedia = (index: number, e: React.MouseEvent) => {
     e.stopPropagation();
+
+    const removedUrl = mediaUrls[index];
+
+    if (removedUrl.startsWith("https://")) {
+      deleteMedia(removedUrl, {
+        onSuccess: () => {
+          console.log("Deleted from Firebase:", removedUrl);
+        },
+        onError: (error) => {
+          console.error("Error deleting from Firebase:", error);
+        },
+      });
+    }
+
     const newMediaUrls = [...mediaUrls];
     newMediaUrls.splice(index, 1);
     setMediaUrls(newMediaUrls);
@@ -1075,6 +1098,7 @@ function AddProductContent() {
 
   const { user } = useFirebaseAuth();
   const mediaUpload = useProductMediaUpload();
+  const { mutate: deleteMedia } = useProductMediaDelete();
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -1233,6 +1257,7 @@ function AddProductContent() {
         isUploading={isUploading}
         setIsUploading={setIsUploading}
         setMediaUrls={setMediaUrls}
+        deleteMedia={deleteMedia}
       />
     );
   } else if (page == Page.DESCRIPTION) {

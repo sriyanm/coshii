@@ -18,7 +18,13 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useContext } from "react";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 
 export function useFirebaseAuth() {
   const context = useContext(FirebaseAuthContext);
@@ -242,6 +248,34 @@ export function useProductMediaUpload() {
   });
 }
 
+export async function deleteProductMedia(
+  storagePathOrUrl: string,
+): Promise<void> {
+  let path = storagePathOrUrl;
+
+  // If a full URL is passed, convert to storage path
+  if (storagePathOrUrl.startsWith("https://")) {
+    const decodedUrl = decodeURIComponent(storagePathOrUrl);
+    const pathMatch = decodedUrl.match(/\/o\/(.*?)\?/);
+    if (!pathMatch || pathMatch.length < 2) {
+      throw new Error("Invalid Firebase Storage URL");
+    }
+    path = pathMatch[1].replace(/\+/g, " ");
+  }
+
+  const fileRef = ref(storage, path);
+  await deleteObject(fileRef);
+}
+
+export function useProductMediaDelete() {
+  return useMutation({
+    mutationKey: ["deleteProductMedia"],
+    mutationFn: async (storagePathOrUrl: string) => {
+      return deleteProductMedia(storagePathOrUrl);
+    },
+  });
+}
+
 // Function to upload a file to Firebase Storage
 export async function uploadProfilePicture(
   file: File,
@@ -275,6 +309,34 @@ export function useProfilePictureUpload() {
     mutationKey: ["uploadProfilePicture"],
     mutationFn: async ({ file, userId }: { file: File; userId: string }) => {
       return uploadProfilePicture(file, userId);
+    },
+  });
+}
+
+export async function deleteProfilePicture(
+  storagePathOrUrl: string,
+): Promise<void> {
+  let path = storagePathOrUrl;
+
+  // If a full URL is passed, convert to storage path
+  if (storagePathOrUrl.startsWith("https://")) {
+    const decodedUrl = decodeURIComponent(storagePathOrUrl);
+    const pathMatch = decodedUrl.match(/\/o\/(.*?)\?/);
+    if (!pathMatch || pathMatch.length < 2) {
+      throw new Error("Invalid Firebase Storage URL");
+    }
+    path = pathMatch[1].replace(/\+/g, " ");
+  }
+
+  const fileRef = ref(storage, path);
+  await deleteObject(fileRef);
+}
+
+export function useProfilePictureDelete() {
+  return useMutation({
+    mutationKey: ["deleteProfilePicture"],
+    mutationFn: async (storagePathOrUrl: string) => {
+      return deleteProfilePicture(storagePathOrUrl);
     },
   });
 }
