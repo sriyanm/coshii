@@ -797,7 +797,6 @@ function PhoneOtpPage(
           isPremium: false,
           profilePic: profileURL,
           shopName: shopName,
-          socialLinks: [],
           username: shopHandle,
           followers: {},
           following: {},
