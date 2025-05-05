@@ -1021,7 +1021,7 @@ function PriceAndShipping({
   );
 }
 
-function SuccessPage({ productImage = "/placeholder.svg" }) {
+function SuccessPage({ productImage = "/placeholder.svg", name = "" }) {
   return (
     <div className="mx-auto flex h-screen grow flex-col items-start justify-start">
       <div className="mx-auto flex max-w-md flex-col items-center text-center">
@@ -1029,7 +1029,7 @@ function SuccessPage({ productImage = "/placeholder.svg" }) {
           <h1 className="text-xl font-bold text-white">
             You&apos;re on the market!
           </h1>
-          <p className="text-2xl font-bold text-white">Item Name</p>
+          <p className="text-2xl font-bold text-white">{name}</p>
           <p className="text-xl font-semibold text-white">
             is up on your store.
           </p>
@@ -1299,6 +1299,7 @@ function AddProductContent() {
     content = (
       <SuccessPage
         productImage={mediaUrls[0] ? mediaUrls[0] : "/placeholder.svg"}
+        name={name}
       />
     );
   } else {
