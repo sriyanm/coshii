@@ -114,53 +114,55 @@ function BottomNavigation({
   const searchParams = useSearchParams();
   const isEditing = searchParams.get("step") === "Update";
   return (
-    <div className="mt-2 flex flex-row items-center justify-end">
-      {previousPage && previousPage !== Page.PRICE && (
-        <Button
-          className="text-lg text-black/50"
-          variant="addProductSecondary"
-          onClick={function () {
-            setPage(previousPage);
-          }}
-        >
-          <ArrowLeft className="mr-1 size-4 text-black/50" /> Back
-        </Button>
-      )}
-      {nextPage && nextPage !== Page.SUCCESS ? (
-        <Button
-          className={"bg-white text-lg font-bold"}
-          variant="addProduct"
-          onClick={function () {
-            setPage(nextPage);
-          }}
-        >
-          Next <ArrowRight className="ml-1 size-4" />
-        </Button>
-      ) : nextPage && !isEditing ? (
-        <Button
-          className="bg-white text-lg font-bold"
-          variant="addProduct"
-          onClick={function () {
-            setPage(nextPage);
-            onPost();
-            console.log("post!");
-          }}
-        >
-          Post <ArrowRight className="ml-1 size-4" />
-        </Button>
-      ) : nextPage ? (
-        <Button
-          className="bg-white text-lg font-bold"
-          variant="addProduct"
-          onClick={function () {
-            // onPost;
-            console.log("update!");
-            window.location.href = "/inventory"; // TODO: temp fix
-          }}
-        >
-          Update <ArrowRight className="ml-1 size-4" />
-        </Button>
-      ) : null}
+    <div className="fixed inset-0">
+      <div className="fixed bottom-5 left-1/2 mt-2 flex flex-row items-center justify-end">
+        {previousPage && previousPage !== Page.PRICE && (
+          <Button
+            className="text-lg text-black/50"
+            variant="addProductSecondary"
+            onClick={function () {
+              setPage(previousPage);
+            }}
+          >
+            <ArrowLeft className="mr-1 size-4 text-black/50" /> Back
+          </Button>
+        )}
+        {nextPage && nextPage !== Page.SUCCESS ? (
+          <Button
+            className={"bg-white text-lg font-bold"}
+            variant="addProduct"
+            onClick={function () {
+              setPage(nextPage);
+            }}
+          >
+            Next <ArrowRight className="ml-1 size-4" />
+          </Button>
+        ) : nextPage && !isEditing ? (
+          <Button
+            className="bg-white text-lg font-bold"
+            variant="addProduct"
+            onClick={function () {
+              setPage(nextPage);
+              onPost();
+              console.log("post!");
+            }}
+          >
+            Post <ArrowRight className="ml-1 size-4" />
+          </Button>
+        ) : nextPage ? (
+          <Button
+            className="bg-white text-lg font-bold"
+            variant="addProduct"
+            onClick={function () {
+              // onPost;
+              console.log("update!");
+              window.location.href = "/inventory"; // TODO: temp fix
+            }}
+          >
+            Update <ArrowRight className="ml-1 size-4" />
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }
