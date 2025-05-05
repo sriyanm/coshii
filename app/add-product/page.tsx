@@ -75,7 +75,7 @@ function Container({
       {children}
     </div>
   ) : (
-    <div className="mx-auto max-w-md bg-gradient-to-b from-[#FF5640] to-[#FFC640]">
+    <div className="fixed inset-0 mx-auto max-w-md bg-gradient-to-b from-[#FF5640] to-[#FFC640]">
       {children}
     </div>
   );
