@@ -65,7 +65,6 @@ function Container({
         backgroundImage,
       }}
     >
-      {/* <div className="flex min-h-screen flex-col p-4 backdrop-blur-md"> */}
       <div className="fixed inset-0 mx-auto flex max-w-md flex-col p-4 backdrop-blur-md">
         {children}
       </div>
@@ -116,6 +115,14 @@ function BottomNavigation({
   const isEditing = searchParams.get("step") === "Update";
   return (
     <div className="fixed bottom-5 left-1/2 mt-2 flex flex-row items-center justify-end">
+      {!previousPage && (
+        <Button
+          className="invisible text-lg text-black/50"
+          variant="addProductSecondary"
+        >
+          <ArrowLeft className="mr-1 size-4 text-black/50" /> Back
+        </Button>
+      )}
       {previousPage && previousPage !== Page.PRICE && (
         <Button
           className="text-lg text-black/50"
@@ -1014,7 +1021,7 @@ function PriceAndShipping({
   );
 }
 
-function SuccessPage() {
+function SuccessPage({ productImage = "/placeholder.svg" }) {
   return (
     <div className="mx-auto flex h-screen grow flex-col items-start justify-start">
       <div className="mx-auto flex max-w-md flex-col items-center text-center">
@@ -1028,13 +1035,13 @@ function SuccessPage() {
           </p>
         </div>
 
-        <div className="mx-auto mb-12 flex h-auto w-40 items-center justify-center overflow-hidden">
+        <div className="relative h-[30vh] w-full">
           <Image
-            src="/ajay-product.png"
+            src={productImage}
             alt="Product showcase"
-            width={160}
-            height={250}
-            className="size-full object-cover"
+            fill
+            className="object-contain"
+            sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
 
@@ -1289,7 +1296,11 @@ function AddProductContent() {
     );
   } else if (page == Page.SUCCESS) {
     previousPage = Page.PRICE;
-    content = <SuccessPage />;
+    content = (
+      <SuccessPage
+        productImage={mediaUrls[0] ? mediaUrls[0] : "/placeholder.svg"}
+      />
+    );
   } else {
     throw Error("Unknown page");
   }
