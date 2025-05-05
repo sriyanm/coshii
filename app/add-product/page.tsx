@@ -60,7 +60,7 @@ function Container({
 }) {
   return backgroundImage ? (
     <div
-      className="mx-auto max-w-md bg-amber-400/75 bg-cover bg-blend-overlay"
+      className="fixed inset-0 mx-auto max-w-md bg-amber-400/75 bg-cover bg-blend-overlay"
       style={{
         backgroundImage,
       }}
