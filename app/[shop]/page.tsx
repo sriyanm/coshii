@@ -17,6 +17,7 @@ import {
   query,
   where,
   getDocs,
+  updateDoc,
   DocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "@/app/lib/client/firebase";
@@ -39,7 +40,7 @@ export default function ProfilePage({
   const [currentTab] = useState("Shop");
   const [products, setProducts] = useState<Product[]>([]);
   const [isFetching, setIsFetching] = useState(false);
-  const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
+  // const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
   const [stickied, setStickied] = useState(false); //track if we have already scrolled to a sticky product
   const [sellerView, setSellerView] = useState(false);
@@ -83,9 +84,33 @@ export default function ProfilePage({
     isPremium: true,
   });
 
-  const handleShopUpdate = (updatedShopData: Shop) => {
-    //TODO: should also update backend
-    setShopData(updatedShopData);
+  const handleShopUpdate = async (updatedShopData: Shop) => {
+    try {
+      const shopsRef = collection(db, "shops");
+      const q = query(
+        shopsRef,
+        where("username", "==", updatedShopData.username),
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const docRef = querySnapshot.docs[0].ref;
+
+        const cleanedData = JSON.parse(JSON.stringify(updatedShopData));
+        await updateDoc(docRef, cleanedData);
+
+        // Only update local state if Firestore update succeeds
+        setShopData(updatedShopData);
+        console.log("Shop data updated in Firestore and local state.");
+      } else {
+        console.warn(
+          "No matching shop document found for username:",
+          updatedShopData.username,
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update shop in Firestore:", error);
+    }
   };
 
   const handleShare = (product: Product) => {
@@ -359,23 +384,10 @@ export default function ProfilePage({
           {/* Wrapper for both toggles */}
           <div className="flex w-full flex-col">
             {/* Shop Name Above the First Toggle */}
-            <div className="px-4 py-0.5 text-center text-sm font-medium">
-              {shopData.shopName}
-            </div>
+            <div className="relative flex items-center justify-center px-4 py-2 text-sm font-medium">
+              <div>{shopData.shopName}</div>
 
-            {/* Shop/Activity Toggle and Shopping Cart in the Same Row */}
-            <div className="flex w-full items-center px-4 py-0.5">
-              {/* Shop/Activity Toggle */}
-              <div className="flex grow justify-center">
-                <Toggle
-                  options={["Shop", "Activity"]}
-                  selectedOption={activeTab}
-                  onOptionSelect={setActiveTab}
-                  font="SF Pro"
-                  underline={true}
-                />
-              </div>
-              <div className="ml-auto flex shrink-0 items-end justify-end">
+              <div className="absolute right-4 flex items-center">
                 {/* Shopping Cart Icon */}
                 <Link
                   href={{ pathname: "/checkout" }}
@@ -402,6 +414,19 @@ export default function ProfilePage({
                 )}
               </div>
             </div>
+
+            {/* Shop/Activity Toggle and Shopping Cart in the Same Row */}
+            {/* <div className="flex w-full items-center px-4 py-0.5">
+              <div className="flex grow justify-center">
+                <Toggle
+                  options={["Shop", "Activity"]}
+                  selectedOption={activeTab}
+                  onOptionSelect={setActiveTab}
+                  font="SF Pro"
+                  underline={true}
+                />
+              </div>
+            </div> */}
 
             {/* Categories Toggle */}
             <div className="shrink-0 px-4 py-0.5">
