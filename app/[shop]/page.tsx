@@ -313,13 +313,23 @@ export default function ProfilePage({
         setBuyerView(true);
         setCart([]);
         setItemCount(0);
+        console.log(
+          "Done with firebase auth. (SellerView, BuyerView): ",
+          false,
+          true,
+        );
       } else {
         // Wait until shopData is loaded
         const isShopOwner = !!(
           shopData && currentUser.uid === shopData.creatorId
         );
         setSellerView(isShopOwner);
-        setBuyerView(!isShopOwner);
+        setBuyerView(false);
+        console.log(
+          "Done with firebase auth. (SellerView, BuyerView): ",
+          isShopOwner,
+          false,
+        );
       }
     });
 
