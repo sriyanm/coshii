@@ -134,13 +134,13 @@ export function SocialBar({
     <div className="flex flex-col space-y-4">
       {/* Share Button */}
       <button onClick={handleShareClick} className="text-white" title="Share">
-        <MdIosShare className="mr-2 text-2xl" />
+        <MdIosShare className="mr-2 text-2xl drop-shadow" />
       </button>
 
       {/* Comment Button */}
       <button
         onClick={handleCommentClick}
-        className="relative text-white"
+        className="relative text-white drop-shadow"
         title="Comment"
       >
         <MdOutlineModeComment className="mr-2 text-2xl" />
@@ -152,7 +152,7 @@ export function SocialBar({
 
       {/* Like Button */}
       <button
-        className="relative text-white"
+        className="relative text-white drop-shadow"
         onClick={handleLikeClick}
         disabled={buyerView}
         title={liked ? "Unlike" : "Like"}

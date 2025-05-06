@@ -45,6 +45,7 @@ export default function ProfilePage({
   const [stickied, setStickied] = useState(false); //track if we have already scrolled to a sticky product
   const [isAtTop, setIsAtTop] = useState(true); //second shopname and notification should show only if at top
   const topRef = useRef<HTMLDivElement | null>(null);
+  const [muted, setMuted] = useState(true);
   const [sellerView, setSellerView] = useState(false);
   const [buyerView, setBuyerView] = useState(true);
   const [invalidShop, setInvalidShop] = useState(false);
@@ -195,7 +196,10 @@ export default function ProfilePage({
       if (cachedData && !bottom) {
         const { products: cachedProducts, timestamp } = JSON.parse(cachedData);
         // Use cached data if it's still valid
-        if (Date.now() - timestamp < CACHE_EXPIRATION_MS) {
+        if (
+          Date.now() - timestamp < CACHE_EXPIRATION_MS &&
+          cachedProducts.length > 0
+        ) {
           console.log("Using cached product data.", cachedProducts);
           setProducts(cachedProducts);
           setIsFetching(false);
@@ -529,6 +533,8 @@ export default function ProfilePage({
                 isPremium={shopData.isPremium}
                 likesCount={product.likesCount || 0}
                 commentsCount={product.commentsCount || 0}
+                muted={muted}
+                setMuted={setMuted}
                 id={`product-${product.id}`}
                 ref={index === products.length - 1 ? lastProductRef : null}
               />
