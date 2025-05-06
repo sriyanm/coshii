@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { CartItem } from "../types/index";
 import Image from "next/image";
-
+import { auth } from "@/app/lib/client/firebase";
 export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
 
@@ -38,11 +38,24 @@ export default function CheckoutPage() {
 
   const handleCheckout = async () => {
     setLoading(true);
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      console.error("User not signed in for checkout.");
+      alert("Please sign in to complete your purchase.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cartItems: cart, sellerId: sellerId }),
+        body: JSON.stringify({
+          cartItems: cart,
+          sellerId: sellerId,
+          buyerId: currentUser.uid, // Add the buyer's ID (current user's ID)
+        }),
       });
 
       console.log("Done with checkout api request");

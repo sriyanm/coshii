@@ -11,7 +11,11 @@ const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY);
 export async function POST(req: Request) {
   try {
     // Parse the request body
-    const { cartItems, sellerId }: { cartItems: CartItem[]; sellerId: string } =
+    const {
+      cartItems,
+      sellerId,
+      buyerId,
+    }: { cartItems: CartItem[]; sellerId: string; buyerId?: string } =
       await req.json();
 
     // Get previous page
@@ -35,11 +39,17 @@ export async function POST(req: Request) {
         line_items: lineItems,
         payment_intent_data: {
           application_fee_amount: 0, // or your fee logic
+          // If using Connect direct charges, you might set transfer_data here,
+          // but using stripeAccount in the second options arg is typical for destination charges.
         },
         mode: "payment",
         shipping_address_collection: {
           allowed_countries: ["US", "CA"],
         },
+        client_reference_id: buyerId, // Pass your internal buyerId here
+        metadata: buyerId
+          ? { userId: buyerId, sellerId: sellerId }
+          : { sellerId: sellerId }, // Include buyerId and sellerId in metadata
         automatic_tax: { enabled: false },
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
         cancel_url: referer || `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,

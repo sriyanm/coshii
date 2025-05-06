@@ -10,7 +10,12 @@ const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY);
 
 export async function POST(request: Request) {
   try {
-    const { priceId, quantity } = await request.json();
+    const {
+      priceId,
+      quantity,
+      userId,
+    }: { priceId: string; quantity: number; userId?: string } =
+      await request.json();
 
     const session = await stripe.checkout.sessions.create({
       ui_mode: "embedded",
@@ -22,6 +27,8 @@ export async function POST(request: Request) {
         },
       ],
       mode: "subscription",
+      client_reference_id: userId,
+      metadata: userId ? { userId: userId } : undefined,
       return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/return?session_id={CHECKOUT_SESSION_ID}`,
     });
 
