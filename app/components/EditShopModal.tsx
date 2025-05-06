@@ -3,7 +3,8 @@
 import React from "react";
 import { useEffect } from "react";
 import Image from "next/image";
-import { X, Instagram, Mail, Facebook } from "lucide-react";
+import { X, Mail } from "lucide-react";
+import { SiFacebook, SiX, SiInstagram } from "react-icons/si";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
@@ -191,7 +192,7 @@ export default function EditShopModal({
 
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <Instagram className="size-6" />
+                  <SiInstagram className="size-6" />
                   <Input
                     name="instagramUsername"
                     value={instagramUsername} // Display Instagram username from socialLinks
@@ -202,7 +203,7 @@ export default function EditShopModal({
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <X className="size-6" />
+                  <SiX className="size-6" />
                   <Input
                     name="XUsername"
                     value={XUsername} // Display X username from socialLinks
@@ -213,7 +214,7 @@ export default function EditShopModal({
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Facebook className="size-6" />
+                  <SiFacebook className="size-6" />
                   <Input
                     name="facebookUsername"
                     value={facebookUsername} // Display Instagram username from socialLinks

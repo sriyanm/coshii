@@ -558,24 +558,21 @@ function SocialMediaPage(
           }`}
           className="h-12 w-full p-4 text-xl"
         />
-        <Label
-          htmlFor="shop-social-media-twitter"
-          className="text-md text-left"
-        >
-          Twitter Username
+        <Label htmlFor="shop-social-media-x" className="text-md text-left">
+          X Username
         </Label>
         <Input
-          id="twitter"
+          id="x"
           placeholder=""
           onChange={(e) =>
             updateSocialLink(
-              "Twitter",
-              "https://twitter.com",
+              "X",
+              "https://x.com",
               e.currentTarget.value.replace(/^@/, ""),
             )
           }
           value={`@${
-            socialLinks.find((l) => l.platform === "Twitter")?.username || ""
+            socialLinks.find((l) => l.platform === "X")?.username || ""
           }`}
           className="h-12 w-full p-4 text-xl"
         />
