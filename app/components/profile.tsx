@@ -130,7 +130,7 @@ function ProfileHeader({
       {/* Bell Icon (Top-Right Corner) */}
       {sellerView && (
         <div className="absolute right-5 top-5">
-          <Link href="/notifications">
+          <Link href="/notifs">
             <CiBellOn
               className="size-6 cursor-pointer font-bold text-gray-500 hover:text-gray-800"
               title="Notifications"

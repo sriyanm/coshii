@@ -43,6 +43,8 @@ export default function ProfilePage({
   // const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
   const [stickied, setStickied] = useState(false); //track if we have already scrolled to a sticky product
+  const [isAtTop, setIsAtTop] = useState(true); //second shopname and notification should show only if at top
+  const topRef = useRef<HTMLDivElement | null>(null);
   const [sellerView, setSellerView] = useState(false);
   const [buyerView, setBuyerView] = useState(true);
   const [invalidShop, setInvalidShop] = useState(false);
@@ -230,6 +232,29 @@ export default function ProfilePage({
     }
   };
 
+  // Observer for rendering second shopname and notification icon
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsAtTop(entry.isIntersecting && entry.boundingClientRect.top <= 0);
+      },
+      {
+        root: null,
+        threshold: 0,
+        rootMargin: "0px 0px -100% 0px", // Trigger only when the element touches the top
+      },
+    );
+
+    const currentTop = topRef.current;
+    if (currentTop) {
+      observer.observe(currentTop);
+    }
+
+    return () => {
+      if (currentTop) observer.unobserve(currentTop);
+    };
+  }, []);
+
   // Add cache products in sessionStorage
   useEffect(() => {
     sessionStorage.setItem(
@@ -384,10 +409,28 @@ export default function ProfilePage({
           {/* Wrapper for both toggles */}
           <div className="flex w-full flex-col">
             {/* Shop Name Above the First Toggle */}
-            <div className="relative flex items-center justify-center px-4 py-2 text-sm font-medium">
-              <div>{shopData.shopName}</div>
+            <div
+              className="relative flex items-center justify-center px-4 py-2 text-sm font-medium"
+              ref={topRef}
+            >
+              <div
+                className={`transition-opacity duration-100 ${isAtTop ? "opacity-100" : "pointer-events-none opacity-0"}`}
+              >
+                {shopData.shopName}
+              </div>
 
               <div className="absolute right-4 flex items-center">
+                {/* Bell Icon (visible only for sellers) */}
+                {isAtTop && sellerView && (
+                  <Link href="/notifs" className="mr-4">
+                    <CiBellOn
+                      className="text-2xl"
+                      title="Notifications"
+                      style={{ strokeWidth: "0.6" }}
+                    />
+                  </Link>
+                )}
+
                 {/* Shopping Cart Icon */}
                 <Link
                   href={{ pathname: "/checkout" }}
@@ -401,17 +444,6 @@ export default function ProfilePage({
                     </span>
                   )}
                 </Link>
-
-                {/* Bell Icon (visible only for sellers) */}
-                {sellerView && (
-                  <Link href="/notifs">
-                    <CiBellOn
-                      className="ml-4 text-2xl"
-                      title="Notifications"
-                      style={{ strokeWidth: "0.6" }}
-                    />
-                  </Link>
-                )}
               </div>
             </div>
 
