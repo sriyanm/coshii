@@ -116,7 +116,7 @@ export default function ProfilePage({
   };
 
   const handleShare = (product: Product) => {
-    const productLink = `${process.env.NEXT_PUBLIC_BASE_URL}/${shopData.username}#product-${product.id}`;
+    const productLink = `${window.location.origin}/${shopData.username}#product-${product.id}`;
     console.log("Share clicked");
 
     // Copy the URL to the clipboard
@@ -442,18 +442,38 @@ export default function ProfilePage({
                 )}
 
                 {/* Shopping Cart Icon */}
-                <Link
-                  href={{ pathname: "/checkout" }}
-                  title="Cart Button"
-                  className="relative"
-                >
-                  <MdAddShoppingCart className="text-2xl" />
-                  {itemCount > 0 && (
+                {itemCount > 0 ? (
+                  <Link
+                    href="/checkout"
+                    title="Cart Button"
+                    className="relative"
+                  >
+                    <MdAddShoppingCart className="text-2xl" />
                     <span className="absolute -right-2 -top-3 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
                       {itemCount}
                     </span>
-                  )}
-                </Link>
+                  </Link>
+                ) : (
+                  <button
+                    title="Cart Button"
+                    onClick={() => {
+                      setShowPopup(true);
+                      setPopupMessage("Sorry, your cart is empty");
+
+                      if (popupTimerRef.current) {
+                        clearTimeout(popupTimerRef.current);
+                      }
+
+                      popupTimerRef.current = setTimeout(
+                        () => setShowPopup(false),
+                        3000,
+                      );
+                    }}
+                    className="relative"
+                  >
+                    <MdAddShoppingCart className="text-2xl" />
+                  </button>
+                )}
               </div>
             </div>
 
