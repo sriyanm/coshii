@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 // import { loadStripe } from '@stripe/stripe-js';
 // import EmbeddedCheckoutButton from "../components/EmbeddedCheckoutButton";
+import { auth } from "@/app/lib/client/firebase";
 
 //TODO: switch from test back to actual stripe mode
 //    change promise keys in all api files
@@ -44,22 +45,37 @@ const SellerOnboardingButton = () => {
 
 const CoshiiPremiumButton = () => {
   const [loading, setLoading] = useState(false);
+  // Example: Get user from Firebase Auth context or state management
+  // const { currentUser } = useAuth(); // Replace with your actual auth hook/logic
+  const currentUser = auth.currentUser; // Assuming auth is available in this scope from Firebase
 
   const handleCheckout = async () => {
     setLoading(true);
+
+    if (!currentUser || !currentUser.email) {
+      console.error(
+        "User not signed in or email not available for subscription.",
+      );
+      alert("Please sign in to subscribe.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/create-subscription-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}), // Provide the user’s email
+        body: JSON.stringify({
+          email: currentUser.email, // User's email
+          userId: currentUser.uid, // User's Firebase UID
+        }),
       });
 
       if (!response.ok) throw new Error("Failed to create checkout session");
 
       const { url } = await response.json();
 
-      // Redirect the user to Stripe’s checkout page
+      // Redirect the user to Stripe's checkout page
       window.location.href = url;
     } catch (error) {
       console.error("Error initiating checkout:", error);

@@ -17,6 +17,7 @@ import {
   query,
   where,
   getDocs,
+  updateDoc,
   DocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "@/app/lib/client/firebase";
@@ -39,9 +40,12 @@ export default function ProfilePage({
   const [currentTab] = useState("Shop");
   const [products, setProducts] = useState<Product[]>([]);
   const [isFetching, setIsFetching] = useState(false);
-  const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
+  // const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
   const [stickied, setStickied] = useState(false); //track if we have already scrolled to a sticky product
+  const [isAtTop, setIsAtTop] = useState(true); //second shopname and notification should show only if at top
+  const topRef = useRef<HTMLDivElement | null>(null);
+  const [muted, setMuted] = useState(true);
   const [sellerView, setSellerView] = useState(false);
   const [buyerView, setBuyerView] = useState(true);
   const [invalidShop, setInvalidShop] = useState(false);
@@ -83,13 +87,37 @@ export default function ProfilePage({
     isPremium: true,
   });
 
-  const handleShopUpdate = (updatedShopData: Shop) => {
-    //TODO: should also update backend
-    setShopData(updatedShopData);
+  const handleShopUpdate = async (updatedShopData: Shop) => {
+    try {
+      const shopsRef = collection(db, "shops");
+      const q = query(
+        shopsRef,
+        where("username", "==", updatedShopData.username),
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const docRef = querySnapshot.docs[0].ref;
+
+        const cleanedData = JSON.parse(JSON.stringify(updatedShopData));
+        await updateDoc(docRef, cleanedData);
+
+        // Only update local state if Firestore update succeeds
+        setShopData(updatedShopData);
+        console.log("Shop data updated in Firestore and local state.");
+      } else {
+        console.warn(
+          "No matching shop document found for username:",
+          updatedShopData.username,
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update shop in Firestore:", error);
+    }
   };
 
   const handleShare = (product: Product) => {
-    const productLink = `${process.env.NEXT_PUBLIC_BASE_URL}/${shopData.username}#product-${product.id}`;
+    const productLink = `${window.location.origin}/${shopData.username}#product-${product.id}`;
     console.log("Share clicked");
 
     // Copy the URL to the clipboard
@@ -168,7 +196,10 @@ export default function ProfilePage({
       if (cachedData && !bottom) {
         const { products: cachedProducts, timestamp } = JSON.parse(cachedData);
         // Use cached data if it's still valid
-        if (Date.now() - timestamp < CACHE_EXPIRATION_MS) {
+        if (
+          Date.now() - timestamp < CACHE_EXPIRATION_MS &&
+          cachedProducts.length > 0
+        ) {
           console.log("Using cached product data.", cachedProducts);
           setProducts(cachedProducts);
           setIsFetching(false);
@@ -204,6 +235,29 @@ export default function ProfilePage({
       setIsFetching(false);
     }
   };
+
+  // Observer for rendering second shopname and notification icon
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsAtTop(entry.isIntersecting && entry.boundingClientRect.top <= 0);
+      },
+      {
+        root: null,
+        threshold: 0,
+        rootMargin: "0px 0px -100% 0px", // Trigger only when the element touches the top
+      },
+    );
+
+    const currentTop = topRef.current;
+    if (currentTop) {
+      observer.observe(currentTop);
+    }
+
+    return () => {
+      if (currentTop) observer.unobserve(currentTop);
+    };
+  }, []);
 
   // Add cache products in sessionStorage
   useEffect(() => {
@@ -263,13 +317,23 @@ export default function ProfilePage({
         setBuyerView(true);
         setCart([]);
         setItemCount(0);
+        console.log(
+          "Done with firebase auth. (SellerView, BuyerView): ",
+          false,
+          true,
+        );
       } else {
         // Wait until shopData is loaded
         const isShopOwner = !!(
           shopData && currentUser.uid === shopData.creatorId
         );
         setSellerView(isShopOwner);
-        setBuyerView(!isShopOwner);
+        setBuyerView(false);
+        console.log(
+          "Done with firebase auth. (SellerView, BuyerView): ",
+          isShopOwner,
+          false,
+        );
       }
     });
 
@@ -359,13 +423,66 @@ export default function ProfilePage({
           {/* Wrapper for both toggles */}
           <div className="flex w-full flex-col">
             {/* Shop Name Above the First Toggle */}
-            <div className="px-4 py-0.5 text-center text-sm font-medium">
-              {shopData.shopName}
+            <div
+              className="relative flex items-center justify-center px-4 py-2 text-sm font-medium"
+              ref={topRef}
+            >
+              <div
+                className={`transition-opacity duration-100 ${isAtTop ? "opacity-100" : "pointer-events-none opacity-0"}`}
+              >
+                {shopData.shopName}
+              </div>
+
+              <div className="absolute right-4 flex items-center">
+                {/* Bell Icon (visible only for sellers) */}
+                {isAtTop && sellerView && (
+                  <Link href="/notifs" className="mr-4">
+                    <CiBellOn
+                      className="text-2xl"
+                      title="Notifications"
+                      style={{ strokeWidth: "0.6" }}
+                    />
+                  </Link>
+                )}
+
+                {/* Shopping Cart Icon */}
+                {itemCount > 0 ? (
+                  <Link
+                    href="/checkout"
+                    title="Cart Button"
+                    className="relative"
+                  >
+                    <MdAddShoppingCart className="text-2xl" />
+                    <span className="absolute -right-2 -top-3 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                      {itemCount}
+                    </span>
+                  </Link>
+                ) : (
+                  <button
+                    title="Cart Button"
+                    onClick={() => {
+                      setShowPopup(true);
+                      setPopupMessage("Sorry, your cart is empty");
+
+                      if (popupTimerRef.current) {
+                        clearTimeout(popupTimerRef.current);
+                      }
+
+                      popupTimerRef.current = setTimeout(
+                        () => setShowPopup(false),
+                        3000,
+                      );
+                    }}
+                    className="relative"
+                  >
+                    <MdAddShoppingCart className="text-2xl" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Shop/Activity Toggle and Shopping Cart in the Same Row */}
-            <div className="flex w-full items-center px-4 py-0.5">
-              {/* Shop/Activity Toggle */}
+            {/* <div className="flex w-full items-center px-4 py-0.5">
               <div className="flex grow justify-center">
                 <Toggle
                   options={["Shop", "Activity"]}
@@ -375,33 +492,7 @@ export default function ProfilePage({
                   underline={true}
                 />
               </div>
-              <div className="ml-auto flex shrink-0 items-end justify-end">
-                {/* Shopping Cart Icon */}
-                <Link
-                  href={{ pathname: "/checkout" }}
-                  title="Cart Button"
-                  className="relative"
-                >
-                  <MdAddShoppingCart className="text-2xl" />
-                  {itemCount > 0 && (
-                    <span className="absolute -right-2 -top-3 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                      {itemCount}
-                    </span>
-                  )}
-                </Link>
-
-                {/* Bell Icon (visible only for sellers) */}
-                {sellerView && (
-                  <Link href="/notifs">
-                    <CiBellOn
-                      className="ml-4 text-2xl"
-                      title="Notifications"
-                      style={{ strokeWidth: "0.6" }}
-                    />
-                  </Link>
-                )}
-              </div>
-            </div>
+            </div> */}
 
             {/* Categories Toggle */}
             <div className="shrink-0 px-4 py-0.5">
@@ -442,6 +533,8 @@ export default function ProfilePage({
                 isPremium={shopData.isPremium}
                 likesCount={product.likesCount || 0}
                 commentsCount={product.commentsCount || 0}
+                muted={muted}
+                setMuted={setMuted}
                 id={`product-${product.id}`}
                 ref={index === products.length - 1 ? lastProductRef : null}
               />

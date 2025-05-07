@@ -10,7 +10,8 @@ const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY);
 export async function POST(req: Request) {
   try {
     // Parse the request body
-    const { email } = await req.json();
+    const { email, userId }: { email: string; userId?: string } =
+      await req.json();
 
     // Get previous page
     const referer =
@@ -29,6 +30,8 @@ export async function POST(req: Request) {
       ],
       mode: "subscription",
       customer_email: email,
+      client_reference_id: userId,
+      metadata: userId ? { userId: userId } : undefined,
       automatic_tax: { enabled: false }, //TODO: change this to true (setup stripe tax)
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
       cancel_url: referer,

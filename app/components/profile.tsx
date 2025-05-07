@@ -130,7 +130,7 @@ function ProfileHeader({
       {/* Bell Icon (Top-Right Corner) */}
       {sellerView && (
         <div className="absolute right-5 top-5">
-          <Link href="/notifications">
+          <Link href="/notifs">
             <CiBellOn
               className="size-6 cursor-pointer font-bold text-gray-500 hover:text-gray-800"
               title="Notifications"
@@ -204,34 +204,45 @@ function ProfileHeader({
 function SocialLinksBar({
   socialLinks,
 }: {
-  socialLinks: { platform: string; url: string }[]; // Added the `icon` prop to the array type
+  socialLinks: { platform: string; url: string }[];
 }) {
   const SOCIAL_ICONS: Record<string, JSX.Element> = {
     Facebook: <SiFacebook size={30} />,
-    Twitter: <SiX size={30} />,
+    X: <SiX size={30} />,
     Instagram: <SiInstagram size={30} />,
+  };
+
+  const SOCIAL_BASE_URLS: Record<string, string> = {
+    Facebook: "https://facebook.com/",
+    X: "https://X.com/",
+    Instagram: "https://instagram.com/",
   };
 
   return (
     <div className="flex justify-center gap-4">
-      {socialLinks?.map(({ platform, url }) => (
-        <Link
-          key={platform}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={platform}
-          className="flex items-center"
-        >
-          {SOCIAL_ICONS[platform] ? (
-            <span className="flex size-5 items-center">
-              {SOCIAL_ICONS[platform]}
-            </span> // Display the SVG icon
-          ) : (
-            <span>{platform}</span> // Fallback text if no icon is provided
-          )}
-        </Link>
-      ))}
+      {socialLinks
+        ?.filter(({ platform, url }) => {
+          const baseUrl = SOCIAL_BASE_URLS[platform];
+          return baseUrl && url !== baseUrl;
+        })
+        .map(({ platform, url }) => (
+          <Link
+            key={platform}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={platform}
+            className="flex items-center"
+          >
+            {SOCIAL_ICONS[platform] ? (
+              <span className="flex size-5 items-center">
+                {SOCIAL_ICONS[platform]}
+              </span>
+            ) : (
+              <span>{platform}</span>
+            )}
+          </Link>
+        ))}
     </div>
   );
 }

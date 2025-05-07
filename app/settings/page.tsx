@@ -323,21 +323,53 @@ export default function SettingsPage() {
   const [showCheckout, setShowCheckout] = useState(false);
   const modalRef = useRef<HTMLDialogElement>(null);
   const fetchClientSecret = useCallback(() => {
+    if (!user || !user.uid) {
+      console.error(
+        "User not authenticated or UID missing. Cannot fetch client secret for embedded checkout.",
+      );
+      return Promise.reject(new Error("User not authenticated"));
+    }
     return fetch("/api/embedded-checkout", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // priceId: "price_1QwnGEE4sAURr3tnLFKauzDP",
-        // priceId: "price_1R635GE4sAURr3tnakAkDpFP", // $0
         priceId: "price_1R1YUqE4sAURr3tn7fFhEd2j", // test mode
         quantity: 1,
+        userId: user.uid,
       }),
     })
-      .then((res) => res.json())
-      .then((data) => data.client_secret);
-  }, []);
+      .then(async (res) => {
+        if (!res.ok) {
+          // Attempt to parse error body if not OK
+          const errorData = await res
+            .json()
+            .catch(() => ({ error: "Failed to parse error response" }));
+          console.error("Error fetching client secret:", res.status, errorData);
+          throw new Error(
+            errorData.error || `API request failed with status ${res.status}`,
+          );
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (!data || !data.client_secret) {
+          console.error("Client secret not found in API response:", data);
+          throw new Error("Client secret not found in API response");
+        }
+        return data.client_secret;
+      })
+      .catch((error) => {
+        console.error("fetchClientSecret failed:", error);
+        // Propagate the error so Stripe's provider can also see it if needed
+        // Or handle it by, for example, closing the modal and showing an alert
+        // alert(`Error: ${error.message}`); // Example user feedback
+        setShowCheckout(false); // Possibly hide checkout on error
+        modalRef.current?.close();
+        throw error; // Re-throw to ensure Stripe's EmbeddedCheckoutProvider knows it failed
+      });
+  }, [user]);
 
   const renderSubscriptionView = () => {
     const handleCancelSubscription = async () => {

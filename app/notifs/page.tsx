@@ -206,7 +206,7 @@ export default function Notifs() {
       <div className="flex-1">
         <div className="mt-4 flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold">Notifications</h1>
-          <Link href="/yourstore">
+          <Link href="/">
             <X className="size-6" />
           </Link>
         </div>

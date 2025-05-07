@@ -3,7 +3,8 @@
 import React from "react";
 import { useEffect } from "react";
 import Image from "next/image";
-import { X, Instagram, Mail } from "lucide-react";
+import { X, Mail } from "lucide-react";
+import { SiFacebook, SiX, SiInstagram } from "react-icons/si";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
@@ -32,7 +33,7 @@ export default function EditShopModal({
     description: "",
     socialLinks: [
       { platform: "Facebook", url: "https://facebook.com", username: "" },
-      { platform: "Twitter", url: "https://twitter.com", username: "" },
+      { platform: "X", url: "https://x.com", username: "" },
       { platform: "Instagram", url: "https://instagram.com", username: "" },
     ],
     categories: [
@@ -63,33 +64,70 @@ export default function EditShopModal({
     }));
   };
 
-  const handleInstagramUsernameChange = (
+  const handleSocialUsernameChange = (
     e: React.ChangeEvent<HTMLInputElement>,
+    platform: "Instagram" | "Facebook" | "X",
   ) => {
-    const value = e.target.value;
-    const updatedSocialLinks = shopInfo.socialLinks.map((link) =>
-      link.platform === "Instagram" ? { ...link, username: value } : link,
-    );
+    const value = e.target.value.trim();
+
+    const urlPrefixes: Record<string, string> = {
+      Instagram: "https://instagram.com/",
+      Facebook: "https://facebook.com/",
+      X: "https://x.com/",
+    };
+
+    const existingLinks = Array.isArray(shopInfo.socialLinks)
+      ? shopInfo.socialLinks
+      : [];
+
+    const updatedSocialLinks = existingLinks.some(
+      (link) => link.platform === platform,
+    )
+      ? existingLinks.map((link) =>
+          link.platform === platform
+            ? {
+                ...link,
+                username: value,
+                url: `${urlPrefixes[platform]}${value || ""}`,
+              }
+            : link,
+        )
+      : [
+          ...existingLinks,
+          {
+            platform,
+            username: value,
+            url: `${urlPrefixes[platform]}${value || ""}`,
+          },
+        ];
+
     setShopInfo((prev) => ({
       ...prev,
       socialLinks: updatedSocialLinks,
     }));
   };
 
+  // Safe access of Instagram username
+  const instagramUsername = Array.isArray(shopInfo.socialLinks)
+    ? shopInfo.socialLinks.find((link) => link.platform === "Instagram")
+        ?.username || ""
+    : "";
+  const XUsername = Array.isArray(shopInfo.socialLinks)
+    ? shopInfo.socialLinks.find((link) => link.platform === "X")?.username || ""
+    : "";
+  const facebookUsername = Array.isArray(shopInfo.socialLinks)
+    ? shopInfo.socialLinks.find((link) => link.platform === "Facebook")
+        ?.username || ""
+    : "";
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Shop info updated:", shopInfo);
-    onShopUpdate(shopInfo); // Pass the updated data to parent component
+    onShopUpdate(shopInfo);
     onClose();
   };
 
-  if (!isOpen) return null; // Don't render the modal if it's closed
-
-  // Get the Instagram username from socialLinks if it exists
-  const instagramUsername =
-    shopInfo.socialLinks?.find((link) => link.platform === "Instagram")
-      ?.username || "";
-
+  if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
@@ -154,11 +192,33 @@ export default function EditShopModal({
 
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <Instagram className="size-6" />
+                  <SiInstagram className="size-6" />
                   <Input
                     name="instagramUsername"
                     value={instagramUsername} // Display Instagram username from socialLinks
-                    onChange={handleInstagramUsernameChange}
+                    onChange={(e) => handleSocialUsernameChange(e, "Instagram")}
+                    placeholder="username"
+                    className="bg-gray-100"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <SiX className="size-6" />
+                  <Input
+                    name="XUsername"
+                    value={XUsername} // Display X username from socialLinks
+                    onChange={(e) => handleSocialUsernameChange(e, "X")}
+                    placeholder="username"
+                    className="bg-gray-100"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <SiFacebook className="size-6" />
+                  <Input
+                    name="facebookUsername"
+                    value={facebookUsername} // Display Instagram username from socialLinks
+                    onChange={(e) => handleSocialUsernameChange(e, "Facebook")}
                     placeholder="username"
                     className="bg-gray-100"
                   />
