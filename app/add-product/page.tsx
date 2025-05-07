@@ -114,7 +114,7 @@ function BottomNavigation({
   const searchParams = useSearchParams();
   const isEditing = searchParams.get("step") === "Update";
   return (
-    <div className="fixed bottom-5 left-1/2 mt-2 flex flex-row items-center justify-end">
+    <div className="fixed bottom-5 right-2 mt-2 flex flex-row items-center">
       {!previousPage && (
         <Button
           className="invisible text-lg text-black/50"
