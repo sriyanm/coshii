@@ -68,6 +68,7 @@ function OnboardingContent() {
   const [creatorName, setCreatorName] = useState("");
   const [shopName, setShopName] = useState("");
   const [shopHandle, setShopHandle] = useState("");
+  const [handleExists, setHandleExists] = useState(false);
   const [shopDescription, setShopDescription] = useState("");
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -106,6 +107,24 @@ function OnboardingContent() {
     }
   };
 
+  useEffect(() => {
+    const checkHandle = async () => {
+      if (!shopHandle) {
+        setHandleExists(false);
+        return;
+      }
+  
+      const snapshot = await getDocs(collection(db, "shops"));
+      const exists = snapshot.docs.some(
+        (doc) =>
+          doc.data().username?.toLowerCase() === shopHandle.toLowerCase()
+      );
+      setHandleExists(exists);
+    };
+  
+    checkHandle();
+  }, [shopHandle]);
+
   return (
     <>
       {page === Page.INTRO && IntroPage(handlePageChange)}
@@ -118,6 +137,7 @@ function OnboardingContent() {
           setShopName,
           shopHandle,
           setShopHandle,
+          handleExists,
         )}
       {page === Page.SHOP_BIO &&
         ShopBioPage(handlePageChange, shopDescription, setShopDescription)}
@@ -267,6 +287,7 @@ function ShopNameAndHandlePage(
   setShopName: Dispatch<SetStateAction<string>>,
   shopHandle: string,
   setShopHandle: Dispatch<SetStateAction<string>>,
+  handleExists: boolean,
 ) {
   const getButtonText = () => {
     return "Continue";
@@ -314,6 +335,11 @@ function ShopNameAndHandlePage(
           value={`@${shopHandle}`}
           className="h-12 w-full p-4 text-xl"
         />
+        {handleExists && (
+          <p className="mt-2 text-sm text-red-500">
+            Sorry, this handle is already taken! Please choose a different one.
+          </p>
+        )}
       </div>
       <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4 text-center">
         <div className="flex justify-center">
@@ -323,8 +349,7 @@ function ShopNameAndHandlePage(
             variant="onboarding"
             onClick={handleContinue}
             disabled={
-              !shopName || !shopHandle
-              // TODO: or if handle already exists
+              !shopName || !shopHandle || handleExists
             }
           >
             {getButtonText()}
