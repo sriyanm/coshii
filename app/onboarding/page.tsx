@@ -190,7 +190,7 @@ function OnboardingContent() {
 function IntroPage(setPage: (nextPage: Page) => void) {
   const router = useRouter();
   return (
-    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center justify-between bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-8">
+    <div className="fixed inset-0 mx-auto flex h-screen max-w-md flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-8">
       <div className="mt-auto mb-auto flex w-full min-w-72 max-w-sm flex-col items-center px-6 text-center">
         <h1 className="mb-2 text-xl font-bold text-white">Welcome to</h1>
         <div className="mb-4 text-8xl font-bold text-white">Coshii</div>
@@ -199,7 +199,7 @@ function IntroPage(setPage: (nextPage: Page) => void) {
         </p>
       </div>
 
-      <div className="w-full max-w-md px-10 py-4 text-center">
+      <div className="fixed bottom-0 w-full max-w-md px-10 py-4 text-center">
         <div className="flex justify-center">
           <Button
             className="w-full min-w-32 py-6 text-lg"
