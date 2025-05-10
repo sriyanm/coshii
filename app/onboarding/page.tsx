@@ -21,12 +21,13 @@ import {
   useSignInWithPhoneNumber,
 } from "../hooks/firebase";
 import { db, auth } from "@/app/lib/client/firebase";
-import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, where, query, getDocs } from "firebase/firestore";
 import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
 import { GoogleSigninButton } from "@/app/components/GoogleSigninButton";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProfilePictureUpload } from "@/app/hooks/firebase";
 import { X } from "lucide-react";
+
 
 // import { set } from "zod";
 
@@ -616,6 +617,7 @@ function SocialMediaPage(
 }
 
 function SignInPage(setPage: (nextPage: Page) => void) {
+  const router = useRouter();
   return (
     <>
       <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
@@ -624,9 +626,30 @@ function SignInPage(setPage: (nextPage: Page) => void) {
             Let&#39;s set up your account!
           </h1>
         </div>
-        <GoogleSigninButton //TOOD: should check if already account associated with email
-          onSuccess={() => {
-            setPage(Page.PHONE);
+        <GoogleSigninButton 
+          onSuccess={({ user, isNewUser }) => {
+            if (isNewUser) {
+              setPage(Page.PHONE);
+            } else {
+              console.log("User already exists, redirecting to their shop...");
+              const q = query(
+                collection(db, "shops"),
+                where("email", "==", user.email),
+              );
+              getDocs(q)
+                .then((querySnapshot) => {
+                  if (!querySnapshot.empty) {
+                    const shopDoc = querySnapshot.docs[0].data();
+                    const shopHandle = shopDoc.username;
+                    router.push(`/${shopHandle}`);
+                  } else {
+                    console.warn("No shop found for this existing user. They may have not set up a shop yet (did not finish onboarding but signed in with Google).");
+                  }
+                })
+                .catch((error) => {
+                  console.error("Error fetching shop document:", error);
+                });
+            }
           }}
         />
         <MagicLinkSigninForm />
