@@ -22,7 +22,7 @@ import {
 } from "../hooks/firebase";
 import { db, auth } from "@/app/lib/client/firebase";
 import { collection, addDoc, doc, updateDoc, where, query, getDocs } from "firebase/firestore";
-import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
+// import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
 import { GoogleSigninButton } from "@/app/components/GoogleSigninButton";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProfilePictureUpload } from "@/app/hooks/firebase";
@@ -652,7 +652,7 @@ function SignInPage(setPage: (nextPage: Page) => void) {
             }
           }}
         />
-        <MagicLinkSigninForm />
+        {/* <MagicLinkSigninForm /> */}
       </div>
     </>
   );

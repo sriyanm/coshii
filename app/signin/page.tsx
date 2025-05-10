@@ -1,6 +1,6 @@
 "use client";
 
-import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
+// import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
 import { GoogleSigninButton } from "@/app/components/GoogleSigninButton";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -43,7 +43,7 @@ export default function SignInPage() {
   return (
     <div className="flex h-screen flex-col items-center justify-center gap-5">
       <GoogleSigninButton />
-      <MagicLinkSigninForm />
+      {/* <MagicLinkSigninForm /> */}
     </div>
   );
 }
