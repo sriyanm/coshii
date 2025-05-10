@@ -1,17 +1,17 @@
 "use client";
 
-import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
 import { Button } from "@/app/components/ui/button";
 import { useSignInWithGoogle } from "@/app/hooks/firebase";
-import { AlertCircle } from "lucide-react";
 import { User } from "firebase/auth";
 
 type GoogleSignInButtonProps = {
+  allowNewUser: boolean;
   onSuccess?: (data: { user: User; isNewUser: boolean }) => void;
+  onError?: (error: Error) => void;
 };
 
-export function GoogleSigninButton({ onSuccess }: GoogleSignInButtonProps) {
-  const signInWithGoogleMutation = useSignInWithGoogle({ onSuccess });
+export function GoogleSigninButton({ onSuccess, allowNewUser, onError }: GoogleSignInButtonProps) {
+  const signInWithGoogleMutation = useSignInWithGoogle({ onSuccess, allowNewUser, onError });
 
   const handleGoogleSignin = () => {
     signInWithGoogleMutation.mutate();
@@ -50,7 +50,7 @@ export function GoogleSigninButton({ onSuccess }: GoogleSignInButtonProps) {
           : "Sign in with Google"}
       </Button>
 
-      {signInWithGoogleMutation.isError && (
+      {/* {signInWithGoogleMutation.isError && (
         <Alert variant="destructive">
           <AlertCircle className="size-4" />
           <AlertTitle>Error</AlertTitle>
@@ -58,7 +58,7 @@ export function GoogleSigninButton({ onSuccess }: GoogleSignInButtonProps) {
             Failed to sign in with Google. Please try again.
           </AlertDescription>
         </Alert>
-      )}
+      )} */}
     </div>
   );
 }

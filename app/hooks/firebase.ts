@@ -15,6 +15,7 @@ import {
   User,
   GoogleAuthProvider,
   signInWithPopup,
+  deleteUser,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useContext } from "react";
@@ -177,8 +178,12 @@ export function usePhoneNumberConfirmationResult() {
 
 export function useSignInWithGoogle({
   onSuccess,
+  allowNewUser,
+  onError,
 }: {
   onSuccess?: (data: { user: User; isNewUser: boolean }) => void;
+  allowNewUser?: boolean;
+  onError?: (error: Error) => void;
 }) {
   return useMutation({
     mutationKey: ["signInWithGoogle"],
@@ -186,8 +191,13 @@ export function useSignInWithGoogle({
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const userInfo = getAdditionalUserInfo(result);
+      console.log("userInfo", userInfo);
       if (!userInfo) {
         throw new Error("Failed to get user info");
+      }
+      if (userInfo.isNewUser && !allowNewUser) {
+        await deleteUser(result.user);
+        throw new Error("New users are not allowed");
       }
       return {
         user: result.user,
@@ -204,6 +214,7 @@ export function useSignInWithGoogle({
     },
     onError: (error) => {
       console.error("failed to sign in with Google:", error.message);
+      onError?.(error);
     },
   });
 }

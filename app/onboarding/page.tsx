@@ -627,6 +627,7 @@ function SignInPage(setPage: (nextPage: Page) => void) {
           </h1>
         </div>
         <GoogleSigninButton 
+          allowNewUser={true}
           onSuccess={({ user, isNewUser }) => {
             if (isNewUser) {
               setPage(Page.PHONE);
@@ -642,6 +643,8 @@ function SignInPage(setPage: (nextPage: Page) => void) {
                     const shopDoc = querySnapshot.docs[0].data();
                     const shopHandle = shopDoc.username;
                     router.push(`/${shopHandle}`);
+                    // TODO: Show a message to the user
+                    // alert("Seems like this email already have a shop. Feel free to set up a new shop with a different email.");
                   } else {
                     console.warn("No shop found for this existing user. They may have not set up a shop yet (did not finish onboarding but signed in with Google).");
                   }
