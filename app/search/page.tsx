@@ -13,6 +13,7 @@ import Fuse from "fuse.js";
 import { db } from "@/app/lib/client/firebase";
 import { auth } from "@/app/lib/client/firebase";
 import { Plus, Minus } from "lucide-react";
+import Image from "next/image";
 
 interface NavigationItem {
   name: string;
@@ -35,7 +36,7 @@ type ShopSearchResult = {
   shopName: string | null;
   username: string | null;
   creatorId: string | null;
-  // You can add other fields as needed
+  profilePic?: string | null;
 };
 
 export default function SearchPage() {
@@ -122,6 +123,7 @@ export default function SearchPage() {
               shopName: shopData.shopName || "",
               username: shopData.username || "",
               creatorId: shopData.creatorId || "",
+              profilePic: shopData.profilePic || "",
             });
           });
         }
@@ -189,6 +191,7 @@ export default function SearchPage() {
             shopName: data.shopName || "",
             username: data.username || "",
             creatorId: data.creatorId || "",
+            profilePic: data.profilePic || "",
           });
         }
       });
@@ -255,10 +258,18 @@ export default function SearchPage() {
                       href={`/${shop.username}`}
                       className="block"
                     >
-                      <div className="cursor-pointer p-4 hover:bg-gray-50">
-                        <div className="font-medium">{shop.shopName}</div>
-                        <div className="text-sm text-gray-500">
-                          {shop.email}
+                      <div className="flex items-center gap-4 cursor-pointer p-4 hover:bg-gray-50">
+                        <div className="relative h-10 w-10">
+                          <Image
+                            src={shop.profilePic || "/default-avatar.png"}
+                            alt={`${shop.shopName} profile`}
+                            fill
+                            className="rounded-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <div className="font-medium">{shop.shopName}</div>
+                          <div className="text-sm text-gray-500">@{shop.username}</div>
                         </div>
                       </div>
                     </Link>
@@ -299,10 +310,18 @@ export default function SearchPage() {
                       href={`/${shop.username}`}
                       className="block"
                     >
-                      <div className="cursor-pointer p-4 hover:bg-gray-50">
-                        <div className="font-medium">{shop.shopName}</div>
-                        <div className="text-sm text-gray-500">
-                          {shop.email}
+                      <div className="flex items-center gap-4 cursor-pointer p-4 hover:bg-gray-50">
+                        <div className="relative h-10 w-10">
+                          <Image
+                            src={shop.profilePic || "/default-avatar.png"}
+                            alt={`${shop.shopName} profile`}
+                            fill
+                            className="rounded-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <div className="font-medium">{shop.shopName}</div>
+                          <div className="text-sm text-gray-500">@{shop.username}</div>
                         </div>
                       </div>
                     </Link>
@@ -328,10 +347,20 @@ export default function SearchPage() {
                     href={`/${shop.username}`}
                     className="block"
                   >
-                    <div className="cursor-pointer p-4 hover:bg-gray-50">
-                      <div className="font-medium">{shop.shopName}</div>
-                      <div className="text-sm text-gray-500">{shop.email}</div>
-                    </div>
+                      <div className="flex items-center gap-4 cursor-pointer p-4 hover:bg-gray-50">
+                        <div className="relative h-10 w-10">
+                          <Image
+                            src={shop.profilePic || "/default-avatar.png"}
+                            alt={`${shop.shopName} profile`}
+                            fill
+                            className="rounded-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <div className="font-medium">{shop.shopName}</div>
+                          <div className="text-sm text-gray-500">@{shop.username}</div>
+                        </div>
+                      </div>
                   </Link>
                 ),
             )}
