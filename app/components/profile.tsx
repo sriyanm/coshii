@@ -18,6 +18,7 @@ import {
   deleteField,
 } from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
+import { ChevronDown } from "lucide-react";
 
 // Subcomponent for Profile Header
 function ProfileHeader({
@@ -32,6 +33,7 @@ function ProfileHeader({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loadingFollowStatus, setLoadingFollowStatus] = useState(true);
+  const [showUnfollowModal, setShowUnfollowModal] = useState(false);
   useEffect(() => {
     const checkFollowing = async () => {
       try {
@@ -119,6 +121,7 @@ function ProfileHeader({
         `${currDoc.data().username} ${isFollowing ? "unfollowed" : "followed"} ${visitedDoc.data().username}`,
       );
       setIsFollowing(!isFollowing);
+      setShowUnfollowModal(false);
     } catch (error) {
       console.error("Error handling follow/unfollow:", error);
     }
@@ -189,13 +192,40 @@ function ProfileHeader({
       <p className="text-gray-600">@{shopData.username}</p>
       <p className="mt-2 text-sm text-gray-500">{shopData.description}</p>
       {auth.currentUser?.uid !== shopData.creatorId && (
-        <button
-          className="mt-4 rounded-lg bg-[#FED15B] px-4 py-2 text-black"
-          onClick={handleFollow}
-          disabled={loadingFollowStatus}
-        >
-          {loadingFollowStatus ? "" : isFollowing ? "Unfollow" : "Follow"}
-        </button>
+        <div className="relative mt-4">
+          {!isFollowing ? (
+            <button
+              className="rounded-lg bg-[#FED15B] px-4 py-2 text-black"
+              onClick={handleFollow}
+              disabled={loadingFollowStatus}
+            >
+              {loadingFollowStatus ? "" : "Follow"}
+            </button>
+          ) : (
+            <div className="relative inline-block">
+              <button
+                className="flex items-center gap-1 rounded-lg bg-[#FED15B] px-4 py-2 text-black"
+                onClick={() => setShowUnfollowModal((prev) => !prev)}
+                disabled={loadingFollowStatus}
+              >
+                {loadingFollowStatus ? "" : "Following"}
+                <ChevronDown className="h-4 w-4" />
+              </button>
+
+              {showUnfollowModal && (
+                <div className="absolute left-0 top-full mt-2 w-32 rounded-md border bg-white shadow-lg">
+                  <button
+                    onClick={handleFollow}
+                    className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100"
+                    disabled={loadingFollowStatus}
+                  >
+                    Unfollow
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
