@@ -139,9 +139,6 @@ const orders: Order[] = [
 
 type View = "backrooms" | "transactions" | "productDetails" | "orderDetails";
 
-//TODO: fetch from account in backend (or local account if cached)
-const userPlan = "paid";
-
 export default function InventoryPage() {
   const [view, setView] = useState<View>("backrooms");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -150,6 +147,7 @@ export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [userPlan, setUserPlan] = useState("");
   const auth = getAuth();
 
   const listedProducts = products.filter((p) => p.isListed);
@@ -165,6 +163,33 @@ export default function InventoryPage() {
 
     return () => unsubscribe();
   }, [auth]);
+
+  // Fetch user plan
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      if (!user) {
+        setUserPlan("");
+        return;
+      }
+      try {
+        const shopsRef = collection(db, "shops");
+        const q = query(shopsRef, where("creatorId", "==", user.uid));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const shopDoc = querySnapshot.docs[0].data();
+          console.log("Shop data:", shopDoc);
+          if(shopDoc.isPremium) setUserPlan("paid");
+          else setUserPlan("free");
+          console.log("User plan:", shopDoc.isPremium);
+        } else {
+          console.warn("No user document found for this user.");
+        }
+      } catch (error) {
+        console.error("Error fetching user plan:", error);
+      }
+    };
+    fetchUserPlan();
+  }, [user]);
 
   // Fetch products when user auth state changes
   useEffect(() => {
