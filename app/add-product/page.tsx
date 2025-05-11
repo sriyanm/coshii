@@ -572,6 +572,7 @@ function MediaPicker({
                             src={url || "/placeholder.svg"}
                             autoPlay
                             loop
+                            muted
                             playsInline
                             className="inline-block size-full rounded-lg object-cover"
                           />
