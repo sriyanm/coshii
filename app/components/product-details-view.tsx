@@ -23,7 +23,7 @@ export function ProductDetailsView({
   onProductUpdate,
 }: ProductDetailsViewProps) {
   const [isListed, setIsListed] = useState(product.isListed || false);
-  const [stock, setStock] = useState(product.stock || 0);
+  const [inventory, setInventory] = useState(product.inventory || 0);
 
   const updateProduct = async (updates: Partial<Product>) => {
     try {
@@ -52,9 +52,11 @@ export function ProductDetailsView({
     }
   };
 
-  const handleStockChange = async (newValue: number) => {
-    setStock(newValue);
-    await updateProduct({ stock: newValue });
+  const handleInventoryChange = async (newValue: number) => {
+    setInventory(newValue);
+    const updatedProduct = { ...product, inventory: newValue };
+    await updateProduct({ inventory: newValue });
+    onProductUpdate(updatedProduct);
   };
 
   return (
@@ -91,7 +93,7 @@ export function ProductDetailsView({
                 name: product.name,
                 desc: product.description,
                 price: product.price,
-                stock: product.stock,
+                inventory: product.inventory,
                 image: product.images[0],
                 cancel: "/inventory",
               },
@@ -120,9 +122,9 @@ export function ProductDetailsView({
           <InventoryInput
             min={0}
             prefix={"Stock: "}
-            inventory={stock}
+            inventory={inventory}
             suffix={" left"}
-            onInventoryChange={handleStockChange}
+            onInventoryChange={handleInventoryChange}
           />
         </div>
       </div>

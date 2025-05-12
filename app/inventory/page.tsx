@@ -227,7 +227,7 @@ export default function InventoryPage() {
               ? [mediaUrl.toString()]
               : data.images || ["/placeholder.svg"],
             description: data.description || "",
-            stock: data.inventory || 0,
+            inventory: data.inventory || 0,
             isListed: data.isListed ?? true,
             tags: data.tags || [],
             shopName: data.shopName || "",
@@ -339,7 +339,7 @@ export default function InventoryPage() {
                         key={product.id}
                         onClick={() => handleProductClick(product)}
                       >
-                        <ProductCard product={product} showStock />
+                        <ProductCard product={product} showInventory />
                       </div>
                     ))}
                   </div>

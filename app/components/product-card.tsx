@@ -4,10 +4,10 @@ import type { Product } from "../types";
 
 interface ProductCardProps {
   product: Product;
-  showStock?: boolean;
+  showInventory?: boolean;
 }
 
-export function ProductCard({ product, showStock }: ProductCardProps) {
+export function ProductCard({ product, showInventory }: ProductCardProps) {
   return (
     <div className="flex items-center justify-between p-4 hover:bg-muted/50">
       <div className="flex items-center gap-4">
@@ -21,8 +21,8 @@ export function ProductCard({ product, showStock }: ProductCardProps) {
         <div>
           <h3 className="font-medium">{product.name}</h3>
           <p className="text-muted-foreground">${product.price}</p>
-          {showStock && product.stock && product.stock <= 3 && (
-            <p className="text-sm text-red-500">{product.stock} left</p>
+          {showInventory && product.inventory && product.inventory <= 3 && (
+            <p className="text-sm text-red-500">{product.inventory} left</p>
           )}
         </div>
       </div>
