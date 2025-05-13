@@ -807,8 +807,9 @@ interface ProductDescriptionProps {
   setDescription: (description: string) => void;
   selectedTags: Tag[];
   setSelectedTags: React.Dispatch<React.SetStateAction<Tag[]>>;
-  defaultTags: Tag[];
-  setDefaultTags: React.Dispatch<React.SetStateAction<Tag[]>>;
+  // defaultTags: Tag[];
+  // setDefaultTags: React.Dispatch<React.SetStateAction<Tag[]>>;
+  ogTags: Tag[];
 }
 
 function ProductDescription({
@@ -818,14 +819,18 @@ function ProductDescription({
   setDescription,
   selectedTags,
   setSelectedTags,
-  defaultTags,
-  setDefaultTags,
+  // defaultTags,
+  // setDefaultTags,
+  ogTags,
 }: ProductDescriptionProps) {
   const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [newTagName, setNewTagName] = useState("");
-  const [isAddingTag, setIsAddingTag] = useState(false);
+  // const [isAddingTag, setIsAddingTag] = useState(false);
 
   const tagWrapperRef = useRef<HTMLDivElement>(null);
+  const filteredSuggestions = ogTags.filter((tag) =>
+    tag.name.toLowerCase().startsWith(newTagName.replace("#", "").toLowerCase())
+  );
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -848,107 +853,95 @@ function ProductDescription({
     };
   }, [isTagsOpen]);
 
-  const toggleTag = (tag: Tag) => {
-    setSelectedTags((prev) =>
-      prev.some((t) => t.id === tag.id)
-        ? prev.filter((t) => t.id !== tag.id)
-        : [...prev, tag],
-    );
-  };
+  // const toggleTag = (tag: Tag) => {
+  //   setSelectedTags((prev) =>
+  //     prev.some((t) => t.id === tag.id)
+  //       ? prev.filter((t) => t.id !== tag.id)
+  //       : [...prev, tag],
+  //   );
+  // };
 
   return (
     <div className="flex grow flex-col items-start justify-start">
       {/* Wrapper for 'Item Name' and 'Tags' */}
-      <div className="mt-0 flex w-full max-w-[calc(100%-2rem)] items-center">
-        {/* Growable wrapper around the 'Item Name' input */}
-        <div className="grow">
+      <div className="mt-0 w-full max-w-[calc(100%-2rem)]">
+        <Input
+          placeholder="Item Name"
+          className="w-full border-0 bg-transparent px-0 py-2 text-xl font-bold text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        {/* Inline Tag Input */}
+        <div className="relative">
           <Input
-            placeholder={"Item Name"}
-            className="w-full border-0 bg-transparent px-0 py-2 text-xl font-bold text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            placeholder="#tags (type with '#' and hit space)"
+            className="w-full border-0 bg-transparent px-0 py-1 text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+            value={newTagName}
+            onChange={(e) => setNewTagName(e.target.value)}
+            onKeyDown={(e) => {
+              if (["Enter", "Tab", " "].includes(e.key)) {
+                e.preventDefault();
+                const raw = newTagName.trim().replace(/^#/, "");
+                if (!raw) return;
+
+                const existing = ogTags.find(
+                  (tag) => tag.name.toLowerCase() === raw.toLowerCase()
+                );
+                const tag = existing || {
+                  id: Date.now().toString(),
+                  name: raw,
+                  color: `hsl(${Math.floor(Math.random() * 360)}, 100%, 90%)`,
+                };
+
+                setSelectedTags((prev) => [...prev, tag]);
+                // if (!existing) setDefaultTags((prev) => [...prev, tag]);
+                setNewTagName("");
+              } else if (e.key === "Backspace" && newTagName === "") {
+                setSelectedTags((prev) => prev.slice(0, -1));
+              }
+            }}
           />
-        </div>
 
-        {/* 'Tags' button, only show when the dropdown is closed */}
-        {!isTagsOpen && (
-          <Button
-            variant="outline"
-            className="ml-4 bg-white/90 hover:bg-white/95"
-            onClick={() => setIsTagsOpen(true)}
-          >
-            Tags
-          </Button>
-        )}
-
-        {/* Dropdown for tags selection, show when the button is clicked */}
-        <div ref={tagWrapperRef} className="relative">
-          {isTagsOpen && (
-            <div className="z-100000 fixed right-5 top-2 mt-12 w-full max-w-xs rounded-md">
-              <div className="p-4">
-                <div className="flex flex-nowrap gap-2 overflow-x-auto p-2">
-                  {defaultTags.map((tag) => {
-                    const isSelected = selectedTags.some(
-                      (t) => t.id === tag.id,
-                    );
-                    return (
-                      <Button
-                        key={tag.id}
-                        variant="outline"
-                        className="rounded-full px-2 py-1 transition-all duration-200"
-                        style={{
-                          backgroundColor: tag.color,
-                          boxShadow: "none",
-                          filter: isSelected ? "saturate(2)" : "saturate(1)",
-                          border: isSelected
-                            ? "2px solid rgba(0,0,0,0.6)"
-                            : "2px solid transparent",
-                        }}
-                        onClick={() => toggleTag(tag)}
-                      >
-                        {tag.name}
-                      </Button>
-                    );
-                  })}
-
-                  {isAddingTag ? (
-                    <input
-                      type="text"
-                      autoFocus
-                      value={newTagName}
-                      onChange={(e) => setNewTagName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && newTagName.trim() !== "") {
-                          const newTag = {
-                            id: Date.now().toString(),
-                            name: newTagName.trim(),
-                            color: `hsl(${Math.floor(Math.random() * 360)}, 100%, 90%)`, // Random background color
-                          };
-                          setDefaultTags([...defaultTags, newTag]);
-                          toggleTag(newTag);
-                          setNewTagName("");
-                          setIsAddingTag(false);
-                        } else if (e.key === "Escape") {
-                          setNewTagName("");
-                          setIsAddingTag(false);
-                        }
-                      }}
-                      className="rounded-full border px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      style={{ minWidth: "6rem" }}
-                    />
-                  ) : (
-                    <Button
-                      variant="outline"
-                      className="rounded-full"
-                      onClick={() => setIsAddingTag(true)}
-                    >
-                      <Plus className="size-4" />
-                    </Button>
-                  )}
+          {/* Suggestions dropdown */}
+          {newTagName.startsWith("#") && filteredSuggestions.length > 0 && (
+            <div className="absolute left-0 z-10 mt-1 w-full rounded-md border bg-white shadow">
+              {filteredSuggestions.map((tag) => (
+                <div
+                  key={tag.id}
+                  className="cursor-pointer px-3 py-1 hover:bg-gray-100"
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // Prevent blur
+                    setSelectedTags((prev) => [...prev, tag]);
+                    setNewTagName("");
+                  }}
+                >
+                  #{tag.name}
                 </div>
-              </div>
+              ))}
             </div>
           )}
+          {/* Render tags */}
+          <div className="mt-2 flex flex-wrap gap-2">
+            {selectedTags.map((tag) => (
+              <span
+                key={tag.id}
+                className="flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium text-black"
+                style={{ backgroundColor: tag.color }}
+              >
+                #{tag.name}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedTags((prev) => prev.filter((t) => t.id !== tag.id))
+                  }
+                  className="ml-1 text-gray-500 hover:text-black"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -1109,7 +1102,7 @@ function AddProductContent() {
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const [defaultTags, setDefaultTags] = useState<Tag[]>([]); // For what ui displays
+  // const [defaultTags, setDefaultTags] = useState<Tag[]>([]); // For what ui displays
   const [ogTags, setOgTags] = useState<Tag[]>([]); // For backend updates
 
   useEffect(() => {
@@ -1142,7 +1135,8 @@ function AddProductContent() {
           }),
         );
 
-        setDefaultTags(generatedTags);
+        // setDefaultTags(generatedTags);
+        console.log("generatedTags", generatedTags);
         setOgTags(generatedTags);
         console.log("got OG:", ogTags);
       }
@@ -1279,8 +1273,9 @@ function AddProductContent() {
         setDescription={setDescription}
         selectedTags={selectedTags}
         setSelectedTags={setSelectedTags}
-        defaultTags={defaultTags}
-        setDefaultTags={setDefaultTags}
+        // defaultTags={defaultTags}
+        // setDefaultTags={setDefaultTags}
+        ogTags={ogTags}
       />
     );
   } else if (page == Page.PRICE) {
