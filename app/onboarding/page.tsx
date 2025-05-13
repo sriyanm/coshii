@@ -648,6 +648,7 @@ function SignInPage(setPage: (nextPage: Page) => void) {
             Let&#39;s set up your account!
           </h1>
         </div>
+        <div className="mt-12">
         <GoogleSigninButton 
           allowNewUser={true}
           onSuccess={({ user, isNewUser }) => {
@@ -677,6 +678,7 @@ function SignInPage(setPage: (nextPage: Page) => void) {
             }
           }}
         />
+        </div>
         {/* <MagicLinkSigninForm /> */}
       </div>
     </>
