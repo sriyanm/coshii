@@ -8,7 +8,7 @@ import {
   PlusSquare,
   Shirt,
   Settings,
-  Clock,
+  // Clock,
 } from "lucide-react";
 import Link from "next/link";
 // import { Switch } from "../components/ui/switch";
@@ -134,8 +134,8 @@ export default function SettingsPage() {
     <div className="space-y-4">
       <h1 className="mx-3 text-2xl font-bold">Settings</h1>
 
-      {/* Plan Card */}
-      {userProfile.plan === "free" && (
+      {/* Plan Card - TODO: Uncomment when release plan promo and plan selection */}
+      {/* {userProfile.plan === "free" && (
         <div className="mx-3 rounded-md bg-black p-6 text-white">
           <p className="mb-2">Your Plan</p>
           <div className="mb-4 flex items-center gap-2">
@@ -152,7 +152,7 @@ export default function SettingsPage() {
             <li>• Access Coshii&apos;s A.I. video editor</li>
           </ul>
         </div>
-      )}
+      )} */}
 
       {/* Menu Items */}
       <div className="mx-3 space-y-2">
@@ -164,13 +164,14 @@ export default function SettingsPage() {
           <ChevronRight className="size-5 text-gray-400" />
         </button>
 
-        <button
+        {/* TODO: Uncomment when release plan promo and plan selection */}
+        {/* <button
           onClick={() => setCurrentView("subscription")}
           className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4"
         >
           <span className="font-bold">COSHII SUBSCRIPTION PLAN</span>
           <ChevronRight className="size-5 text-gray-400" />
-        </button>
+        </button> */}
 
         {/* Placeholder fields */}
 
