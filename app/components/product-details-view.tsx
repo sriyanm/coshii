@@ -9,7 +9,7 @@ import type { Product } from "../types";
 import InventoryInput from "./inventory-input";
 import Link from "next/link";
 import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/app/lib/client/firebase";
+import { db, auth } from "@/app/lib/client/firebase";
 
 interface ProductDetailsViewProps {
   product: Product;
@@ -46,6 +46,18 @@ export function ProductDetailsView({
       });
       setIsListed(newValue);
       const updatedProduct = { ...product, isListed: newValue };
+
+      // Clear product cache safely
+      if (auth.currentUser?.uid) {
+        const CACHE_KEY = `cachedProducts-${auth.currentUser.uid}`;
+        sessionStorage.removeItem(CACHE_KEY);
+        console.log(`Cleared cache key: ${CACHE_KEY}`);
+      } else {
+        console.warn(
+          "Could not clear product cache: no authenticated user UID found.",
+        );
+      }
+
       onProductUpdate(updatedProduct);
     } catch (error) {
       console.error("Error updating product listed status:", error);

@@ -21,62 +21,6 @@ const navigation: NavigationItem[] = [
   { name: "Settings", icon: Settings, href: "/settings" },
 ];
 
-// // TODO: this is all sample data, check /types/index.ts if there are any type issues
-// const products: Product[] = [
-//   {
-//     id: "1",
-//     name: "Charm Necklace",
-//     price: 31,
-//     images: ["/placeholder.svg"],
-//     description:
-//       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
-//     stock: 4,
-//     isListed: true,
-//     tags: [],
-//     shopName: "",
-//     sellerId: "",
-//   },
-//   {
-//     id: "2",
-//     name: "Vase Necklace",
-//     price: 18,
-//     images: ["/placeholder.svg"],
-//     description:
-//       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
-//     stock: 4,
-//     isListed: true,
-//     tags: [],
-//     shopName: "",
-//     sellerId: "",
-//   },
-//   {
-//     id: "3",
-//     name: "Custom Candle",
-//     price: 60,
-//     images: ["/placeholder.svg"],
-//     description:
-//       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
-//     stock: 4,
-//     isListed: false,
-//     tags: [],
-//     shopName: "",
-//     sellerId: "",
-//   },
-//   {
-//     id: "4",
-//     name: "Ashtrays",
-//     price: 79,
-//     images: ["/placeholder.svg"],
-//     description:
-//       "This beautiful Home Beautiful Linens by Vickie tablecloth and napkin set is in good vintage condition and its original box.",
-//     stock: 4,
-//     isListed: false,
-//     tags: [],
-//     shopName: "",
-//     sellerId: "",
-//   },
-// ];
-
 const orders: Order[] = [
   {
     id: "1",
@@ -178,7 +122,7 @@ export default function InventoryPage() {
         if (!querySnapshot.empty) {
           const shopDoc = querySnapshot.docs[0].data();
           console.log("Shop data:", shopDoc);
-          if(shopDoc.isPremium) setUserPlan("paid");
+          if (shopDoc.isPremium) setUserPlan("paid");
           else setUserPlan("free");
           console.log("User plan:", shopDoc.isPremium);
         } else {

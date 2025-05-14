@@ -114,7 +114,7 @@ function BottomNavigation({
   const searchParams = useSearchParams();
   const isEditing = searchParams.get("step") === "Update";
   return (
-    <div className="fixed bottom-5 left-1/2 w-full max-w-md -translate-x-1/2 px-2 flex justify-end space-x-2">
+    <div className="fixed bottom-5 left-1/2 flex w-full max-w-md -translate-x-1/2 justify-end space-x-2 px-2">
       {!previousPage && (
         <Button
           className="invisible text-lg text-black/50"
@@ -829,7 +829,9 @@ function ProductDescription({
 
   const tagWrapperRef = useRef<HTMLDivElement>(null);
   const filteredSuggestions = ogTags.filter((tag) =>
-    tag.name.toLowerCase().startsWith(newTagName.replace("#", "").toLowerCase())
+    tag.name
+      .toLowerCase()
+      .startsWith(newTagName.replace("#", "").toLowerCase()),
   );
 
   useEffect(() => {
@@ -886,7 +888,7 @@ function ProductDescription({
                 if (!raw) return;
 
                 const existing = ogTags.find(
-                  (tag) => tag.name.toLowerCase() === raw.toLowerCase()
+                  (tag) => tag.name.toLowerCase() === raw.toLowerCase(),
                 );
                 const tag = existing || {
                   id: Date.now().toString(),
@@ -933,7 +935,9 @@ function ProductDescription({
                 <button
                   type="button"
                   onClick={() =>
-                    setSelectedTags((prev) => prev.filter((t) => t.id !== tag.id))
+                    setSelectedTags((prev) =>
+                      prev.filter((t) => t.id !== tag.id),
+                    )
                   }
                   className="ml-1 text-gray-500 hover:text-black"
                 >
@@ -1018,7 +1022,7 @@ function PriceAndShipping({
 function SuccessPage({ productImage = "/placeholder.svg", name = "" }) {
   return (
     <div className="mx-auto flex h-screen w-full min-w-[50px] max-w-md flex-col items-start justify-start overflow-x-auto">
-      <div className="mx-auto flex w-full flex-col items-center text-center px-4">
+      <div className="mx-auto flex w-full flex-col items-center px-4 text-center">
         <div className="mb-8 mt-12 space-y-2">
           <h1 className="text-xl font-bold text-white">
             You&apos;re on the market!
@@ -1055,7 +1059,7 @@ function SuccessPage({ productImage = "/placeholder.svg", name = "" }) {
                 key={platform.name}
                 variant="addProduct"
                 size="icon"
-                className="h-12 w-12 flex-shrink-0 rounded-full bg-white/90 p-3"
+                className="size-12 shrink-0 rounded-full bg-white/90 p-3"
                 aria-label={`Share on ${platform.name}`}
               >
                 {platform.icon}
@@ -1199,6 +1203,11 @@ function AddProductContent() {
           });
         }
       }
+
+      // Clear product cache
+      const CACHE_KEY = `cachedProducts-${auth.currentUser.uid}`;
+      sessionStorage.removeItem(CACHE_KEY);
+      console.log(`Cleared cache key: ${CACHE_KEY}`);
 
       console.log("Product created successfully");
       setPage(Page.SUCCESS);

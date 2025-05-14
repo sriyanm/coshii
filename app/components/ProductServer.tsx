@@ -33,6 +33,7 @@ export const fetchProducts = async (
         productsRef,
         where("createdBy", "==", shopID),
         where("tags", "array-contains", tag), // checks if `tags` array has `tag`
+        where("isListed", "==", true), // Don't show unlisted products
         orderBy("createdAt", "desc"),
         limit(PAGE_SIZE),
       );
@@ -40,6 +41,7 @@ export const fetchProducts = async (
       q = query(
         productsRef,
         where("createdBy", "==", shopID),
+        where("isListed", "==", true), // Don't show unlisted products
         orderBy("createdAt", "desc"),
         limit(PAGE_SIZE),
       );

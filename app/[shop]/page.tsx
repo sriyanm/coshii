@@ -179,7 +179,7 @@ export default function ProfilePage({
     console.log("Account Id: ", "acct_1R1Yp7E2rsuqp9lw"); //TODO: this is hardcoded
   };
 
-  const CACHE_KEY = `cachedProducts-${shopData.username}`;
+  const CACHE_KEY = `cachedProducts-${shopData.creatorId}`;
   const CACHE_EXPIRATION_MS = 2 * 60 * 1000; // 2 minutes
 
   const getProducts = async (
