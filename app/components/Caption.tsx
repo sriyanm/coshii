@@ -11,12 +11,12 @@ export function Caption({ caption }: { caption: string }) {
   return (
     <div className="w-full">
       <p
-        className={`text-xs ${isExpanded ? "h-auto" : "line-clamp-1"} overflow-hidden`}
+        className={`text-base ${isExpanded ? "h-auto" : "line-clamp-1"} overflow-hidden`}
       >
         {caption}
       </p>
       {caption.length > 100 && (
-        <button onClick={toggleCaption} className="text-500 text-xs">
+        <button onClick={toggleCaption} className="text-500 text-base">
           {isExpanded ? "View less" : "View more"}
         </button>
       )}

@@ -17,8 +17,8 @@ interface SocialBarProps {
   onComment: () => void; // Callback for when the Comment button is clicked
   onShare: () => void; // Callback for when the Share button is clicked
   buyerView: boolean;
-  likesCount: number;
-  commentsCount: number;
+  likesCountInit: number;
+  commentsCountInit: number;
   productId: string;
 }
 
@@ -27,13 +27,15 @@ export function SocialBar({
   onComment,
   onShare,
   buyerView,
-  likesCount,
-  commentsCount,
+  likesCountInit,
+  commentsCountInit,
   productId,
 }: SocialBarProps) {
   const [liked, setLiked] = useState(false); // State to track like status
+  const [likesCount, setLikesCount] = useState(likesCountInit); // Track number of likes
   const [likeToggled, setLikeToggled] = useState(false); // To decouple likes and updating backend
   const [showComments, setShowComments] = useState(false); // State to toggle comment popup
+  const [commentsCount, setCommentsCount] = useState(commentsCountInit);
   const [hasFetchedLike, setHasFetchedLike] = useState(false); // guard
 
   // Check if user has already liked a product (when loaded)
@@ -108,15 +110,27 @@ export function SocialBar({
 
   // Handle Like button click
   const handleLikeClick = () => {
+    if (!liked) {
+      setLikesCount(likesCount + 1);
+    } else {
+      setLikesCount(likesCount - 1);
+    }
+
     setLiked((prevLiked) => !prevLiked); // Toggle like state
     setLikeToggled(true);
     onLike(); // Trigger the passed onLike handler
   };
 
+  // Handle when post comment
+  const handleCommentPost = () => {
+    // Increment comment count
+    setCommentsCount(commentsCount + 1);
+    onComment(); // Trigger the passed onComment handler
+  };
+
   // Handle Comment button click
   const handleCommentClick = () => {
     setShowComments(true); // Show the comments popup
-    onComment(); // Trigger the passed onComment handler
   };
 
   // Handle closing the Comments popup
@@ -131,42 +145,42 @@ export function SocialBar({
   };
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col items-center space-y-2">
       {/* Share Button */}
-      <button onClick={handleShareClick} className="text-white" title="Share">
-        <MdIosShare className="mr-2 text-2xl drop-shadow" />
+      <button
+        onClick={handleShareClick}
+        className="flex flex-col items-center text-white drop-shadow"
+        title="Share"
+      >
+        <MdIosShare className="text-3xl drop-shadow-[0_5px_5px_rgba(0,0,0,0.2)]" />
+        <span className="h-3" />{" "}
+        {/* Placeholder to align spacing with counts */}
       </button>
 
       {/* Comment Button */}
       <button
         onClick={handleCommentClick}
-        className="relative text-white drop-shadow"
+        className="relative flex flex-col items-center text-white drop-shadow"
         title="Comment"
       >
-        <MdOutlineModeComment className="mr-2 text-2xl" />
-        {/* Comments count */}
-        <span className="absolute bottom-[-16px] left-1/2 -translate-x-1.5 text-xs text-gray-300">
-          {commentsCount}
-        </span>
+        <MdOutlineModeComment className="text-3xl drop-shadow-[0_5px_5px_rgba(0,0,0,0.2)]" />
+        <span className="-mt-0.5 text-xs text-white">{commentsCount}</span>
       </button>
 
       {/* Like Button */}
       <button
-        className="relative text-white drop-shadow"
+        className="relative flex flex-col items-center text-white drop-shadow"
         onClick={handleLikeClick}
         disabled={buyerView}
         title={liked ? "Unlike" : "Like"}
         aria-label={liked ? "Unlike" : "Like"}
       >
         {liked ? (
-          <FaHeart className="size-6" />
+          <FaHeart className="size-7 drop-shadow-[0_5px_5px_rgba(0,0,0,0.2)]" />
         ) : (
-          <FaRegHeart className="size-6" />
+          <FaRegHeart className="size-7 drop-shadow-[0_5px_5px_rgba(0,0,0,0.2)]" />
         )}
-        {/* Likes count */}
-        <span className="absolute bottom-[-16px] left-1/2 -translate-x-1.5 text-xs text-gray-300">
-          {likesCount}
-        </span>
+        <span className="mt-px text-xs text-white">{likesCount}</span>
       </button>
 
       {/* Conditional rendering for the popup */}
@@ -174,6 +188,7 @@ export function SocialBar({
         <div className="popup-overlay fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50">
           <div className="comments-popup size-4/5 overflow-y-auto bg-white p-4 shadow-lg backdrop-blur-md">
             <CommentsPopup
+              onPost={handleCommentPost}
               onClose={handleClosePopup}
               productId={productId}
               buyerView={buyerView}
