@@ -258,7 +258,7 @@ export default function SearchPage() {
                       href={`/${shop.username}`}
                       className="block"
                     >
-                      <div className="flex items-center gap-4 cursor-pointer p-4 hover:bg-gray-50">
+                      <div className="flex items-center gap-4 cursor-pointer py-4 hover:bg-gray-50">
                         <div className="relative h-10 w-10">
                           <Image
                             src={shop.profilePic || "/default-avatar.png"}
@@ -310,7 +310,7 @@ export default function SearchPage() {
                       href={`/${shop.username}`}
                       className="block"
                     >
-                      <div className="flex items-center gap-4 cursor-pointer p-4 hover:bg-gray-50">
+                      <div className="flex items-center gap-4 cursor-pointer py-4 hover:bg-gray-50">
                         <div className="relative h-10 w-10">
                           <Image
                             src={shop.profilePic || "/default-avatar.png"}
