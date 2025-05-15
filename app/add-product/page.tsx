@@ -28,6 +28,8 @@ import {
   getDocs,
   addDoc,
   updateDoc,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
 import {
@@ -35,6 +37,7 @@ import {
   useProductMediaUpload,
   useProductMediaDelete,
 } from "@/app/hooks/firebase";
+import { cleanupUnusedCategoriesForShop } from "../lib/utils";
 
 enum Page {
   MEDIA = 1,
@@ -80,11 +83,10 @@ function Container({
   );
 }
 
-function TopNavigation({ page }: { page: Page }) {
-  const searchParams = useSearchParams();
+function TopNavigation({ page, isUpdateProduct }: { page: Page, isUpdateProduct: boolean }) {
   const name =
-    searchParams.get("step") === "Update" ? "Update Product" : "New Product";
-  const cancelLink = searchParams.get("cancel") || "/";
+    isUpdateProduct ? "Update Product" : "New Product";
+  const cancelLink = isUpdateProduct ? "/inventory" : "/";
   return page !== Page.SUCCESS ? (
     <div className="flex flex-row items-center justify-between">
       <Button
@@ -105,14 +107,14 @@ function BottomNavigation({
   nextPage,
   setPage,
   onPost,
+  isUpdateProduct
 }: {
   previousPage: Page | null;
   nextPage: Page | null;
   setPage: Dispatch<SetStateAction<Page>>;
-  onPost: () => void;
+  onPost: (isUpdate: boolean) => void;
+  isUpdateProduct: boolean;
 }) {
-  const searchParams = useSearchParams();
-  const isEditing = searchParams.get("step") === "Update";
   return (
     <div className="fixed bottom-5 left-1/2 flex w-full max-w-md -translate-x-1/2 justify-end space-x-2 px-2">
       {!previousPage && (
@@ -144,13 +146,13 @@ function BottomNavigation({
         >
           Next <ArrowRight className="ml-1 size-4" />
         </Button>
-      ) : nextPage && !isEditing ? (
+      ) : nextPage && !isUpdateProduct ? (
         <Button
           className="bg-white text-lg font-bold"
           variant="addProduct"
           onClick={function () {
             setPage(nextPage);
-            onPost();
+            onPost(isUpdateProduct);
             console.log("post!");
           }}
         >
@@ -161,9 +163,9 @@ function BottomNavigation({
           className="bg-white text-lg font-bold"
           variant="addProduct"
           onClick={function () {
-            // onPost;
+            onPost(isUpdateProduct);
             console.log("update!");
-            window.location.href = "/inventory"; // TODO: temp fix
+            // window.location.href = "/inventory"; // TODO: temp fix
           }}
         >
           Update <ArrowRight className="ml-1 size-4" />
@@ -194,6 +196,8 @@ function MediaPicker({
   setIsUploading,
   setMediaUrls,
   deleteMedia,
+  isUpdateProduct,
+  updateProductId,
 }: {
   handleFileUpload: (file: File) => Promise<string | undefined>;
   mediaUrls: string[];
@@ -204,6 +208,8 @@ function MediaPicker({
     url: string,
     options?: { onSuccess?: () => void; onError?: (error: Error) => void },
   ) => void;
+  isUpdateProduct: boolean;
+  updateProductId: string;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -451,6 +457,22 @@ function MediaPicker({
       });
     }
   }, [activeIndex, isEditMode, containerWidth]);
+
+  useEffect(() => {
+    if (isUpdateProduct) {
+      // fetch existing media
+      const fetchProductDetails = async () => {
+        const productRef = doc(db, "products", updateProductId);
+        const productDoc = await getDoc(productRef);
+        if (productDoc.exists()) {
+          const productData = productDoc.data();
+          setMediaUrls(productData.mediaUrls || []);
+          console.log("productData", productData);
+        }
+      };
+      fetchProductDetails();
+    }
+  }, [isUpdateProduct, updateProductId]);
 
   // Check if current image is the last one
   const isLastImage = activeIndex === mediaUrls.length - 1;
@@ -810,6 +832,9 @@ interface ProductDescriptionProps {
   // defaultTags: Tag[];
   // setDefaultTags: React.Dispatch<React.SetStateAction<Tag[]>>;
   ogTags: Tag[];
+  isUpdateProduct: boolean;
+  updateProductId: string;
+  setIsTagDeleted: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 function ProductDescription({
@@ -822,17 +847,23 @@ function ProductDescription({
   // defaultTags,
   // setDefaultTags,
   ogTags,
+  isUpdateProduct,
+  updateProductId,
+  setIsTagDeleted
 }: ProductDescriptionProps) {
   const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [newTagName, setNewTagName] = useState("");
   // const [isAddingTag, setIsAddingTag] = useState(false);
 
   const tagWrapperRef = useRef<HTMLDivElement>(null);
-  const filteredSuggestions = ogTags.filter((tag) =>
-    tag.name
-      .toLowerCase()
-      .startsWith(newTagName.replace("#", "").toLowerCase()),
-  );
+  
+  const filteredSuggestions = ogTags.filter((tag) => {
+    const raw = newTagName.replace("#", "").toLowerCase();
+    const isAlreadySelected = selectedTags.some(
+      (t) => t.name.toLowerCase() === tag.name.toLowerCase()
+    );
+    return tag.name.toLowerCase().startsWith(raw) && !isAlreadySelected;
+  });
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -854,6 +885,36 @@ function ProductDescription({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isTagsOpen]);
+
+  useEffect(() => {
+    if (isUpdateProduct) {
+      // fetch existing name, description, and tags from the database
+      const fetchProductDetails = async () => {
+        const productRef = doc(db, "products", updateProductId);
+        const productDoc = await getDoc(productRef);
+        if (productDoc.exists()) {
+          const productData = productDoc.data();
+          setName(productData.name);
+          setDescription(productData.description);
+          console.log("productData", productData);
+          const tagsFromDb = (productData.tags as string[]).map((tagName) => {
+            return (
+              ogTags.find(
+                (tag) => tag.name.toLowerCase() === tagName.toLowerCase()
+              ) || {
+                id: Date.now().toString() + Math.random(),
+                name: tagName,
+                color: `hsl(${Math.floor(Math.random() * 360)}, 100%, 90%)`,
+              }
+            );
+          });
+          
+          setSelectedTags(tagsFromDb);
+        }
+      };
+      fetchProductDetails();
+    }
+  }, [isUpdateProduct, updateProductId]);
 
   // const toggleTag = (tag: Tag) => {
   //   setSelectedTags((prev) =>
@@ -896,11 +957,15 @@ function ProductDescription({
                   color: `hsl(${Math.floor(Math.random() * 360)}, 100%, 90%)`,
                 };
 
-                setSelectedTags((prev) => [...prev, tag]);
+                setSelectedTags((prev) => {
+                  if (prev.some((t) => t.name.toLowerCase() === tag.name.toLowerCase())) return prev;
+                  return [...prev, tag];
+                });
                 // if (!existing) setDefaultTags((prev) => [...prev, tag]);
                 setNewTagName("");
               } else if (e.key === "Backspace" && newTagName === "") {
                 setSelectedTags((prev) => prev.slice(0, -1));
+                setIsTagDeleted(true);
               }
             }}
           />
@@ -913,8 +978,11 @@ function ProductDescription({
                   key={tag.id}
                   className="cursor-pointer px-3 py-1 hover:bg-gray-100"
                   onMouseDown={(e) => {
-                    e.preventDefault(); // Prevent blur
-                    setSelectedTags((prev) => [...prev, tag]);
+                    e.preventDefault();
+                    setSelectedTags((prev) => {
+                      if (prev.some((t) => t.name.toLowerCase() === tag.name.toLowerCase())) return prev;
+                      return [...prev, tag];
+                    });
                     setNewTagName("");
                   }}
                 >
@@ -934,11 +1002,10 @@ function ProductDescription({
                 #{tag.name}
                 <button
                   type="button"
-                  onClick={() =>
-                    setSelectedTags((prev) =>
-                      prev.filter((t) => t.id !== tag.id),
-                    )
-                  }
+                  onClick={() => {
+                    setSelectedTags((prev) => prev.filter((t) => t.id !== tag.id));
+                    setIsTagDeleted(true);
+                  }}
                   className="ml-1 text-gray-500 hover:text-black"
                 >
                   ×
@@ -968,17 +1035,29 @@ function ProductDescription({
 interface PriceAndShippingProps {
   price: number;
   setPrice: (price: number) => void;
+  shipping: number;
+  setShipping: (shipping: number) => void;
   inventory: number;
   setInventory: (inventory: number) => void;
+  isUpdateProduct: boolean;
+  updateProductId: string;
 }
 
 function PriceAndShipping({
   price,
   setPrice,
+  shipping,
+  setShipping,
   inventory,
   setInventory,
+  isUpdateProduct,
+  updateProductId,
 }: PriceAndShippingProps) {
-  const [shipping, setShipping] = useState<MoneyInputValues | null>(null);
+  const [shippingInput, setShippingInput] = useState<MoneyInputValues | null>({
+    value: shipping.toString(),
+    formatted: shipping.toLocaleString(),
+    float: shipping,
+  });
   const [priceInput, setPriceInput] = useState<MoneyInputValues | null>({
     value: price.toString(),
     formatted: price.toLocaleString(),
@@ -990,6 +1069,38 @@ function PriceAndShipping({
       setPrice(priceInput.float);
     }
   }, [priceInput?.float, setPrice]);
+
+  useEffect(() => {
+    if (shippingInput?.float !== undefined && shippingInput.float !== null) {
+      setShipping(shippingInput.float);
+    }
+  }, [shippingInput?.float, setShipping]);
+
+  useEffect(() => {
+    if (isUpdateProduct) {
+      const fetchProductDetails = async () => {
+        const productRef = doc(db, "products", updateProductId);
+        const productDoc = await getDoc(productRef);
+        if (productDoc.exists()) {
+          const productData = productDoc.data();
+          setPriceInput({
+            float: productData.price,
+            formatted: productData.price.toLocaleString(),
+            value: productData.price.toString(),
+          });
+          setPrice(productData.price);
+          setShippingInput({
+            float: productData.shipping,
+            formatted: productData.shipping.toLocaleString(),
+            value: productData.shipping.toString(),
+          });
+          setShipping(productData.shipping);
+          setInventory(productData.inventory);
+        }
+      };
+      fetchProductDetails();
+    }
+  }, [isUpdateProduct, updateProductId]);
 
   return (
     <div className="mt-32 flex grow flex-col items-center justify-start">
@@ -1010,8 +1121,8 @@ function PriceAndShipping({
           <h4 className="text-xl font-bold">Shipping:</h4>
           <MoneyInput
             className="text-2xl font-bold"
-            values={shipping}
-            onValuesChange={setShipping}
+            values={shippingInput}
+            onValuesChange={setShippingInput}
           />
         </div>
       </div>
@@ -1091,12 +1202,13 @@ function SuccessPage({ productImage = "/placeholder.svg", name = "" }) {
 
 function AddProductContent() {
   const searchParams = useSearchParams();
-  const initialPage = Number(searchParams.get("page")) || Page.MEDIA;
+  const initialPage = /* Number(searchParams.get("page")) || */ Page.MEDIA;
 
   const [page, setPage] = useState(initialPage);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState<number>(0);
+  const [shipping, setShipping] = useState<number>(0);
   const [inventory, setInventory] = useState<number>(1);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
@@ -1105,6 +1217,19 @@ function AddProductContent() {
   const { mutate: deleteMedia } = useProductMediaDelete();
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+
+  const [isUpdateProduct, setIsUpdateProduct] = useState(false);
+  const [updateProductId, setUpdateProductId] = useState<string>("");
+  const [isTagDeleted, setIsTagDeleted] = useState(false);
+  useEffect(() => {
+    if (searchParams.get("step") === "Update") {
+      setIsUpdateProduct(true);
+    }
+    const productId = searchParams.get("productId");
+    if (productId) {
+      setUpdateProductId(productId);
+    }
+  }, [searchParams]);
 
   // const [defaultTags, setDefaultTags] = useState<Tag[]>([]); // For what ui displays
   const [ogTags, setOgTags] = useState<Tag[]>([]); // For backend updates
@@ -1149,28 +1274,52 @@ function AddProductContent() {
     fetchTagsFromShop();
   }, [user]);
 
-  const handlePost = async () => {
+  const handlePost = async (isUpdate: boolean) => {
     try {
       if (!auth.currentUser) {
         console.error("No authenticated user found!");
         return;
       }
 
-      console.log("Posting product with media URLs:", mediaUrls);
+      // console.log("Posting product with media URLs:", mediaUrls);
 
-      const productRef = collection(db, "products");
-      await addDoc(productRef, {
-        name,
-        description,
-        price,
-        tags: selectedTags.map((tag) => tag.name),
-        inventory,
-        mediaUrls,
-        isListed: true,
-        createdBy: auth.currentUser.uid,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      if (isUpdate) {
+        // Update existing product
+        // console.log("tags", selectedTags.map((tag) => tag.name));
+        console.log("ogTags", ogTags.map((tag) => tag.name));
+        const productRef = doc(db, "products", updateProductId);
+        await updateDoc(productRef, {
+          name,
+          description,
+          price,
+          shipping,
+          inventory,
+          tags: selectedTags.map((tag) => tag.name),
+          mediaUrls,
+          updatedAt: new Date(),
+        });
+        console.log("Product updated successfully");
+        if (isTagDeleted) {
+          console.log("Deleting unused tags");
+          cleanupUnusedCategoriesForShop(auth.currentUser.uid || "");
+        }
+      }
+      else {
+        const productRef = collection(db, "products");
+        await addDoc(productRef, {
+          name,
+          description,
+          price,
+          shipping,
+          tags: selectedTags.map((tag) => tag.name),
+          inventory,
+          mediaUrls,
+          isListed: true,
+          createdBy: auth.currentUser.uid,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
 
       // Check for new tags that are not in the original tags
       const oldTags = ogTags.map((tag) => tag.name);
@@ -1268,6 +1417,8 @@ function AddProductContent() {
         setIsUploading={setIsUploading}
         setMediaUrls={setMediaUrls}
         deleteMedia={deleteMedia}
+        isUpdateProduct={isUpdateProduct}
+        updateProductId={updateProductId}
       />
     );
   } else if (page == Page.DESCRIPTION) {
@@ -1285,6 +1436,9 @@ function AddProductContent() {
         // defaultTags={defaultTags}
         // setDefaultTags={setDefaultTags}
         ogTags={ogTags}
+        isUpdateProduct={isUpdateProduct}
+        updateProductId={updateProductId}
+        setIsTagDeleted={setIsTagDeleted}
       />
     );
   } else if (page == Page.PRICE) {
@@ -1295,8 +1449,12 @@ function AddProductContent() {
       <PriceAndShipping
         price={price}
         setPrice={setPrice}
+        shipping={shipping}
+        setShipping={setShipping}
         inventory={inventory}
         setInventory={setInventory}
+        isUpdateProduct={isUpdateProduct}
+        updateProductId={updateProductId}
       />
     );
   } else if (page == Page.SUCCESS) {
@@ -1313,7 +1471,7 @@ function AddProductContent() {
 
   return (
     <Container backgroundImage={backgroundImage} nextPage={nextPage}>
-      <TopNavigation page={page} />
+      <TopNavigation page={page} isUpdateProduct={isUpdateProduct} />
       <PageIndicator page={page} />
       {content}
       <BottomNavigation
@@ -1321,6 +1479,7 @@ function AddProductContent() {
         nextPage={nextPage}
         setPage={setPage}
         onPost={handlePost}
+        isUpdateProduct={isUpdateProduct}
       />
     </Container>
   );

@@ -8,22 +8,26 @@ import { Button } from "./ui/button";
 import type { Product } from "../types";
 import InventoryInput from "./inventory-input";
 import Link from "next/link";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
+import { useProductMediaDelete } from "@/app/hooks/firebase";
 
 interface ProductDetailsViewProps {
   product: Product;
   onBack: () => void;
   onProductUpdate: (updatedProduct: Product) => void;
+  onDeleteProduct: (productId: string) => void;
 }
 
 export function ProductDetailsView({
   product,
   onBack,
   onProductUpdate,
+  onDeleteProduct,
 }: ProductDetailsViewProps) {
   const [isListed, setIsListed] = useState(product.isListed || false);
   const [inventory, setInventory] = useState(product.inventory || 0);
+  const { mutateAsync: deleteMedia } = useProductMediaDelete();
 
   const updateProduct = async (updates: Partial<Product>) => {
     try {
@@ -71,6 +75,38 @@ export function ProductDetailsView({
     onProductUpdate(updatedProduct);
   };
 
+const handleRemoveProductMedia = async (mediaUrls: string[]) => {
+  console.log("Removing product media:", mediaUrls);
+
+  const deletions = mediaUrls
+    .filter((url) => url.startsWith("https://"))
+    .map(async (url) => {
+      try {
+        await deleteMedia(url);
+        console.log("Deleted from Firebase:", url);
+      } catch (err) {
+        console.error("Failed to delete media:", err);
+      }
+    });
+
+    await Promise.allSettled(deletions);
+  };
+
+  const handleDeleteProduct = async () => {
+    console.log("Product deleted:", product.id);
+    console.log("Images", product.images);
+    const confirm = window.confirm("Are you sure you want to delete this product?");
+    if (!confirm) return;
+    try {
+      const productRef = doc(db, "products", product.id);
+      await handleRemoveProductMedia(product.images);
+      await deleteDoc(productRef);
+      onDeleteProduct?.(product.id);
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
+  };
+
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-white">
       <div className="relative">
@@ -100,14 +136,9 @@ export function ProductDetailsView({
             href={{
               pathname: "/add-product",
               query: {
-                page: 1,
+                // page: 1,
                 step: "Update",
-                name: product.name,
-                desc: product.description,
-                price: product.price,
-                inventory: product.inventory,
-                image: product.images[0],
-                cancel: "/inventory",
+                productId: product.id,
               },
             }}
           >
@@ -125,7 +156,7 @@ export function ProductDetailsView({
 
         <p
           className="cursor-pointer text-center text-sm font-bold text-gray-600 hover:text-black"
-          onClick={() => console.log("Delete listing")}
+          onClick={handleDeleteProduct}
         >
           Delete Listing
         </p>
