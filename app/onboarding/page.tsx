@@ -21,13 +21,20 @@ import {
   useSignInWithPhoneNumber,
 } from "../hooks/firebase";
 import { db, auth } from "@/app/lib/client/firebase";
-import { collection, addDoc, doc, updateDoc, where, query, getDocs } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  doc,
+  updateDoc,
+  where,
+  query,
+  getDocs,
+} from "firebase/firestore";
 // import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
 import { GoogleSigninButton } from "@/app/components/GoogleSigninButton";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProfilePictureUpload } from "@/app/hooks/firebase";
 import { X } from "lucide-react";
-
 
 // import { set } from "zod";
 
@@ -113,15 +120,15 @@ function OnboardingContent() {
         setHandleExists(false);
         return;
       }
-  
+
       const snapshot = await getDocs(collection(db, "shops"));
       const exists = snapshot.docs.some(
         (doc) =>
-          doc.data().username?.toLowerCase() === shopHandle.toLowerCase()
+          doc.data().username?.toLowerCase() === shopHandle.toLowerCase(),
       );
       setHandleExists(exists);
     };
-  
+
     checkHandle();
   }, [shopHandle]);
 
@@ -345,9 +352,7 @@ function ShopNameAndHandlePage(
             className="w-full min-w-24 py-6 text-lg"
             variant="onboarding"
             onClick={handleContinue}
-            disabled={
-              !shopName || !shopHandle || handleExists
-            }
+            disabled={!shopName || !shopHandle || handleExists}
           >
             {getButtonText()}
           </Button>
@@ -560,6 +565,8 @@ function SocialMediaPage(
           Do you want to add any of your social handles to your profile? You can
           always add more later...
         </Label>
+
+        {/* Facebook */}
         <Label
           htmlFor="shop-social-media-facebook"
           className="text-md text-left"
@@ -569,36 +576,38 @@ function SocialMediaPage(
         <Input
           id="facebook"
           placeholder=""
-          onChange={(e) =>
+          onChange={(e) => {
+            const username = e.currentTarget.value.replace(/^@/, "");
             updateSocialLink(
               "Facebook",
-              "https://facebook.com",
-              e.currentTarget.value.replace(/^@/, ""),
-            )
-          }
+              `https://facebook.com/${username}`,
+              username,
+            );
+          }}
           value={`@${
             socialLinks.find((l) => l.platform === "Facebook")?.username || ""
           }`}
           className="h-12 w-full p-4 text-xl"
         />
+
+        {/* X */}
         <Label htmlFor="shop-social-media-x" className="text-md text-left">
           X Username
         </Label>
         <Input
           id="x"
           placeholder=""
-          onChange={(e) =>
-            updateSocialLink(
-              "X",
-              "https://x.com",
-              e.currentTarget.value.replace(/^@/, ""),
-            )
-          }
+          onChange={(e) => {
+            const username = e.currentTarget.value.replace(/^@/, "");
+            updateSocialLink("X", `https://x.com/${username}`, username);
+          }}
           value={`@${
             socialLinks.find((l) => l.platform === "X")?.username || ""
           }`}
           className="h-12 w-full p-4 text-xl"
         />
+
+        {/* Instagram */}
         <Label
           htmlFor="shop-social-media-instagram"
           className="text-md text-left"
@@ -608,13 +617,14 @@ function SocialMediaPage(
         <Input
           id="instagram"
           placeholder=""
-          onChange={(e) =>
+          onChange={(e) => {
+            const username = e.currentTarget.value.replace(/^@/, "");
             updateSocialLink(
               "Instagram",
-              "https://instagram.com",
-              e.currentTarget.value.replace(/^@/, ""),
-            )
-          }
+              `https://instagram.com/${username}`,
+              username,
+            );
+          }}
           value={`@${
             socialLinks.find((l) => l.platform === "Instagram")?.username || ""
           }`}
@@ -649,35 +659,39 @@ function SignInPage(setPage: (nextPage: Page) => void) {
           </h1>
         </div>
         <div className="mt-12">
-        <GoogleSigninButton 
-          allowNewUser={true}
-          onSuccess={({ user, isNewUser }) => {
-            if (isNewUser) {
-              setPage(Page.PHONE);
-            } else {
-              console.log("User already exists, redirecting to their shop...");
-              const q = query(
-                collection(db, "shops"),
-                where("email", "==", user.email),
-              );
-              getDocs(q)
-                .then((querySnapshot) => {
-                  if (!querySnapshot.empty) {
-                    const shopDoc = querySnapshot.docs[0].data();
-                    const shopHandle = shopDoc.username;
-                    router.push(`/${shopHandle}`);
-                    // TODO: Show a message to the user
-                    // alert("Seems like this email already have a shop. Feel free to set up a new shop with a different email.");
-                  } else {
-                    console.warn("No shop found for this existing user. They may have not set up a shop yet (did not finish onboarding but signed in with Google).");
-                  }
-                })
-                .catch((error) => {
-                  console.error("Error fetching shop document:", error);
-                });
-            }
-          }}
-        />
+          <GoogleSigninButton
+            allowNewUser={true}
+            onSuccess={({ user, isNewUser }) => {
+              if (isNewUser) {
+                setPage(Page.PHONE);
+              } else {
+                console.log(
+                  "User already exists, redirecting to their shop...",
+                );
+                const q = query(
+                  collection(db, "shops"),
+                  where("email", "==", user.email),
+                );
+                getDocs(q)
+                  .then((querySnapshot) => {
+                    if (!querySnapshot.empty) {
+                      const shopDoc = querySnapshot.docs[0].data();
+                      const shopHandle = shopDoc.username;
+                      router.push(`/${shopHandle}`);
+                      // TODO: Show a message to the user
+                      // alert("Seems like this email already have a shop. Feel free to set up a new shop with a different email.");
+                    } else {
+                      console.warn(
+                        "No shop found for this existing user. They may have not set up a shop yet (did not finish onboarding but signed in with Google).",
+                      );
+                    }
+                  })
+                  .catch((error) => {
+                    console.error("Error fetching shop document:", error);
+                  });
+              }
+            }}
+          />
         </div>
         {/* <MagicLinkSigninForm /> */}
       </div>
@@ -703,17 +717,21 @@ function PhoneNumberPage(
 
   const handleContinue = async () => {
     try {
-      // Development bypass for SMS verification
       // console.log("SMS Handler Called with phone number:", phoneNumber);
-      setPage(Page.OTP);
-      // Comment out the actual SMS verification for now
-      /*
+      // Do NOT navigate before mutation. Navigate only on success.
       signInMutation.mutate(phoneNumber, {
-        onSuccess: () => setPage(Page.OTP)
+        onSuccess: () => {
+          console.log("SMS sent successfully, navigating to OTP page.");
+          setPage(Page.OTP);
+        },
+        onError: (error) => {
+          console.error("Failed to send SMS sign-in code:", error);
+          // Optionally, provide user feedback here, e.g., via an alert or toast
+        },
       });
-      */
     } catch (error) {
-      console.error("Error:", error);
+      // This catch block might not be necessary if errors are handled by mutation.onError
+      console.error("Error in handleContinue (PhoneNumberPage):", error);
     }
   };
   return (
@@ -914,19 +932,18 @@ function PhoneOtpPage(
               console.log("OTP Verification bypassed. Code entered:", otp);
               await createShopAndContinue();
 
-              /* Production code - commented out for development
-            if (!signInMutation.isSuccess) {
-              throw Error("SMS sign-in code was not sent");
-            }
-            confirmationResultMutation.mutate(
-              { confirmationResult: signInMutation.data, code: otp },
-              {
-                onSuccess: async () => {
-                  await createShopAndContinue();
-                }
-              },
-            );
-            */
+              // Production code - commented out for development
+              if (!signInMutation.isSuccess) {
+                throw Error("SMS sign-in code was not sent");
+              }
+              confirmationResultMutation.mutate(
+                { confirmationResult: signInMutation.data, code: otp },
+                {
+                  onSuccess: async () => {
+                    await createShopAndContinue();
+                  },
+                },
+              );
             }}
             disabled={
               otp.length != 6

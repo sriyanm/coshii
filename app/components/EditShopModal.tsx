@@ -1,14 +1,16 @@
 "use client";
 
 import React from "react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { X, Mail } from "lucide-react";
+import { X, Mail, Pencil } from "lucide-react";
 import { SiFacebook, SiX, SiInstagram } from "react-icons/si";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { Shop } from "../types/index";
+import { auth } from "@/app/lib/client/firebase";
+import { useProfilePictureUpload } from "@/app/hooks/firebase";
 
 interface EditShopModalProps {
   isOpen: boolean;
@@ -46,6 +48,8 @@ export default function EditShopModal({
     ],
     isPremium: false,
   });
+  const profilePicInputRef = useRef<HTMLInputElement>(null);
+  const profilePictureUpload = useProfilePictureUpload();
 
   // Initialize state with shopData when modal opens
   useEffect(() => {
@@ -62,6 +66,28 @@ export default function EditShopModal({
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleFileUpload = async (file: File): Promise<string | null> => {
+    if (!auth.currentUser) {
+      console.error("No authenticated user found");
+      return null;
+    }
+    console.log("Uploading file:", file);
+    try {
+      const profilePictureDownloadURL = await profilePictureUpload.mutateAsync({
+        file: file,
+        userId: auth.currentUser.uid,
+      });
+      console.log("Uploaded to:", profilePictureDownloadURL);
+      return profilePictureDownloadURL;
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Upload failed. Please try again.");
+      return null;
+    } finally {
+      console.log("Done trying to upload file");
+    }
   };
 
   const handleSocialUsernameChange = (
@@ -130,10 +156,10 @@ export default function EditShopModal({
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
+      <div className="mx-auto h-4/5 w-[90%] max-w-md overflow-y-auto rounded-lg bg-white shadow-lg sm:p-6">
         <form onSubmit={handleSubmit}>
           {/* Header */}
-          <div className="sticky top-0 flex items-center justify-between border-b bg-white p-4">
+          <div className="sticky top-0 z-50 flex items-center justify-between border-b bg-white p-4">
             <h1 className="flex-1 text-center text-xl font-bold">
               Edit shop info
             </h1>
@@ -149,13 +175,44 @@ export default function EditShopModal({
           <div className="space-y-4 p-4">
             {/* Profile Image */}
             <div className="flex justify-center">
-              <Image
-                src={shopInfo.profilePic || "/placeholder.svg"}
-                alt="Profile"
-                width={100}
-                height={100}
-                className="mx-auto size-20 rounded-full object-cover"
+              <input
+                type="file"
+                accept="image/*"
+                ref={profilePicInputRef}
+                className="hidden"
+                onChange={async (e) => {
+                  if (e.target.files?.[0]) {
+                    const uploadedUrl = await handleFileUpload(
+                      e.target.files[0],
+                    );
+                    if (uploadedUrl) {
+                      setShopInfo((prev) => ({
+                        ...prev,
+                        profilePic: uploadedUrl,
+                      }));
+                    }
+                  }
+                }}
               />
+
+              {/* Group wrapper required for hover to work */}
+              <div
+                className="group relative cursor-pointer"
+                onClick={() => profilePicInputRef.current?.click()}
+              >
+                <Image
+                  src={shopInfo.profilePic || "/placeholder.svg"}
+                  alt="Profile"
+                  width={100}
+                  height={100}
+                  className="mx-auto size-20 rounded-full object-cover"
+                />
+
+                {/* Pencil icon overlay */}
+                <div className="absolute bottom-1 right-1 flex size-6 items-center justify-center rounded-full bg-black bg-opacity-70 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  <Pencil size={14} />
+                </div>
+              </div>
             </div>
 
             {/* Form Fields */}
@@ -165,16 +222,6 @@ export default function EditShopModal({
                 <Input
                   name="shopName"
                   value={shopInfo.shopName}
-                  onChange={handleInputChange}
-                  className="bg-gray-100"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm">Username:</label>
-                <Input
-                  name="username"
-                  value={shopInfo.username}
                   onChange={handleInputChange}
                   className="bg-gray-100"
                 />
