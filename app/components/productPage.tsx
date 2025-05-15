@@ -135,13 +135,13 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
         >
           {media.map((item, index) => {
             const isVideo =
-              item.split("?")[0].endsWith(".mp4") ||
-              item.split("?")[0].endsWith(".mov");
+              item.split("?")[0].toLowerCase().endsWith(".mp4") ||
+              item.split("?")[0].toLowerCase().endsWith(".mov");
 
             return (
               <div
                 key={index}
-                className="relative inline-block size-full"
+                className="relative inline-block size-full align-top"
                 style={{ scrollSnapAlign: "start", flexShrink: 0 }}
               >
                 {isVideo ? (
