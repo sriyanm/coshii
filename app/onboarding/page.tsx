@@ -565,6 +565,8 @@ function SocialMediaPage(
           Do you want to add any of your social handles to your profile? You can
           always add more later...
         </Label>
+
+        {/* Facebook */}
         <Label
           htmlFor="shop-social-media-facebook"
           className="text-md text-left"
@@ -574,36 +576,38 @@ function SocialMediaPage(
         <Input
           id="facebook"
           placeholder=""
-          onChange={(e) =>
+          onChange={(e) => {
+            const username = e.currentTarget.value.replace(/^@/, "");
             updateSocialLink(
               "Facebook",
-              "https://facebook.com",
-              e.currentTarget.value.replace(/^@/, ""),
-            )
-          }
+              `https://facebook.com/${username}`,
+              username,
+            );
+          }}
           value={`@${
             socialLinks.find((l) => l.platform === "Facebook")?.username || ""
           }`}
           className="h-12 w-full p-4 text-xl"
         />
+
+        {/* X */}
         <Label htmlFor="shop-social-media-x" className="text-md text-left">
           X Username
         </Label>
         <Input
           id="x"
           placeholder=""
-          onChange={(e) =>
-            updateSocialLink(
-              "X",
-              "https://x.com",
-              e.currentTarget.value.replace(/^@/, ""),
-            )
-          }
+          onChange={(e) => {
+            const username = e.currentTarget.value.replace(/^@/, "");
+            updateSocialLink("X", `https://x.com/${username}`, username);
+          }}
           value={`@${
             socialLinks.find((l) => l.platform === "X")?.username || ""
           }`}
           className="h-12 w-full p-4 text-xl"
         />
+
+        {/* Instagram */}
         <Label
           htmlFor="shop-social-media-instagram"
           className="text-md text-left"
@@ -613,13 +617,14 @@ function SocialMediaPage(
         <Input
           id="instagram"
           placeholder=""
-          onChange={(e) =>
+          onChange={(e) => {
+            const username = e.currentTarget.value.replace(/^@/, "");
             updateSocialLink(
               "Instagram",
-              "https://instagram.com",
-              e.currentTarget.value.replace(/^@/, ""),
-            )
-          }
+              `https://instagram.com/${username}`,
+              username,
+            );
+          }}
           value={`@${
             socialLinks.find((l) => l.platform === "Instagram")?.username || ""
           }`}
