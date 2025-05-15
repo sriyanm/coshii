@@ -407,7 +407,7 @@ export default function ProfilePage({
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-white">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col overflow-x-hidden bg-white">
       <div className="min-h-screen flex-1 flex-col items-center font-sans">
         {/* Profile Section */}
         <div className="w-full max-w-md p-4">
@@ -510,7 +510,7 @@ export default function ProfilePage({
         </div>
 
         {/* Product Pages */}
-        <div className="mb-16 space-y-6 pt-2">
+        <div className="mb-16 flex flex-col items-center space-y-6 pt-2">
           {products
             .filter((product) => {
               return (

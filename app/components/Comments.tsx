@@ -19,6 +19,7 @@ interface Comment {
 
 // Props definition
 interface CommentsPopupProps {
+  onPost: () => void;
   onClose: () => void;
   productId: string;
   buyerView: boolean;
@@ -98,6 +99,7 @@ const postComment = async (
 };
 
 export function CommentsPopup({
+  onPost,
   onClose,
   productId,
   buyerView,
@@ -191,7 +193,10 @@ export function CommentsPopup({
             className="flex-1 rounded-lg border border-gray-300 p-2"
           />
           <button
-            onClick={handleAddComment}
+            onClick={() => {
+              handleAddComment();
+              onPost();
+            }}
             disabled={loading}
             className="ml-2 rounded-lg bg-blue-500 px-4 py-2 text-white disabled:bg-gray-300"
           >

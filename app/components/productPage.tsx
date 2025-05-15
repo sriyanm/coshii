@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, forwardRef } from "react";
 import { SocialBar } from "./SocialBar";
-import { Caption } from "./Caption";
 import { MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import Image from "next/image";
 
@@ -48,6 +47,18 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);
+
+    const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
+    const toggleCaption = () => setIsCaptionExpanded((prev) => !prev);
+    const captionRef = useRef<HTMLDivElement>(null);
+    const [maxHeight, setMaxHeight] = useState("3rem"); // Initial collapsed height
+
+    useEffect(() => {
+      if (captionRef.current) {
+        const scrollHeight = captionRef.current.scrollHeight;
+        setMaxHeight(isCaptionExpanded ? `${scrollHeight}px` : "3rem");
+      }
+    }, [isCaptionExpanded, caption]);
 
     // Scroll behavior: keep track of image index for dots at top
     const handleScroll = () => {
@@ -154,7 +165,7 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
                     </div>
                     <button
                       onClick={toggleMute}
-                      className="absolute right-5 top-5 rounded-full bg-gray-50 bg-opacity-20 p-2 text-white"
+                      className="absolute right-5 top-5 rounded-full bg-neutral-700/40 p-2 text-white shadow-md"
                     >
                       {muted ? (
                         <MdVolumeOff className="text-2xl" />
@@ -190,40 +201,74 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
           ))}
         </div>
 
-        {/* Bottom Caption & Buttons */}
-        <div className="via-black/1 absolute bottom-0 left-0 flex w-full items-end justify-between rounded-lg bg-gradient-to-t from-black/10 to-transparent p-5">
-          <div className="z-9 flex flex-col pr-10 text-white drop-shadow">
-            <p className="text-md mb-0 font-bold">{productName}</p>
-            <p className="text-md -mt-1 mb-1 font-semibold">{price}</p>
-            <Caption caption={caption} />
-            {!isPremium ? (
-              <button
-                onClick={onDMCreator}
-                className="mt-2 rounded-full bg-white px-6 py-2 text-black shadow"
-              >
-                DM Creator
-              </button>
-            ) : (
-              <button
-                onClick={onAddToCart}
-                className="mt-2 rounded-full bg-white px-6 py-2 text-black shadow"
-              >
-                Add to Cart
-              </button>
-            )}
-          </div>
+        {/* Bottom Caption & Buttons - Updated for smooth transition */}
+        <div className="absolute bottom-0 left-0 min-h-48 w-full rounded-lg">
+          {/* Base gradient that stays constant */}
+          <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/10 to-transparent"></div>
 
-          {/* Social Bar */}
-          <div className="z-8 relative -top-3 flex flex-col items-center space-y-4">
-            <SocialBar
-              onLike={onLike}
-              onComment={onComment}
-              onShare={onShare}
-              buyerView={buyerView}
-              likesCount={likesCount}
-              commentsCount={commentsCount}
-              productId={id.split("-")[1]}
-            />
+          {/* Overlay with transitioning opacity that's also a gradient */}
+          <div
+            className={`absolute inset-0 rounded-lg bg-gradient-to-t from-black via-black/80 via-40% to-transparent backdrop-blur-sm transition-opacity duration-500 ease-in-out ${isCaptionExpanded ? "opacity-50" : "opacity-0"} `}
+          ></div>
+
+          {/* Content positioned on top of the gradients */}
+          <div className="relative -top-2 flex min-h-48 w-full items-end justify-between p-5">
+            {/* Left Column */}
+            <div className="z-9 flex h-full grow flex-col justify-between pr-4 text-white drop-shadow">
+              <div>
+                <p className="mb-0 text-xl font-bold">{productName}</p>
+                <p className="-mt-1 mb-1 text-lg font-semibold">{price}</p>
+
+                {/* Animated Caption */}
+                <div
+                  onClick={toggleCaption}
+                  className="max-w-xs cursor-pointer select-none overflow-hidden transition-all duration-500 ease-in-out"
+                  style={{ maxHeight }}
+                >
+                  <div ref={captionRef}>
+                    <p className="w-full whitespace-pre-wrap break-words text-base">
+                      {isCaptionExpanded
+                        ? caption
+                        : caption.length > 80
+                          ? `${caption.slice(0, 80)}...`
+                          : caption}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom-aligned Button */}
+              <div>
+                {!isPremium ? (
+                  <button
+                    onClick={onDMCreator}
+                    className="mt-2 w-11/12 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black shadow"
+                  >
+                    DM Creator
+                  </button>
+                ) : (
+                  <button
+                    onClick={onAddToCart}
+                    className="mt-2 w-11/12 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black shadow"
+                  >
+                    Add to Cart
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Social Bar */}
+            <div className="z-8 relative top-1 flex w-8 flex-col items-center space-y-4">
+              <SocialBar
+                onLike={onLike}
+                onComment={onComment}
+                onShare={onShare}
+                buyerView={buyerView}
+                likesCountInit={likesCount}
+                commentsCountInit={commentsCount}
+                productId={id.split("-")[1]}
+              />
+            </div>
           </div>
         </div>
       </div>
