@@ -37,7 +37,7 @@ export default function ProfilePage({
   params: Promise<{ shop: string }>;
 }) {
   const shopHandle = use(params).shop;
-  const [currentTab] = useState("Shop");
+  const [currentTab, setCurrentTab] = useState("Shop");
   const [products, setProducts] = useState<Product[]>([]);
   const [isFetching, setIsFetching] = useState(false);
   // const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
@@ -328,6 +328,12 @@ export default function ProfilePage({
           shopData && currentUser.uid === shopData.creatorId
         );
         setSellerView(isShopOwner);
+        if (!isShopOwner) {
+          setCurrentTab("Search");
+        }
+        else {
+          setCurrentTab("Shop");
+        }
         setBuyerView(false);
         console.log(
           "Done with firebase auth. (SellerView, BuyerView): ",
