@@ -26,8 +26,6 @@ import {
   addDoc,
   doc,
   updateDoc,
-  where,
-  query,
   getDocs,
 } from "firebase/firestore";
 // import { MagicLinkSigninForm } from "@/app/components/magic-link-signin-form";
@@ -49,6 +47,7 @@ enum Page {
   PHONE,
   OTP,
   FINISH,
+  REROUTE,
 }
 
 type ConfirmationResultMutationParams = {
@@ -190,6 +189,7 @@ function OnboardingContent() {
           profilePictureUpload,
         )}
       {page === Page.FINISH && OnboardingFinishPage(shopHandle)}
+      {page === Page.REROUTE && ReroutePage(shopHandle)}
     </>
   );
 }
@@ -649,7 +649,6 @@ function SocialMediaPage(
 }
 
 function SignInPage(setPage: (nextPage: Page) => void) {
-  const router = useRouter();
   return (
     <>
       <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
@@ -661,34 +660,11 @@ function SignInPage(setPage: (nextPage: Page) => void) {
         <div className="mt-12">
           <GoogleSigninButton
             allowNewUser={true}
-            onSuccess={({ user, isNewUser }) => {
+            onSuccess={({ isNewUser }) => {
               if (isNewUser) {
                 setPage(Page.PHONE);
               } else {
-                console.log(
-                  "User already exists, redirecting to their shop...",
-                );
-                const q = query(
-                  collection(db, "shops"),
-                  where("email", "==", user.email),
-                );
-                getDocs(q)
-                  .then((querySnapshot) => {
-                    if (!querySnapshot.empty) {
-                      const shopDoc = querySnapshot.docs[0].data();
-                      const shopHandle = shopDoc.username;
-                      router.push(`/${shopHandle}`);
-                      // TODO: Show a message to the user
-                      // alert("Seems like this email already have a shop. Feel free to set up a new shop with a different email.");
-                    } else {
-                      console.warn(
-                        "No shop found for this existing user. They may have not set up a shop yet (did not finish onboarding but signed in with Google).",
-                      );
-                    }
-                  })
-                  .catch((error) => {
-                    console.error("Error fetching shop document:", error);
-                  });
+                setPage(Page.REROUTE);
               }
             }}
           />
@@ -982,6 +958,33 @@ function OnboardingFinishPage(shopHandle: string) {
         <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
           <Button className="px-8 py-6 text-lg" variant="onboardingSecondary">
             <Link href={`/${shopHandle}`}>Take me to my shop</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReroutePage(shopHandle: string) {
+  const router = useRouter();
+  return (
+    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+      <div>
+        <h1 className="mb-6 mt-4 text-start text-xl font-bold text-gray-600">
+        You already have a shop, let&pos;s take you there now.
+        </h1>
+      </div>
+      <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4">
+        <div className="flex justify-center">
+          <Button
+            id="recaptcha-element"
+            className="w-full min-w-24 py-6 text-lg"
+            variant="onboarding"
+            onClick={function () {
+              router.push(`/${shopHandle}`);
+            }}
+          >
+            {"Continue"}
           </Button>
         </div>
       </div>
