@@ -529,16 +529,14 @@ export default function SettingsPage() {
           type={field === "email" ? "email" : "text"}
           defaultValue={value}
           className="w-full rounded-lg border p-4 text-base"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              const updates = {
-                [mapLabelToField(field)]: e.currentTarget.value,
-              };
-              if (field === "Shop Name") {
-                updateShopProfile(updates);
-              }
-              updateUserProfile(updates);
+          onBlur={(e) => {
+            const updates = {
+              [mapLabelToField(field)]: e.currentTarget.value,
+            };
+            if (field === "Shop Name") {
+              updateShopProfile(updates);
             }
+            updateUserProfile(updates);
           }}
         />
       </div>
