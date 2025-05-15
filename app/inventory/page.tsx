@@ -12,6 +12,7 @@ import Link from "next/link";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/app/lib/client/firebase";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { cleanupUnusedCategoriesForShop } from "../lib/utils";
 
 const navigation: NavigationItem[] = [
   { name: "Shop", icon: Store, href: "/" },
@@ -212,19 +213,19 @@ export default function InventoryPage() {
           console.log("Product data:", data);
 
           // Check if mediaUrls exists and has valid entries
-          const mediaUrl =
+          const mediaUrls =
             data.mediaUrls && data.mediaUrls.length > 0
-              ? data.mediaUrls[0]
+              ? data.mediaUrls
               : null;
-          console.log("Using mediaUrl:", mediaUrl);
+          console.log("Using mediaUrls:", mediaUrls);
 
           fetchedProducts.push({
             id: doc.id,
             name: data.name || "",
             price: data.price || 0,
             // Make sure we use the full URL string without modifications
-            images: mediaUrl
-              ? [mediaUrl.toString()]
+            images: mediaUrls && mediaUrls.length > 0
+              ? mediaUrls.map((mediaUrl: string) => mediaUrl.toString())
               : data.images || ["/placeholder.svg"],
             description: data.description || "",
             inventory: data.inventory || 0,
@@ -267,6 +268,15 @@ export default function InventoryPage() {
     );
   };
 
+  const handleProductDelete = (productId: string) => {
+    setProducts((prevProducts) =>
+      prevProducts.filter((p) => p.id !== productId),
+    );
+    setSelectedProduct(null);
+    setView("backrooms");
+    cleanupUnusedCategoriesForShop(auth.currentUser?.uid || "");
+  };
+
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setView("productDetails");
@@ -307,6 +317,7 @@ export default function InventoryPage() {
             product={selectedProduct}
             onBack={handleBackClick}
             onProductUpdate={handleProductUpdate}
+            onDeleteProduct={handleProductDelete}
           />
         ) : view === "orderDetails" && selectedOrder ? (
           <OrderDetailsView order={selectedOrder} onBack={handleBackClick} />
