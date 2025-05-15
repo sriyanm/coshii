@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
+import { useRouter } from "next/navigation";
 import InventoryInput from "@/app/components/inventory-input";
 import MoneyInput, { MoneyInputValues } from "@/app/components/money-input";
 import { Button } from "@/app/components/ui/button";
@@ -115,6 +116,7 @@ function BottomNavigation({
   onPost: (isUpdate: boolean) => void;
   isUpdateProduct: boolean;
 }) {
+  const router = useRouter();
   return (
     <div className="fixed bottom-5 left-1/2 flex w-full max-w-md -translate-x-1/2 justify-end space-x-2 px-2">
       {!previousPage && (
@@ -165,7 +167,7 @@ function BottomNavigation({
           onClick={function () {
             onPost(isUpdateProduct);
             console.log("update!");
-            // window.location.href = "/inventory"; // TODO: temp fix
+            router.push("/inventory");
           }}
         >
           Update <ArrowRight className="ml-1 size-4" />
