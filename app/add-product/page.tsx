@@ -314,17 +314,35 @@ function MediaPicker({
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const MAX_FILE_SIZE_MB = 25;
+    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
     const files = e.target.files;
-    if (files && files.length > 0) {
-      console.log("File selected:", files[0].name);
-      try {
-        setIsUploading(true);
-        const result = await handleFileUpload(files[0]);
-        console.log("Upload result:", result);
-        setActiveIndex(mediaUrls.length); // Set to the newly added image
-      } catch (error) {
-        console.error("Error in handleFileChange:", error);
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+
+    try {
+      const fileArray = Array.from(files);
+      const tooLargeFiles = fileArray.filter(file => file.size > MAX_FILE_SIZE_BYTES);
+      const validFiles = fileArray.filter(file => file.size <= MAX_FILE_SIZE_BYTES);
+
+      if (tooLargeFiles.length > 0) {
+        alert(`Some files are too large and will not be uploaded (limit: ${MAX_FILE_SIZE_MB}MB).
+          Skipped files: ${tooLargeFiles.map(f => f.name)}`);
+        console.warn("Skipped files:", tooLargeFiles.map(f => f.name));
       }
+
+      const uploadPromises = validFiles.map(file => handleFileUpload(file));
+      const results = await Promise.all(uploadPromises);
+      const successfulUrls = results.filter((url): url is string => !!url);
+
+      setMediaUrls([...mediaUrls, ...successfulUrls]);
+      setActiveIndex(mediaUrls.length);
+    } catch (error) {
+      console.error("Error uploading files:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -565,6 +583,7 @@ function MediaPicker({
         ref={fileInputRef}
         onChange={handleFileChange}
         accept="image/*,video/*"
+        multiple
         className="hidden"
       />
 
@@ -1406,16 +1425,13 @@ function AddProductContent() {
     }
   };
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (file: File): Promise<string | undefined> => {
     if (!user) {
       console.error("User not authenticated");
       return;
     }
 
-    setIsUploading(true);
-
     try {
-      // Use the hook's mutation function instead of reimplementing upload logic
       const downloadURL = await mediaUpload.mutateAsync({
         file: file,
         userId: user.uid,
@@ -1424,14 +1440,10 @@ function AddProductContent() {
       console.log("File available at", downloadURL);
       console.log("File type:", file.type);
 
-      // Add to the media URLs state
-      setMediaUrls((prev) => [...prev, downloadURL]);
-
       return downloadURL;
     } catch (error) {
       console.error("Error uploading file:", error);
 
-      // Log error details for debugging
       if (error instanceof Error) {
         console.log("Error name:", error.name);
         console.log("Error message:", error.message);
@@ -1439,8 +1451,6 @@ function AddProductContent() {
       }
 
       alert("Upload failed. Please try again.");
-    } finally {
-      setIsUploading(false);
     }
   };
 
