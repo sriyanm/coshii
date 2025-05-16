@@ -634,8 +634,8 @@ function MediaPicker({
                     style={{
                       width: "85%", // Make image width smaller to show preview of next image
                       height: "500px",
-                      marginLeft: index === 0 ? "7.5%" : undefined,
-                      marginRight: "16px",
+                      marginLeft: index === 0 ? "7.5%" : "2%",
+                      marginRight: index === mediaUrls.length - 1 ? "7.5%" : "2%",
                     }}
                   >
                     <div
