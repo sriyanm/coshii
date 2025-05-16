@@ -84,18 +84,55 @@ function Container({
   );
 }
 
-function TopNavigation({ page, isUpdateProduct }: { page: Page, isUpdateProduct: boolean }) {
+function TopNavigation({ 
+  page, 
+  isUpdateProduct, 
+  mediaUrls, 
+  setMediaUrls 
+}: { 
+    page: Page, 
+    isUpdateProduct: boolean, 
+    mediaUrls: string[], 
+    setMediaUrls: (mediaUrls: string[]) => void 
+  }) {
   const name =
     isUpdateProduct ? "Update Product" : "New Product";
   const cancelLink = isUpdateProduct ? "/inventory" : "/";
+  const router = useRouter();
+  const { mutateAsync: deleteMedia } = useProductMediaDelete();
+
+  const handleRemoveProductMedia = async (mediaUrls: string[]) => {
+    console.log("Removing product media:", mediaUrls);
+  
+    const deletions = mediaUrls
+      .filter((url) => url.startsWith("https://"))
+      .map(async (url) => {
+        try {
+          await deleteMedia(url);
+          console.log("Deleted from Firebase:", url);
+        } catch (err) {
+          console.error("Failed to delete media:", err);
+        }
+      });
+  
+      await Promise.allSettled(deletions);
+      setMediaUrls([]);
+    };
+  
+  const handleCancel = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    router.push(cancelLink); 
+    await handleRemoveProductMedia(mediaUrls);
+  };
+
   return page !== Page.SUCCESS ? (
     <div className="flex flex-row items-center justify-between">
       <Button
         className="basis-1/3 justify-start text-lg font-bold text-[#703600]/50"
         variant="addProductSecondary"
-        asChild
+        onClick={handleCancel}
       >
-        <Link href={cancelLink}>Cancel</Link>
+        Cancel
       </Button>
       <h1 className="text-center text-lg font-bold text-black">{name}</h1>
       <div className="basis-1/3"></div>
@@ -1475,7 +1512,12 @@ function AddProductContent() {
 
   return (
     <Container backgroundImage={backgroundImage} nextPage={nextPage}>
-      <TopNavigation page={page} isUpdateProduct={isUpdateProduct} />
+      <TopNavigation 
+        page={page} 
+        isUpdateProduct={isUpdateProduct}
+        mediaUrls={mediaUrls}
+        setMediaUrls={setMediaUrls}
+      />
       <PageIndicator page={page} />
       {content}
       <BottomNavigation
