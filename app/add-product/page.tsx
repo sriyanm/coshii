@@ -574,10 +574,12 @@ function MediaPicker({
                 return (
                   <div
                     key={index}
-                    className="relative mr-4 shrink-0 snap-center"
+                    className="relative shrink-0 snap-center"
                     style={{
                       width: "85%", // Make image width smaller to show preview of next image
                       height: "500px",
+                      marginLeft: index === 0 ? "7.5%" : undefined,
+                      marginRight: "16px",
                     }}
                   >
                     <div
@@ -717,7 +719,7 @@ function MediaPicker({
           ) : isUploading ? (
             <div
               className="flex shrink-0 snap-center"
-              style={{ width: "85%", height: "500px", marginRight: "16px" }}
+              style={{ width: "85%", height: "500px", marginLeft: "7.5%", marginRight: "7.5%" }}
             >
               <div className="flex size-full flex-col items-center justify-center rounded-lg bg-black/20">
                 <div className="animate-pulse">
@@ -731,7 +733,7 @@ function MediaPicker({
           ) : (
             <div
               className="flex shrink-0 snap-center"
-              style={{ width: "85%", height: "500px", marginRight: "16px" }}
+              style={{ width: "85%", height: "500px", marginLeft: "7.5%", marginRight: "7.5%" }}
               onClick={handleClick}
             >
               <div className="flex size-full cursor-pointer flex-col items-center justify-center rounded-lg bg-black/20 px-8 hover:bg-black/30">
@@ -746,11 +748,11 @@ function MediaPicker({
 
         {/* Plus button in the sliver for the last image */}
         {mediaUrls.length > 0 && isLastImage && !isEditMode && (
-          <div className="absolute right-0 top-1/2 z-10 -translate-y-1/2">
+          <div className="absolute -right-4 top-1/2 z-10 -translate-y-1/2 pr-1">
             <Button
               variant="ghost"
               size="icon"
-              className="size-14 rounded-full border-8 border-black/50 p-0"
+              className="size-6 rounded-full border-4 border-black/50 p-0"
               onClick={addMoreMedia}
             >
               <Plus className="text-black" />
