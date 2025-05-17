@@ -635,7 +635,7 @@ function MediaPicker({
                       width: "85%", // Make image width smaller to show preview of next image
                       height: "500px",
                       marginLeft: index === 0 ? "7.5%" : "2%",
-                      marginRight: index === mediaUrls.length - 1 ? "15%" : "2%",
+                      marginRight: index === mediaUrls.length - 1 ? "0%" : "2%",
                     }}
                   >
                     <div
@@ -771,6 +771,12 @@ function MediaPicker({
                   </div>
                 );
               })}
+              <div
+                className="shrink-0"
+                style={{
+                  width: "7.5%", // space for last image to center
+                }}
+              />
             </>
           ) : isUploading ? (
             <div
