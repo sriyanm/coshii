@@ -53,17 +53,9 @@ export function ProductDetailsView({
 
       // Clear product cache safely
       if (auth.currentUser?.uid) {
-        if (auth.currentUser?.uid) {
-          const CACHE_KEY = `cachedProducts-${auth.currentUser.uid}`;
-          sessionStorage.removeItem(CACHE_KEY);
-          console.log(`Cleared cache key: ${CACHE_KEY}`);
-        } else {
-          console.warn("Could not clear product cache: no authenticated user UID found.");
-        }
-      } else {
-        console.warn(
-          "Could not clear product cache: no authenticated user UID found.",
-        );
+        const CACHE_KEY = `cachedProducts-${auth.currentUser.uid}`;
+        sessionStorage.removeItem(CACHE_KEY);
+        console.log(`Cleared cache key: ${CACHE_KEY}`);
       }
 
       onProductUpdate(updatedProduct);
