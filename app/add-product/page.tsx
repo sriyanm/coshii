@@ -53,6 +53,11 @@ interface Tag {
   color: string;
 }
 
+type MediaPreview = {
+  url: string;
+  type: 'image' | 'video';
+};
+
 function Container({
   backgroundImage,
   nextPage,
@@ -129,7 +134,7 @@ function BottomNavigation({
   setPage: Dispatch<SetStateAction<Page>>;
   onPost: (isUpdate: boolean) => void;
   isUpdateProduct: boolean;
-  mediaPreviews: string[];
+  mediaPreviews: MediaPreview[];
 }) {
   const router = useRouter();
   return (
@@ -154,15 +159,24 @@ function BottomNavigation({
         </Button>
       )}
       {nextPage && nextPage !== Page.SUCCESS ? (
-        <Button
-          className={"bg-white text-lg font-bold"}
-          variant="addProduct"
-          onClick={function () {
-            setPage(nextPage);
-          }}
-        >
-          Next <ArrowRight className="ml-1 size-4" />
-        </Button>
+        <div className="relative group">
+          {/* Tooltip */}
+          {mediaPreviews.length === 0 && (
+            <div className="absolute -top-8 right-0 w-max text-black text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              Please add at least one image or video!
+            </div>
+          )}
+          <Button
+            className={"bg-white text-lg font-bold"}
+            variant="addProduct"
+            onClick={function () {
+              setPage(nextPage);
+            }}
+            disabled={mediaPreviews.length === 0}
+          >
+            Next <ArrowRight className="ml-1 size-4" />
+          </Button>
+        </div>
       ) : nextPage && !isUpdateProduct ? (
         <Button
           className="bg-white text-lg font-bold"
@@ -207,10 +221,6 @@ function PageIndicator({ page }: { page: Page }) {
 }
 
 function MediaPicker({
-  handleFileUpload,
-  isUploading,
-  setIsUploading,
-  deleteMedia,
   isUpdateProduct,
   updateProductId,
   mediaFiles,
@@ -218,19 +228,12 @@ function MediaPicker({
   mediaPreviews,
   setMediaPreviews,
 }: {
-  handleFileUpload: (file: File) => Promise<string | undefined>;
-  isUploading: boolean;
-  setIsUploading: (isUploading: boolean) => void;
-  deleteMedia: (
-    url: string,
-    options?: { onSuccess?: () => void; onError?: (error: Error) => void },
-  ) => void;
   isUpdateProduct: boolean;
   updateProductId: string;
   mediaFiles: File[];
   setMediaFiles: React.Dispatch<React.SetStateAction<File[]>>;
-  mediaPreviews: string[];
-  setMediaPreviews: React.Dispatch<React.SetStateAction<string[]>>;
+  mediaPreviews: MediaPreview[];
+  setMediaPreviews: React.Dispatch<React.SetStateAction<MediaPreview[]>>;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -312,8 +315,11 @@ function MediaPicker({
       console.warn("Skipped files:", tooLargeFiles.map(f => f.name));
     }
 
-    const previewUrls = validFiles.map(file => URL.createObjectURL(file));
-    console.log("Preview URLs:", previewUrls);
+    const previewItems = validFiles.map(file => ({
+      url: URL.createObjectURL(file),
+      type: file.type.split('/')[0],
+    } as MediaPreview));
+    console.log("Preview items:", previewItems);
     // Use updater form to ensure correct previous state reference
     setMediaFiles((prev) => {
       const updated = [...prev, ...validFiles];
@@ -321,11 +327,11 @@ function MediaPicker({
     });
 
     setMediaPreviews((prev) => {
-      const updated = [...prev, ...previewUrls];
+      const updated = [...prev, ...previewItems];
       return updated;
     });
 
-    setActiveIndex(prev => mediaPreviews.length);
+    setActiveIndex(() => mediaPreviews.length);
   };
 
   const handleRemoveMedia = (index: number, e: React.MouseEvent) => {
@@ -466,6 +472,12 @@ function MediaPicker({
     setDebugInfo(`Zoom: ${newScale.toFixed(2)}`);
   };
 
+  function getMediaTypeFromUrl(url: string): 'image' | 'video' {
+    const extension = url.split('.').pop()?.toLowerCase() || '';
+    const videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
+    return videoExtensions.includes(extension) ? 'video' : 'image';
+  }
+
   // Handle scroll snap and update active index
   useEffect(() => {
     const handleScroll = () => {
@@ -509,7 +521,12 @@ function MediaPicker({
         const productDoc = await getDoc(productRef);
         if (productDoc.exists()) {
           const productData = productDoc.data();
-          setMediaPreviews(productData.mediaUrls || []);
+          setMediaPreviews(
+            (productData.mediaUrls || []).map((url: string) => ({
+              url,
+              type: getMediaTypeFromUrl(url), // a helper function
+            }))
+          );
           setMediaFiles(productData.mediaUrls || []);
           console.log("productData", productData);
         }
@@ -590,16 +607,13 @@ function MediaPicker({
           {/* Media items */}
           {mediaPreviews.length > 0 ? (
             <>
-              {mediaPreviews.map((url, index) => {
+              {mediaPreviews.map((preview, index) => {
+                const url = preview.url;
+                console.log("Preview URL:", url);
+                console.log("Preview type:", preview.type);
                 console.log("Rendering media item", index, "with URL:", url);
-                const fileExtension = url
-                  .split(".")
-                  .pop()
-                  ?.toLowerCase()
-                  .split("?")[0];
-                const isVideo =
-                  fileExtension === "mp4" || fileExtension === "mov";
-                const isImage = true;
+                const isVideo = preview.type === 'video';
+                const isImage = preview.type === 'image';
 
                 
 
@@ -643,7 +657,7 @@ function MediaPicker({
                             playsInline
                             className="inline-block size-full rounded-lg object-cover"
                           />
-                          <source src={url} type={`video/${fileExtension}`} />
+                          <source src={url} type={`video/`} />
                         </div>
                       ) : isImage ? (
                         <div
@@ -763,20 +777,6 @@ function MediaPicker({
                 }}
               />
             </>
-          ) : isUploading ? (
-            <div
-              className="flex shrink-0 snap-center"
-              style={{ width: "85%", height: "500px", marginLeft: "7.5%", marginRight: "7.5%" }}
-            >
-              <div className="flex size-full flex-col items-center justify-center rounded-lg bg-black/20">
-                <div className="animate-pulse">
-                  <ImagePlus className="size-10 text-white/90" />
-                </div>
-                <p className="text-wrap text-center text-xl text-white/90">
-                  Uploading...
-                </p>
-              </div>
-            </div>
           ) : (
             <div
               className="flex shrink-0 snap-center"
@@ -1267,8 +1267,7 @@ function AddProductContent() {
   const mediaUpload = useProductMediaUpload();
   const { mutate: deleteMedia } = useProductMediaDelete();
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
-  const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
+  const [mediaPreviews, setMediaPreviews] = useState<MediaPreview[]>([]);
 
   const [isUpdateProduct, setIsUpdateProduct] = useState(false);
   const [updateProductId, setUpdateProductId] = useState<string>("");
@@ -1485,10 +1484,6 @@ function AddProductContent() {
     nextPage = Page.DESCRIPTION;
     content = (
       <MediaPicker
-        handleFileUpload={handleFileUpload}
-        isUploading={isUploading}
-        setIsUploading={setIsUploading}
-        deleteMedia={deleteMedia}
         isUpdateProduct={isUpdateProduct}
         updateProductId={updateProductId}
         mediaFiles={mediaFiles}
@@ -1500,7 +1495,7 @@ function AddProductContent() {
   } else if (page == Page.DESCRIPTION) {
     previousPage = Page.MEDIA;
     nextPage = Page.PRICE;
-    backgroundImage = mediaPreviews[0] ? `url(${mediaPreviews[0]})` : ``;
+    backgroundImage = mediaPreviews[0].url ? `url(${mediaPreviews[0].url})` : ``;
     content = (
       <ProductDescription
         name={name}
@@ -1520,7 +1515,7 @@ function AddProductContent() {
   } else if (page == Page.PRICE) {
     previousPage = Page.DESCRIPTION;
     nextPage = Page.SUCCESS;
-    backgroundImage = mediaPreviews[0] ? `url(${mediaPreviews[0]})` : ``;
+    backgroundImage = mediaPreviews[0].url ? `url(${mediaPreviews[0].url})` : ``;
     content = (
       <PriceAndShipping
         price={price}
@@ -1537,7 +1532,7 @@ function AddProductContent() {
     previousPage = Page.PRICE;
     content = (
       <SuccessPage
-        productImage={mediaPreviews[0] ? mediaPreviews[0] : "/placeholder.svg"}
+        productImage={mediaPreviews[0].url ? mediaPreviews[0].url : "/placeholder.svg"}
         name={name}
       />
     );
