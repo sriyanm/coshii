@@ -240,6 +240,7 @@ function MediaPicker({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isEditMode, setIsEditMode] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [scrollSyncEnabled, setScrollSyncEnabled] = useState(true);
 
   // Image editing state
   const [imageEdits, setImageEdits] = useState<
@@ -292,6 +293,12 @@ function MediaPicker({
     }
   }, [isEditMode, activeIndex, imageEdits]);
 
+  useEffect(() => {
+    if (activeIndex >= mediaPreviews.length) {
+      setActiveIndex(Math.max(0, mediaPreviews.length - 1));
+    }
+  }, [mediaPreviews]);
+
   const handleClick = () => {
     if (mediaPreviews.length === 0) {
       fileInputRef.current?.click();
@@ -336,7 +343,8 @@ function MediaPicker({
 
   const handleRemoveMedia = (index: number, e: React.MouseEvent) => {
     e.stopPropagation();
-
+    setScrollSyncEnabled(false);
+    setTimeout(() => setScrollSyncEnabled(true), 300);
     // const removedUrl = mediaPreviews[index];
 
     // if (removedUrl.startsWith("https://")) {
@@ -363,9 +371,13 @@ function MediaPicker({
     newImageEdits.splice(index, 1);
     setImageEdits(newImageEdits);
 
-    if (activeIndex >= newMediaPreviews.length) {
-      setActiveIndex(Math.max(0, newMediaPreviews.length - 1));
-    }
+    // Adjust activeIndex if needed (shift to the new last image if we're deleting the current or last one)
+    setActiveIndex(prev => {
+      if (prev >= newMediaPreviews.length) {
+        return Math.max(0, newMediaPreviews.length - 1);
+      }
+      return prev;
+    });
     console.log("Removed media at index:", index);
   };
 
@@ -480,6 +492,7 @@ function MediaPicker({
 
   // Handle scroll snap and update active index
   useEffect(() => {
+    if (!scrollSyncEnabled) return;
     const handleScroll = () => {
       if (!scrollContainerRef.current || containerWidth === 0) return;
 
@@ -498,7 +511,7 @@ function MediaPicker({
       scrollContainer.addEventListener("scroll", handleScroll);
       return () => scrollContainer.removeEventListener("scroll", handleScroll);
     }
-  }, [activeIndex, mediaPreviews.length, containerWidth]);
+  }, [scrollSyncEnabled, activeIndex, mediaPreviews.length, containerWidth]);
 
   // Scroll to active index when it changes
   useEffect(() => {
