@@ -87,42 +87,18 @@ function Container({
 function TopNavigation({ 
   page, 
   isUpdateProduct, 
-  mediaUrls, 
-  setMediaUrls 
 }: { 
     page: Page, 
     isUpdateProduct: boolean, 
-    mediaUrls: string[], 
-    setMediaUrls: (mediaUrls: string[]) => void 
   }) {
   const name =
     isUpdateProduct ? "Update Product" : "New Product";
   const cancelLink = isUpdateProduct ? "/inventory" : "/";
   const router = useRouter();
-  const { mutateAsync: deleteMedia } = useProductMediaDelete();
-
-  const handleRemoveProductMedia = async (mediaUrls: string[]) => {
-    console.log("Removing product media:", mediaUrls);
-  
-    const deletions = mediaUrls
-      .filter((url) => url.startsWith("https://"))
-      .map(async (url) => {
-        try {
-          await deleteMedia(url);
-          console.log("Deleted from Firebase:", url);
-        } catch (err) {
-          console.error("Failed to delete media:", err);
-        }
-      });
-  
-      await Promise.allSettled(deletions);
-      setMediaUrls([]);
-    };
   
   const handleCancel = async (e: React.MouseEvent) => {
     e.preventDefault();
     router.push(cancelLink); 
-    await handleRemoveProductMedia(mediaUrls);
   };
 
   return page !== Page.SUCCESS ? (
@@ -145,13 +121,15 @@ function BottomNavigation({
   nextPage,
   setPage,
   onPost,
-  isUpdateProduct
+  isUpdateProduct,
+  mediaPreviews,
 }: {
   previousPage: Page | null;
   nextPage: Page | null;
   setPage: Dispatch<SetStateAction<Page>>;
   onPost: (isUpdate: boolean) => void;
   isUpdateProduct: boolean;
+  mediaPreviews: string[];
 }) {
   const router = useRouter();
   return (
@@ -230,25 +208,29 @@ function PageIndicator({ page }: { page: Page }) {
 
 function MediaPicker({
   handleFileUpload,
-  mediaUrls,
   isUploading,
   setIsUploading,
-  setMediaUrls,
   deleteMedia,
   isUpdateProduct,
   updateProductId,
+  mediaFiles,
+  setMediaFiles,
+  mediaPreviews,
+  setMediaPreviews,
 }: {
   handleFileUpload: (file: File) => Promise<string | undefined>;
-  mediaUrls: string[];
   isUploading: boolean;
   setIsUploading: (isUploading: boolean) => void;
-  setMediaUrls: (mediaUrls: string[]) => void;
   deleteMedia: (
     url: string,
     options?: { onSuccess?: () => void; onError?: (error: Error) => void },
   ) => void;
   isUpdateProduct: boolean;
   updateProductId: string;
+  mediaFiles: File[];
+  setMediaFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  mediaPreviews: string[];
+  setMediaPreviews: React.Dispatch<React.SetStateAction<string[]>>;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -282,13 +264,13 @@ function MediaPicker({
   // Initialize image edits when media URLs change
   useEffect(() => {
     // Initialize edits for new images
-    if (mediaUrls.length > imageEdits.length) {
+    if (mediaPreviews.length > imageEdits.length) {
       setImageEdits((prev) => [
         ...prev,
-        ...Array(mediaUrls.length - prev.length).fill({ scale: 1, x: 0, y: 0 }),
+        ...Array(mediaPreviews.length - prev.length).fill({ scale: 1, x: 0, y: 0 }),
       ]);
     }
-  }, [mediaUrls, imageEdits.length]);
+  }, [mediaPreviews, imageEdits.length]);
 
   // Set current edit values when entering edit mode
   useEffect(() => {
@@ -308,71 +290,75 @@ function MediaPicker({
   }, [isEditMode, activeIndex, imageEdits]);
 
   const handleClick = () => {
-    if (mediaUrls.length === 0) {
+    if (mediaPreviews.length === 0) {
       fileInputRef.current?.click();
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const MAX_FILE_SIZE_MB = 25;
     const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    setIsUploading(true);
+    const fileArray = Array.from(files);
+    const tooLargeFiles = fileArray.filter(file => file.size > MAX_FILE_SIZE_BYTES);
+    const validFiles = fileArray.filter(file => file.size <= MAX_FILE_SIZE_BYTES);
 
-    try {
-      const fileArray = Array.from(files);
-      const tooLargeFiles = fileArray.filter(file => file.size > MAX_FILE_SIZE_BYTES);
-      const validFiles = fileArray.filter(file => file.size <= MAX_FILE_SIZE_BYTES);
-
-      if (tooLargeFiles.length > 0) {
-        alert(`Some files are too large and will not be uploaded (limit: ${MAX_FILE_SIZE_MB}MB).
-          Skipped files: ${tooLargeFiles.map(f => f.name)}`);
-        console.warn("Skipped files:", tooLargeFiles.map(f => f.name));
-      }
-
-      const uploadPromises = validFiles.map(file => handleFileUpload(file));
-      const results = await Promise.all(uploadPromises);
-      const successfulUrls = results.filter((url): url is string => !!url);
-
-      setMediaUrls([...mediaUrls, ...successfulUrls]);
-      setActiveIndex(mediaUrls.length);
-    } catch (error) {
-      console.error("Error uploading files:", error);
-    } finally {
-      setIsUploading(false);
+    if (tooLargeFiles.length > 0) {
+      alert(`Some files are too large and will not be added (limit: ${MAX_FILE_SIZE_MB}MB).
+        Skipped files: ${tooLargeFiles.map(f => f.name).join(", ")}`);
+      console.warn("Skipped files:", tooLargeFiles.map(f => f.name));
     }
+
+    const previewUrls = validFiles.map(file => URL.createObjectURL(file));
+    console.log("Preview URLs:", previewUrls);
+    // Use updater form to ensure correct previous state reference
+    setMediaFiles((prev) => {
+      const updated = [...prev, ...validFiles];
+      return updated;
+    });
+
+    setMediaPreviews((prev) => {
+      const updated = [...prev, ...previewUrls];
+      return updated;
+    });
+
+    setActiveIndex(prev => mediaPreviews.length);
   };
 
   const handleRemoveMedia = (index: number, e: React.MouseEvent) => {
     e.stopPropagation();
 
-    const removedUrl = mediaUrls[index];
+    // const removedUrl = mediaPreviews[index];
 
-    if (removedUrl.startsWith("https://")) {
-      deleteMedia(removedUrl, {
-        onSuccess: () => {
-          console.log("Deleted from Firebase:", removedUrl);
-        },
-        onError: (error) => {
-          console.error("Error deleting from Firebase:", error);
-        },
-      });
-    }
+    // if (removedUrl.startsWith("https://")) {
+    //   deleteMedia(removedUrl, {
+    //     onSuccess: () => {
+    //       console.log("Deleted from Firebase:", removedUrl);
+    //     },
+    //     onError: (error) => {
+    //       console.error("Error deleting from Firebase:", error);
+    //     },
+    //   });
+    // }
 
-    const newMediaUrls = [...mediaUrls];
-    newMediaUrls.splice(index, 1);
-    setMediaUrls(newMediaUrls);
+    const newMediaPreviews = [...mediaPreviews];
+    newMediaPreviews.splice(index, 1);
+    setMediaPreviews(newMediaPreviews);
+
+    const newMediaFiles = [...mediaFiles];
+    newMediaFiles.splice(index, 1);
+    setMediaFiles(newMediaFiles);
 
     // Also remove from edits
     const newImageEdits = [...imageEdits];
     newImageEdits.splice(index, 1);
     setImageEdits(newImageEdits);
 
-    if (activeIndex >= newMediaUrls.length) {
-      setActiveIndex(Math.max(0, newMediaUrls.length - 1));
+    if (activeIndex >= newMediaPreviews.length) {
+      setActiveIndex(Math.max(0, newMediaPreviews.length - 1));
     }
     console.log("Removed media at index:", index);
   };
@@ -490,7 +476,7 @@ function MediaPicker({
       const itemWidth = containerWidth * 0.85 + 16; // 85% of container width + margin
       const newIndex = Math.round(scrollLeft / itemWidth);
 
-      if (newIndex !== activeIndex && newIndex < mediaUrls.length) {
+      if (newIndex !== activeIndex && newIndex < mediaPreviews.length) {
         setActiveIndex(newIndex);
       }
     };
@@ -500,7 +486,7 @@ function MediaPicker({
       scrollContainer.addEventListener("scroll", handleScroll);
       return () => scrollContainer.removeEventListener("scroll", handleScroll);
     }
-  }, [activeIndex, mediaUrls.length, containerWidth]);
+  }, [activeIndex, mediaPreviews.length, containerWidth]);
 
   // Scroll to active index when it changes
   useEffect(() => {
@@ -523,7 +509,8 @@ function MediaPicker({
         const productDoc = await getDoc(productRef);
         if (productDoc.exists()) {
           const productData = productDoc.data();
-          setMediaUrls(productData.mediaUrls || []);
+          setMediaPreviews(productData.mediaUrls || []);
+          setMediaFiles(productData.mediaUrls || []);
           console.log("productData", productData);
         }
       };
@@ -532,7 +519,7 @@ function MediaPicker({
   }, [isUpdateProduct, updateProductId]);
 
   // Check if current image is the last one
-  const isLastImage = activeIndex === mediaUrls.length - 1;
+  const isLastImage = activeIndex === mediaPreviews.length - 1;
 
   // Add this touch handler function
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -601,9 +588,10 @@ function MediaPicker({
           }}
         >
           {/* Media items */}
-          {mediaUrls.length > 0 ? (
+          {mediaPreviews.length > 0 ? (
             <>
-              {mediaUrls.map((url, index) => {
+              {mediaPreviews.map((url, index) => {
+                console.log("Rendering media item", index, "with URL:", url);
                 const fileExtension = url
                   .split(".")
                   .pop()
@@ -611,12 +599,9 @@ function MediaPicker({
                   .split("?")[0];
                 const isVideo =
                   fileExtension === "mp4" || fileExtension === "mov";
-                const isImage =
-                  fileExtension === "jpg" ||
-                  fileExtension === "jpeg" ||
-                  fileExtension === "png" ||
-                  fileExtension === "gif" ||
-                  fileExtension === "bmp";
+                const isImage = true;
+
+                
 
                 const isActive = index === activeIndex;
                 const edit = imageEdits[index] || { scale: 1, x: 0, y: 0 };
@@ -635,7 +620,7 @@ function MediaPicker({
                       width: "85%", // Make image width smaller to show preview of next image
                       height: "500px",
                       marginLeft: index === 0 ? "7.5%" : "2%",
-                      marginRight: index === mediaUrls.length - 1 ? "0%" : "2%",
+                      marginRight: index === mediaPreviews.length - 1 ? "0%" : "2%",
                     }}
                   >
                     <div
@@ -809,7 +794,7 @@ function MediaPicker({
         </div>
 
         {/* Plus button in the sliver for the last image */}
-        {mediaUrls.length > 0 && isLastImage && !isEditMode && (
+        {mediaPreviews.length > 0 && isLastImage && !isEditMode && (
           <div className="absolute -right-4 top-1/2 z-10 -translate-y-1/2 pr-1">
             <Button
               variant="ghost"
@@ -838,10 +823,10 @@ function MediaPicker({
       {/* Fixed bottom section for buttons and text */}
       <div className="relative mt-4 h-16">
         {/* Dot indicators */}
-        {mediaUrls.length > 1 && !isEditMode && (
+        {mediaPreviews.length > 1 && !isEditMode && (
           <div className="flex justify-center">
             <div className="flex space-x-2">
-              {mediaUrls.map((_, index) => (
+              {mediaPreviews.map((_, index) => (
                 <button
                   key={index}
                   className={`size-2 rounded-full ${activeIndex === index ? "bg-black" : "bg-black/30"}`}
@@ -866,7 +851,7 @@ function MediaPicker({
         )}
 
         {/* Only show "Press and hold to reorder" when in edit mode */}
-        {isEditMode && mediaUrls.length > 0 && (
+        {isEditMode && mediaPreviews.length > 0 && (
           <p className="absolute inset-x-0 top-0 text-center text-sm text-black/70">
             Press and hold to reorder
           </p>
@@ -1281,7 +1266,8 @@ function AddProductContent() {
   const { user } = useFirebaseAuth();
   const mediaUpload = useProductMediaUpload();
   const { mutate: deleteMedia } = useProductMediaDelete();
-  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
   const [isUpdateProduct, setIsUpdateProduct] = useState(false);
@@ -1340,6 +1326,10 @@ function AddProductContent() {
     fetchTagsFromShop();
   }, [user]);
 
+  function isString(value: unknown): value is string {
+    return typeof value === "string";
+  }
+
   const handlePost = async (isUpdate: boolean) => {
     try {
       if (!auth.currentUser) {
@@ -1347,13 +1337,41 @@ function AddProductContent() {
         return;
       }
 
-      // console.log("Posting product with media URLs:", mediaUrls);
+      const uploadedUrls: string[] = [];
+      for (const file of mediaFiles) {
+        if (isString(file) && file.startsWith("https://")) {
+          // Already uploaded, keep it
+          uploadedUrls.push(file);
+          console.log("Already uploaded URL:", file);
+        } else {
+          const url = await handleFileUpload(file);
+          if (url) uploadedUrls.push(url);
+          console.log("Uploaded URL:", url);
+        }
+      }
 
       if (isUpdate) {
         // Update existing product
         // console.log("tags", selectedTags.map((tag) => tag.name));
         console.log("ogTags", ogTags.map((tag) => tag.name));
         const productRef = doc(db, "products", updateProductId);
+        const productSnap = await getDoc(productRef);
+        const existingMediaUrls = productSnap.data()?.mediaUrls || [];
+        console.log("existingMediaUrls", existingMediaUrls);
+        const urlsToDelete = existingMediaUrls.filter(
+          (url: string) => !uploadedUrls.includes(url)
+        );
+        console.log("urlsToDelete", urlsToDelete);
+        for (const url of urlsToDelete) {
+          deleteMedia(url, {
+            onSuccess: () => {
+              console.log("Deleted from Firebase:", url);
+            },
+            onError: (error) => {
+              console.error("Error deleting from Firebase:", error);
+            },
+          });
+        }
         await updateDoc(productRef, {
           name,
           description,
@@ -1361,7 +1379,7 @@ function AddProductContent() {
           shipping,
           inventory,
           tags: selectedTags.map((tag) => tag.name),
-          mediaUrls,
+          mediaUrls: uploadedUrls,
           updatedAt: new Date(),
         });
         console.log("Product updated successfully");
@@ -1379,14 +1397,13 @@ function AddProductContent() {
           shipping,
           tags: selectedTags.map((tag) => tag.name),
           inventory,
-          mediaUrls,
+          mediaUrls: uploadedUrls,
           isListed: true,
           createdBy: auth.currentUser.uid,
           createdAt: new Date(),
           updatedAt: new Date(),
         });
       }
-
       // Check for new tags that are not in the original tags
       const oldTags = ogTags.map((tag) => tag.name);
       const newTags = selectedTags
@@ -1469,19 +1486,21 @@ function AddProductContent() {
     content = (
       <MediaPicker
         handleFileUpload={handleFileUpload}
-        mediaUrls={mediaUrls}
         isUploading={isUploading}
         setIsUploading={setIsUploading}
-        setMediaUrls={setMediaUrls}
         deleteMedia={deleteMedia}
         isUpdateProduct={isUpdateProduct}
         updateProductId={updateProductId}
+        mediaFiles={mediaFiles}
+        setMediaFiles={setMediaFiles}
+        mediaPreviews={mediaPreviews}
+        setMediaPreviews={setMediaPreviews}
       />
     );
   } else if (page == Page.DESCRIPTION) {
     previousPage = Page.MEDIA;
     nextPage = Page.PRICE;
-    backgroundImage = mediaUrls[0] ? `url(${mediaUrls[0]})` : ``;
+    backgroundImage = mediaPreviews[0] ? `url(${mediaPreviews[0]})` : ``;
     content = (
       <ProductDescription
         name={name}
@@ -1501,7 +1520,7 @@ function AddProductContent() {
   } else if (page == Page.PRICE) {
     previousPage = Page.DESCRIPTION;
     nextPage = Page.SUCCESS;
-    backgroundImage = mediaUrls[0] ? `url(${mediaUrls[0]})` : ``;
+    backgroundImage = mediaPreviews[0] ? `url(${mediaPreviews[0]})` : ``;
     content = (
       <PriceAndShipping
         price={price}
@@ -1518,7 +1537,7 @@ function AddProductContent() {
     previousPage = Page.PRICE;
     content = (
       <SuccessPage
-        productImage={mediaUrls[0] ? mediaUrls[0] : "/placeholder.svg"}
+        productImage={mediaPreviews[0] ? mediaPreviews[0] : "/placeholder.svg"}
         name={name}
       />
     );
@@ -1531,8 +1550,6 @@ function AddProductContent() {
       <TopNavigation 
         page={page} 
         isUpdateProduct={isUpdateProduct}
-        mediaUrls={mediaUrls}
-        setMediaUrls={setMediaUrls}
       />
       <PageIndicator page={page} />
       {content}
@@ -1542,6 +1559,7 @@ function AddProductContent() {
         setPage={setPage}
         onPost={handlePost}
         isUpdateProduct={isUpdateProduct}
+        mediaPreviews={mediaPreviews}
       />
     </Container>
   );
