@@ -345,26 +345,27 @@ function MediaPicker({
     e.stopPropagation();
     setScrollSyncEnabled(false);
     setTimeout(() => setScrollSyncEnabled(true), 300);
-
-    const newLength = mediaPreviews.length - 1;
-    const newIndex = Math.max(0, newLength - 1);
-
+  
     const newMediaPreviews = [...mediaPreviews];
     newMediaPreviews.splice(index, 1);
-    setMediaPreviews(newMediaPreviews);
-
     const newMediaFiles = [...mediaFiles];
     newMediaFiles.splice(index, 1);
-    setMediaFiles(newMediaFiles);
-
-    // Also remove from edits
     const newImageEdits = [...imageEdits];
     newImageEdits.splice(index, 1);
+  
+    const newLength = newMediaPreviews.length;
+    const isLastImage = index === mediaPreviews.length - 1;
+    const newIndex = isLastImage ? Math.max(0, newLength - 1) : Math.min(index, newLength - 1);
+  
+    setMediaPreviews(newMediaPreviews);
+    setMediaFiles(newMediaFiles);
     setImageEdits(newImageEdits);
-
-    setTimeout(() => {
-      setActiveIndex(Math.max(0, newIndex));
-    }, 0);
+  
+    // Wait until after layout updates
+    requestAnimationFrame(() => {
+      setActiveIndex(newIndex);
+    });
+  
     console.log("Removed media at index:", index);
   };
 
