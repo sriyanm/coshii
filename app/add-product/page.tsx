@@ -345,18 +345,9 @@ function MediaPicker({
     e.stopPropagation();
     setScrollSyncEnabled(false);
     setTimeout(() => setScrollSyncEnabled(true), 300);
-    // const removedUrl = mediaPreviews[index];
 
-    // if (removedUrl.startsWith("https://")) {
-    //   deleteMedia(removedUrl, {
-    //     onSuccess: () => {
-    //       console.log("Deleted from Firebase:", removedUrl);
-    //     },
-    //     onError: (error) => {
-    //       console.error("Error deleting from Firebase:", error);
-    //     },
-    //   });
-    // }
+    const newLength = mediaPreviews.length - 1;
+    const newIndex = Math.max(0, newLength - 1);
 
     const newMediaPreviews = [...mediaPreviews];
     newMediaPreviews.splice(index, 1);
@@ -371,13 +362,9 @@ function MediaPicker({
     newImageEdits.splice(index, 1);
     setImageEdits(newImageEdits);
 
-    // Adjust activeIndex if needed (shift to the new last image if we're deleting the current or last one)
-    setActiveIndex(prev => {
-      if (prev >= newMediaPreviews.length) {
-        return Math.max(0, newMediaPreviews.length - 1);
-      }
-      return prev;
-    });
+    setTimeout(() => {
+      setActiveIndex(Math.max(0, newIndex));
+    }, 0);
     console.log("Removed media at index:", index);
   };
 
