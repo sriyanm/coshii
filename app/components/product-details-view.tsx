@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ChevronLeft, Pencil } from "lucide-react";
 import { Switch } from "./ui/switch";
@@ -28,6 +28,11 @@ export function ProductDetailsView({
   const [isListed, setIsListed] = useState(product.isListed || false);
   const [inventory, setInventory] = useState(product.inventory || 0);
   const { mutateAsync: deleteMedia } = useProductMediaDelete();
+
+  // Scroll to top on load or product change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [product.id]);
 
   const updateProduct = async (updates: Partial<Product>) => {
     try {
