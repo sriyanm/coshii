@@ -125,9 +125,14 @@ function BottomNavigation({
   previousPage,
   nextPage,
   setPage,
+  page,
   onPost,
   isUpdateProduct,
   mediaPreviews,
+  name,
+  description,
+  price,
+  shipping,
 }: {
   previousPage: Page | null;
   nextPage: Page | null;
@@ -135,6 +140,11 @@ function BottomNavigation({
   onPost: (isUpdate: boolean) => void;
   isUpdateProduct: boolean;
   mediaPreviews: MediaPreview[];
+  page: Page;
+  name: string;
+  description: string;
+  price: number | null;
+  shipping: number | null;
 }) {
   const router = useRouter();
   return (
@@ -172,7 +182,7 @@ function BottomNavigation({
             onClick={function () {
               setPage(nextPage);
             }}
-            disabled={mediaPreviews.length === 0}
+            disabled={(page === Page.MEDIA && mediaPreviews.length === 0) || (page === Page.DESCRIPTION && (name === "" || description === ""))}
           >
             Next <ArrowRight className="ml-1 size-4" />
           </Button>
@@ -186,6 +196,7 @@ function BottomNavigation({
             onPost(isUpdateProduct);
             console.log("post!");
           }}
+          disabled={page === Page.PRICE && (price === null || shipping === null)}
         >
           Post <ArrowRight className="ml-1 size-4" />
         </Button>
@@ -198,6 +209,7 @@ function BottomNavigation({
             console.log("update!");
             router.push("/inventory");
           }}
+          disabled={page === Page.PRICE && (price === null || shipping === null)}
         >
           Update <ArrowRight className="ml-1 size-4" />
         </Button>
@@ -1085,10 +1097,8 @@ function ProductDescription({
 }
 
 interface PriceAndShippingProps {
-  price: number;
-  setPrice: (price: number) => void;
-  shipping: number;
-  setShipping: (shipping: number) => void;
+  setPrice: (price: number | null) => void;
+  setShipping: (shipping: number | null) => void;
   inventory: number;
   setInventory: (inventory: number) => void;
   isUpdateProduct: boolean;
@@ -1096,9 +1106,7 @@ interface PriceAndShippingProps {
 }
 
 function PriceAndShipping({
-  price,
   setPrice,
-  shipping,
   setShipping,
   inventory,
   setInventory,
@@ -1112,11 +1120,17 @@ function PriceAndShipping({
     if (priceInput?.float !== undefined && priceInput.float !== null) {
       setPrice(priceInput.float);
     }
+    else {
+      setPrice(null);
+    }
   }, [priceInput?.float, setPrice]);
 
   useEffect(() => {
     if (shippingInput?.float !== undefined && shippingInput.float !== null) {
       setShipping(shippingInput.float);
+    }
+    else {
+      setShipping(null);
     }
   }, [shippingInput?.float, setShipping]);
 
@@ -1251,8 +1265,8 @@ function AddProductContent() {
   const [page, setPage] = useState(initialPage);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [price, setPrice] = useState<number>(0);
-  const [shipping, setShipping] = useState<number>(0);
+  const [price, setPrice] = useState<number | null>(null);
+  const [shipping, setShipping] = useState<number | null>(null);
   const [inventory, setInventory] = useState<number>(1);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
@@ -1511,9 +1525,7 @@ function AddProductContent() {
     backgroundImage = mediaPreviews[0].url ? `url(${mediaPreviews[0].url})` : ``;
     content = (
       <PriceAndShipping
-        price={price}
         setPrice={setPrice}
-        shipping={shipping}
         setShipping={setShipping}
         inventory={inventory}
         setInventory={setInventory}
@@ -1545,9 +1557,14 @@ function AddProductContent() {
         previousPage={previousPage}
         nextPage={nextPage}
         setPage={setPage}
+        page={page}
         onPost={handlePost}
         isUpdateProduct={isUpdateProduct}
         mediaPreviews={mediaPreviews}
+        name={name}
+        description={description}
+        price={price}
+        shipping={shipping}
       />
     </Container>
   );
