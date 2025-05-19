@@ -1105,16 +1105,8 @@ function PriceAndShipping({
   isUpdateProduct,
   updateProductId,
 }: PriceAndShippingProps) {
-  const [shippingInput, setShippingInput] = useState<MoneyInputValues | null>({
-    value: shipping.toString(),
-    formatted: shipping.toLocaleString(),
-    float: shipping,
-  });
-  const [priceInput, setPriceInput] = useState<MoneyInputValues | null>({
-    value: price.toString(),
-    formatted: price.toLocaleString(),
-    float: price,
-  });
+  const [shippingInput, setShippingInput] = useState<MoneyInputValues | null>(null);
+  const [priceInput, setPriceInput] = useState<MoneyInputValues | null>(null);
 
   useEffect(() => {
     if (priceInput?.float !== undefined && priceInput.float !== null) {
