@@ -191,7 +191,7 @@ function ProfileHeader({
       {/* Username and Description */}
       <p className="text-gray-600">@{shopData.username}</p>
       <p className="mt-2 text-sm text-gray-500">{shopData.description}</p>
-      {auth.currentUser?.uid !== shopData.creatorId && (
+      {auth.currentUser?.uid !== shopData.creatorId && sellerView && (
         <div className="relative mt-4">
           {!isFollowing ? (
             <button
