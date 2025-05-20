@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import { CiBellOn } from "react-icons/ci"; // Import CiBellOn
+import { HiOutlineUserCircle } from "react-icons/hi";
 import { SiFacebook, SiX, SiInstagram } from "react-icons/si";
 import EditShopModal from "../components/EditShopModal";
 import { useState } from "react";
@@ -23,10 +24,12 @@ import { ChevronDown } from "lucide-react";
 // Subcomponent for Profile Header
 function ProfileHeader({
   shopData,
+  buyerView,
   sellerView,
   onShopUpdate,
 }: {
   shopData: Shop;
+  buyerView: boolean;
   sellerView: boolean;
   onShopUpdate: (updatedShopData: Shop) => void;
 }) {
@@ -129,15 +132,26 @@ function ProfileHeader({
   return (
     <div className="relative p-5 text-center">
       {" "}
-      {/* Added relative positioning */}
       {/* Bell Icon (Top-Right Corner) */}
       {sellerView && (
         <div className="absolute -right-5 top-6">
           <Link href="/notifs">
             <CiBellOn
-              className="size-6 cursor-pointer font-bold text-black"
+              className="size-6 cursor-pointer font-bold text-gray-600 hover:text-gray-800"
               title="Notifications"
               style={{ strokeWidth: "0.6" }}
+            />
+          </Link>
+        </div>
+      )}
+      {/* Login Button (also Top-Right) */}
+      {buyerView && (
+        <div className="absolute -right-5 top-6">
+          <Link href="/signin">
+            <HiOutlineUserCircle
+              className="size-6 cursor-pointer font-bold text-gray-600 hover:text-gray-800"
+              title="Sign in"
+              style={{ strokeWidth: "1.5" }}
             />
           </Link>
         </div>
@@ -282,10 +296,12 @@ function SocialLinksBar({
 // Main Profile Component
 export function Profile({
   shopData,
+  buyerView,
   sellerView,
   onShopUpdate,
 }: {
   shopData: Shop;
+  buyerView: boolean;
   sellerView: boolean;
   onShopUpdate: (updatedShopData: Shop) => void;
 }) {
@@ -293,6 +309,7 @@ export function Profile({
     <div className="mx-auto max-w-md overflow-hidden rounded-lg bg-white p-5">
       <ProfileHeader
         shopData={shopData}
+        buyerView={buyerView}
         sellerView={sellerView}
         onShopUpdate={onShopUpdate}
       />

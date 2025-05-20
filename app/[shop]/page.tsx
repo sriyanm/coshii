@@ -418,6 +418,7 @@ export default function ProfilePage({
         <div className="w-full max-w-md p-4">
           <Profile
             shopData={shopData}
+            buyerView={buyerView}
             sellerView={sellerView}
             onShopUpdate={handleShopUpdate}
           />
