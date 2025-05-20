@@ -132,11 +132,12 @@ function ProfileHeader({
       {/* Added relative positioning */}
       {/* Bell Icon (Top-Right Corner) */}
       {sellerView && (
-        <div className="absolute right-5 top-5">
+        <div className="absolute -right-5 top-6">
           <Link href="/notifs">
             <CiBellOn
-              className="size-6 cursor-pointer font-bold text-gray-500 hover:text-gray-800"
+              className="size-6 cursor-pointer font-bold text-black"
               title="Notifications"
+              style={{ strokeWidth: "0.6" }}
             />
           </Link>
         </div>
@@ -150,43 +151,44 @@ function ProfileHeader({
         className="mx-auto size-24 rounded-full object-cover"
       />
       {/* Shop Name with Optional Edit Button */}
-      <div className="mt-3 flex items-center justify-center gap-2">
-        <h1 className="text-2xl font-semibold">{shopData.shopName}</h1>
-        {sellerView && (
-          <div>
-            {/* Floating Edit Button */}
-            <button
-              title="Edit Shop Name"
-              className="text-gray-500 hover:text-gray-800"
-              aria-label="Edit Shop Name"
-              onClick={() => setIsModalOpen(true)}
-            >
-              {/* Pencil SVG */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="size-5"
+      <div className="mt-3 flex justify-center">
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold">{shopData.shopName}</h1>
+          {sellerView && (
+            <>
+              <button
+                title="Edit Shop Name"
+                className="flex items-center justify-center text-gray-500 hover:text-gray-800"
+                aria-label="Edit Shop Name"
+                onClick={() => setIsModalOpen(true)}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M16.862 3.487a2.25 2.25 0 013.182 3.182L8.622 18.09a1.5 1.5 0 01-.53.35l-4.877 1.95a.375.375 0 01-.49-.49l1.95-4.876a1.5 1.5 0 01.35-.531L16.862 3.487z"
-                />
-              </svg>
-            </button>
+                {/* Pencil SVG */}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.8"
+                  stroke="currentColor"
+                  className="size-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16.862 3.487a2.25 2.25 0 013.182 3.182L8.622 18.09a1.5 1.5 0 01-.53.35l-4.877 1.95a.375.375 0 01-.49-.49l1.95-4.876a1.5 1.5 0 01.35-.531L16.862 3.487z"
+                  />
+                </svg>
+              </button>
 
-            {/* Modal (Controlled Externally) */}
-            <EditShopModal
-              isOpen={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-              shopData={shopData}
-              onShopUpdate={onShopUpdate}
-            />
-          </div>
-        )}
+              {/* Modal (Controlled Externally) */}
+              <EditShopModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                shopData={shopData}
+                onShopUpdate={onShopUpdate}
+              />
+            </>
+          )}
+        </div>
       </div>
       {/* Username and Description */}
       <p className="text-gray-600">@{shopData.username}</p>
@@ -209,7 +211,7 @@ function ProfileHeader({
                 disabled={loadingFollowStatus}
               >
                 {loadingFollowStatus ? "" : "Following"}
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="size-4" />
               </button>
 
               {showUnfollowModal && (
