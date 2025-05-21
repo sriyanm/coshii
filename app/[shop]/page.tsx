@@ -330,8 +330,7 @@ export default function ProfilePage({
         setSellerView(isShopOwner);
         if (!isShopOwner) {
           setCurrentTab("Search");
-        }
-        else {
+        } else {
           setCurrentTab("Shop");
         }
         setBuyerView(false);
@@ -413,12 +412,13 @@ export default function ProfilePage({
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col overflow-x-hidden bg-white">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-white">
       <div className="min-h-screen flex-1 flex-col items-center font-sans">
         {/* Profile Section */}
         <div className="w-full max-w-md p-4">
           <Profile
             shopData={shopData}
+            buyerView={buyerView}
             sellerView={sellerView}
             onShopUpdate={handleShopUpdate}
           />
@@ -452,53 +452,41 @@ export default function ProfilePage({
                 )}
 
                 {/* Shopping Cart Icon */}
-                {itemCount > 0 ? (
-                  <Link
-                    href="/checkout"
-                    title="Cart Button"
-                    className="relative"
-                  >
-                    <MdAddShoppingCart className="text-2xl" />
-                    <span className="absolute -right-2 -top-3 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                      {itemCount}
-                    </span>
-                  </Link>
-                ) : (
-                  <button
-                    title="Cart Button"
-                    onClick={() => {
-                      setShowPopup(true);
-                      setPopupMessage("Sorry, your cart is empty");
+                {shopData.isPremium &&
+                  (itemCount > 0 ? (
+                    <Link
+                      href="/checkout"
+                      title="Cart Button"
+                      className="relative"
+                    >
+                      <MdAddShoppingCart className="text-2xl" />
+                      <span className="absolute -right-2 -top-3 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                        {itemCount}
+                      </span>
+                    </Link>
+                  ) : (
+                    <button
+                      title="Cart Button"
+                      onClick={() => {
+                        setShowPopup(true);
+                        setPopupMessage("Sorry, your cart is empty");
 
-                      if (popupTimerRef.current) {
-                        clearTimeout(popupTimerRef.current);
-                      }
+                        if (popupTimerRef.current) {
+                          clearTimeout(popupTimerRef.current);
+                        }
 
-                      popupTimerRef.current = setTimeout(
-                        () => setShowPopup(false),
-                        3000,
-                      );
-                    }}
-                    className="relative"
-                  >
-                    <MdAddShoppingCart className="text-2xl" />
-                  </button>
-                )}
+                        popupTimerRef.current = setTimeout(
+                          () => setShowPopup(false),
+                          3000,
+                        );
+                      }}
+                      className="relative"
+                    >
+                      <MdAddShoppingCart className="text-2xl" />
+                    </button>
+                  ))}
               </div>
             </div>
-
-            {/* Shop/Activity Toggle and Shopping Cart in the Same Row */}
-            {/* <div className="flex w-full items-center px-4 py-0.5">
-              <div className="flex grow justify-center">
-                <Toggle
-                  options={["Shop", "Activity"]}
-                  selectedOption={activeTab}
-                  onOptionSelect={setActiveTab}
-                  font="SF Pro"
-                  underline={true}
-                />
-              </div>
-            </div> */}
 
             {/* Categories Toggle */}
             <div className="shrink-0 px-4 py-0.5">
@@ -506,7 +494,6 @@ export default function ProfilePage({
                 options={shopData.categories}
                 selectedOption={selectedCategory}
                 onOptionSelect={setSelectedCategory}
-                font="SF Pro"
                 underline={false}
                 borderBox={true}
                 selectedColor="orange"
@@ -549,8 +536,10 @@ export default function ProfilePage({
 
         {/* Pop-up Message if adding own product to cart */}
         {showPopup && (
-          <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-white p-4 shadow-lg">
-            {popupMessage}
+          <div className="fixed bottom-20 left-1/2 z-50 w-[95vw] max-w-md -translate-x-1/2 px-4">
+            <div className="rounded-lg bg-white p-4 text-center shadow-lg">
+              {popupMessage}
+            </div>
           </div>
         )}
       </div>
