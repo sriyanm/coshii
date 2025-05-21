@@ -157,7 +157,7 @@ function OnboardingContent() {
         )}
       {page === Page.SOCIAL_MEDIA &&
         SocialMediaPage(handlePageChange, socialLinks, setSocialLinks)}
-      {page === Page.SIGNIN && SignInPage(handlePageChange)}
+      {page === Page.SIGNIN && SignInPage(handlePageChange, setShopHandle)}
       {page === Page.PHONE &&
         PhoneNumberPage(
           handlePageChange,
@@ -648,7 +648,18 @@ function SocialMediaPage(
   );
 }
 
-function SignInPage(setPage: (nextPage: Page) => void) {
+function SignInPage(setPage: (nextPage: Page) => void, setShopHandle: Dispatch<SetStateAction<string>>) {
+  const setCreatedShopHandle = async (userId: string) => {
+    const shopsRef = collection(db, "shops");
+    const querySnapshot = await getDocs(shopsRef);
+    const shopDoc = querySnapshot.docs.find((doc) => {
+      const data = doc.data();
+      return data.creatorId === userId;
+    });
+    if (shopDoc) {
+      setShopHandle(shopDoc.data().username);
+    }
+  }
   return (
     <>
       <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
@@ -660,10 +671,14 @@ function SignInPage(setPage: (nextPage: Page) => void) {
         <div className="mt-12">
           <GoogleSigninButton
             allowNewUser={true}
-            onSuccess={({ isNewUser }) => {
+            onSuccess={({ user, isNewUser }) => {
               if (isNewUser) {
                 setPage(Page.PHONE);
               } else {
+                const userId = user?.uid;
+                if (userId) {
+                  setCreatedShopHandle(userId);
+                }
                 setPage(Page.REROUTE);
               }
             }}
@@ -971,7 +986,7 @@ function ReroutePage(shopHandle: string) {
     <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
       <div>
         <h1 className="mb-6 mt-4 text-start text-xl font-bold text-gray-600">
-        You already have a shop, let&pos;s take you there now.
+        You already have a shop, let&#39;s take you there now.
         </h1>
       </div>
       <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4">
