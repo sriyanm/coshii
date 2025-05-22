@@ -16,6 +16,7 @@ interface SocialBarProps {
   onLike: () => void; // Callback for when the Like button is clicked
   onComment: () => void; // Callback for when the Comment button is clicked
   onShare: () => void; // Callback for when the Share button is clicked
+  profilePic: string;
   buyerView: boolean;
   likesCountInit: number;
   commentsCountInit: number;
@@ -26,6 +27,7 @@ export function SocialBar({
   onLike,
   onComment,
   onShare,
+  profilePic,
   buyerView,
   likesCountInit,
   commentsCountInit,
@@ -190,6 +192,7 @@ export function SocialBar({
             onPost={handleCommentPost}
             onClose={handleClosePopup}
             productId={productId}
+            profilePic={profilePic}
             buyerView={buyerView}
           />
         </div>

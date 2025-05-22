@@ -15,6 +15,7 @@ interface Comment {
   text: string;
   likes: number;
   owner: string;
+  profilePic: string;
   timestamp: string;
 }
 
@@ -23,6 +24,7 @@ interface CommentsPopupProps {
   onPost: () => void;
   onClose: () => void;
   productId: string;
+  profilePic: string;
   buyerView: boolean;
 }
 
@@ -43,6 +45,7 @@ const fetchComments = async (productId: string): Promise<Comment[]> => {
         text: data.text || "",
         likes: data.likes || 0,
         owner: data.owner || "Unknown",
+        profilePic: data.profilePic || "https://via.placeholder.com/40",
         timestamp: data.timestamp || new Date().toISOString(), // fallback
       };
     });
@@ -58,6 +61,7 @@ const fetchComments = async (productId: string): Promise<Comment[]> => {
 const postComment = async (
   productId: string,
   commentText: string,
+  profilePic: string,
 ): Promise<Comment | null> => {
   try {
     const user = auth.currentUser;
@@ -67,6 +71,7 @@ const postComment = async (
       text: commentText,
       likes: 0,
       owner: user.displayName || user.email || "Anonymous",
+      profilePic: profilePic || "/tempImages/blank.jpg",
       timestamp: new Date().toISOString(),
     };
 
@@ -103,6 +108,7 @@ export function CommentsPopup({
   onPost,
   onClose,
   productId,
+  profilePic,
   buyerView,
 }: CommentsPopupProps) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -129,7 +135,11 @@ export function CommentsPopup({
     if (newComment.trim()) {
       setLoading(true);
       try {
-        const newComments = await postComment(productId, newComment);
+        const newComments = await postComment(
+          productId,
+          newComment,
+          profilePic,
+        );
         if (newComments) {
           setComments([...comments, newComments]);
         }
@@ -237,9 +247,18 @@ export function CommentsPopup({
           ) : (
             <ul className="space-y-4">
               {comments.map((comment, index) => (
-                <li key={index} className="pb-2">
-                  <p className="font-semibold text-gray-800">{comment.owner}</p>
-                  <p className="text-sm text-gray-600">{comment.text}</p>
+                <li key={index} className="flex items-center gap-3 pb-2">
+                  <img
+                    src={comment.profilePic}
+                    alt={`${comment.owner}'s profile`}
+                    className="size-9 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      {comment.owner}
+                    </p>
+                    <p className="text-sm text-gray-600">{comment.text}</p>
+                  </div>
                 </li>
               ))}
             </ul>

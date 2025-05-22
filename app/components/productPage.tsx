@@ -13,6 +13,7 @@ interface ProductPageProps {
   onComment: () => void;
   onShare: () => void;
   buyerView: boolean;
+  profilePic: string;
   isPremium: boolean;
   likesCount: number;
   commentsCount: number;
@@ -34,6 +35,7 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
       onShare,
       buyerView,
       isPremium,
+      profilePic,
       id,
       likesCount,
       commentsCount,
@@ -263,6 +265,7 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
                 onLike={onLike}
                 onComment={onComment}
                 onShare={onShare}
+                profilePic={profilePic}
                 buyerView={buyerView}
                 likesCountInit={likesCount}
                 commentsCountInit={commentsCount}

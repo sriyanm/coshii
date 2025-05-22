@@ -518,6 +518,7 @@ export default function ProfilePage({
                 onShare={() => handleShare(product)}
                 buyerView={buyerView}
                 isPremium={shopData.isPremium}
+                profilePic={shopData.profilePic}
                 likesCount={product.likesCount || 0}
                 commentsCount={product.commentsCount || 0}
                 muted={muted}
