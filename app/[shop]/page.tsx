@@ -22,6 +22,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/app/lib/client/firebase";
 import { fetchProducts } from "../components/ProductServer";
+import { ErrorCoshiiCat } from "@/app/components/ErrorCoshiiCat";
 
 const navigation: NavigationItem[] = [
   { name: "Shop", icon: Store, href: "/" },
@@ -400,14 +401,7 @@ export default function ProfilePage({
   // If invalid shop
   if (invalidShop) {
     return (
-      <div>
-        You have entered an invalid shop name — go home
-        <Link href="/">
-          <button className="rounded mt-2 bg-black px-4 py-2 text-white">
-            Go Home
-          </button>
-        </Link>
-      </div>
+      <ErrorCoshiiCat />
     );
   }
 
