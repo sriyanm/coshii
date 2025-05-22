@@ -5,13 +5,13 @@ import Image from "next/image";
 export function ErrorCoshiiCat() {
     const router = useRouter();
     return (
-        <div className="flex min-h-screen max-w-md flex-col items-center mx-auto justify-center bg-[#FED15B] px-4 text-center">
+        <div className="fixed inset-0 flex min-h-screen max-w-md flex-col items-center mx-auto justify-center bg-[#FED15B] px-4 text-center">
             <Image
                 src="/coshii-cat.png"
                 alt="Coshii Cat"
                 width={192}
                 height={192}
-                className="mb-8 mt-16"
+                className="mb-8"
             />
             <p className="text-lg font-medium text-gray-900 mb-2 mx-10">
                 Sorry, Coshii Cat says you can’t access this page meow
