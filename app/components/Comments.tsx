@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   collection,
   doc,
@@ -9,6 +9,7 @@ import {
   increment,
 } from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
+
 // Comment type definition
 interface Comment {
   text: string;
@@ -158,52 +159,129 @@ export function CommentsPopup({
     }
   };
 
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    touchStartY.current = e.touches[0].clientY;
+  }
+
+  function handleTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+    if (touchStartY.current === null) return;
+    const touchCurrentY = e.touches[0].clientY;
+    const diff = touchCurrentY - touchStartY.current;
+
+    if (diff > 50) {
+      onClose();
+      touchStartY.current = null;
+    }
+  }
+
+  function handleBackdropClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      onClose();
+    }
+  }
+
+  const [viewportHeight, setViewportHeight] = useState<number | undefined>(
+    undefined,
+  );
+
+  useEffect(() => {
+    function onResize() {
+      if (window.visualViewport) {
+        setViewportHeight(window.visualViewport.height);
+      } else {
+        // fallback
+        setViewportHeight(window.innerHeight);
+      }
+    }
+
+    // Initial set
+    onResize();
+
+    window.visualViewport?.addEventListener("resize", onResize);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", onResize);
+    };
+  }, []);
+
   return (
-    <div className="comments-popup fixed inset-x-0 bottom-0 h-4/5 overflow-y-auto bg-white bg-opacity-100 p-4 shadow-lg backdrop-blur-md">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">Comments</h2>
-        <button onClick={onClose} className="text-gray-500">
-          Close
-        </button>
-      </div>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <ul className="mt-4 space-y-4">
-          {comments.map((comment, index) => (
-            <li key={index} className="border-b border-gray-200 pb-2">
-              <p className="font-semibold">{comment.owner}</p>
-              <p className="text-sm text-gray-600">{comment.text}</p>
-              <p className="text-xs text-gray-400">
-                {new Date(comment.timestamp).toLocaleString()}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {!buyerView && (
-        <div className="mt-4 flex items-center">
-          <input
-            type="text"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment"
-            className="flex-1 rounded-lg border border-gray-300 p-2"
-          />
-          <button
-            onClick={() => {
-              handleAddComment();
-              onPost();
-            }}
-            disabled={loading}
-            className="ml-2 rounded-lg bg-blue-500 px-4 py-2 text-white disabled:bg-gray-300"
-          >
-            Post
-          </button>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
+      onClick={handleBackdropClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+    >
+      <div
+        ref={modalRef}
+        style={{
+          height: viewportHeight ? `${viewportHeight * 0.6}px` : "60vh",
+        }}
+        className="animate-slideUp flex h-[60vh] w-screen max-w-md flex-col overflow-hidden rounded-t-lg bg-white/60 p-4 shadow-xl backdrop-blur-lg"
+      >
+        {/* Dragging icon */}
+        <div className="flex justify-center">
+          <div className="mb-2 h-1.5 w-20 rounded-full bg-white/70"></div>
         </div>
-      )}
+
+        {/* Title */}
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-gray-800">Comments</h2>
+        </div>
+
+        {/* Scrollable Comments*/}
+        <div className="mt-4 flex-1 overflow-y-auto pr-1">
+          {loading ? (
+            <p className="text-center text-gray-500">Loading...</p>
+          ) : (
+            <ul className="space-y-4">
+              {comments.map((comment, index) => (
+                <li key={index} className="pb-2">
+                  <p className="font-semibold text-gray-800">{comment.owner}</p>
+                  <p className="text-sm text-gray-600">{comment.text}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {!buyerView && (
+          <div className="relative mt-4">
+            <input
+              type="text"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Add a comment..."
+              className="w-full rounded-full border border-gray-300 bg-white/80 px-4 py-2 pr-12 text-base backdrop-blur focus:outline-none"
+              style={{ fontSize: "16px" }}
+            />
+            <button
+              onClick={() => {
+                handleAddComment();
+                onPost();
+              }}
+              disabled={loading || newComment.trim() === ""}
+              className={`absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full transition-colors ${newComment.trim() === "" ? "bg-gray-300 text-white" : "bg-blue-500 text-white hover:bg-blue-600"} `}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="size-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={3}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 10l7-7m0 0l7 7m-7-7v18"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

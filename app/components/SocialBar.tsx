@@ -185,15 +185,13 @@ export function SocialBar({
 
       {/* Conditional rendering for the popup */}
       {showComments && (
-        <div className="popup-overlay fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="comments-popup size-4/5 overflow-y-auto bg-white p-4 shadow-lg backdrop-blur-md">
-            <CommentsPopup
-              onPost={handleCommentPost}
-              onClose={handleClosePopup}
-              productId={productId}
-              buyerView={buyerView}
-            />
-          </div>
+        <div className="popup-overlay fixed inset-0 z-10 flex flex-col justify-end">
+          <CommentsPopup
+            onPost={handleCommentPost}
+            onClose={handleClosePopup}
+            productId={productId}
+            buyerView={buyerView}
+          />
         </div>
       )}
     </div>
