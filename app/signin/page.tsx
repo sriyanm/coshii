@@ -88,7 +88,7 @@ export default function SignInPage() {
                 className="w-full min-w-24 py-6 text-lg"
                 variant="onboarding"
                 onClick={function () {
-                  router.push("/onboarding");
+                  router.push("/onboarding?page=2");
                 }}
               >
                 {"Continue"}
