@@ -318,7 +318,7 @@ function MediaPicker({
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const MAX_FILE_SIZE_MB = 25;
+    const MAX_FILE_SIZE_MB = 50;
     const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
     const files = e.target.files;
@@ -807,7 +807,7 @@ function MediaPicker({
         </div>
 
         {/* Plus button in the sliver for the last image */}
-        {mediaPreviews.length > 0 && isLastImage && !isEditMode && (
+        {mediaPreviews.length > 0 && mediaPreviews.length < 5 && isLastImage && !isEditMode && (
           <div className="absolute -right-4 top-1/2 z-10 -translate-y-1/2 pr-1">
             <Button
               variant="ghost"
