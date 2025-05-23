@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { CiBellOn } from "react-icons/ci"; // Import CiBellOn
 import { HiOutlineUserCircle } from "react-icons/hi";
@@ -207,7 +207,7 @@ function ProfileHeader({
       {/* Username and Description */}
       <p className="text-gray-600">@{shopData.username}</p>
       <p className="mt-2 text-sm text-gray-500">{shopData.description}</p>
-      {auth.currentUser?.uid !== shopData.creatorId && sellerView && (
+      {auth.currentUser?.uid !== shopData.creatorId && !buyerView && (
         <div className="relative mt-4">
           {!isFollowing ? (
             <button
