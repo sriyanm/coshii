@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { CommentsPopup } from "./Comments";
 import { FaHeart, FaRegHeart } from "react-icons/fa"; // Import like icons
 import { MdIosShare, MdOutlineModeComment } from "react-icons/md"; // Import share and comment icons
+import { AnimatePresence } from "framer-motion";
 import {
   doc,
   setDoc,
@@ -16,6 +17,7 @@ interface SocialBarProps {
   onLike: () => void; // Callback for when the Like button is clicked
   onComment: () => void; // Callback for when the Comment button is clicked
   onShare: () => void; // Callback for when the Share button is clicked
+  profilePic: string;
   buyerView: boolean;
   likesCountInit: number;
   commentsCountInit: number;
@@ -26,6 +28,7 @@ export function SocialBar({
   onLike,
   onComment,
   onShare,
+  profilePic,
   buyerView,
   likesCountInit,
   commentsCountInit,
@@ -184,18 +187,19 @@ export function SocialBar({
       </button>
 
       {/* Conditional rendering for the popup */}
-      {showComments && (
-        <div className="popup-overlay fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="comments-popup size-4/5 overflow-y-auto bg-white p-4 shadow-lg backdrop-blur-md">
+      <AnimatePresence>
+        {showComments && (
+          <div className="popup-overlay fixed inset-0 z-10 flex flex-col justify-end">
             <CommentsPopup
               onPost={handleCommentPost}
               onClose={handleClosePopup}
               productId={productId}
+              profilePic={profilePic}
               buyerView={buyerView}
             />
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
