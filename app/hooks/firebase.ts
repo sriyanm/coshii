@@ -114,7 +114,8 @@ export function useSignInWithMagicLinkEmail() {
   });
 }
 
-export function useSignOut() {
+export function useSignOut(shopHandle: string) {
+  const router = useRouter();
   return useMutation({
     mutationKey: ["signOut"],
     mutationFn: () => signOut(auth),
@@ -124,6 +125,7 @@ export function useSignOut() {
     },
     onSuccess: () => {
       console.log("signed out");
+      router.push(`/${shopHandle}`);
     },
     onError: (error) => {
       console.error("failed to sign out: ", error.message);

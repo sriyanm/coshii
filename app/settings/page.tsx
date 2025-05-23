@@ -31,6 +31,7 @@ import {
 import { db, auth } from "@/app/lib/client/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { SignoutButton } from "../components/SignoutButton";
+import { useRouter } from "next/navigation";
 
 // const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 const stripePromise = loadStripe(
@@ -62,9 +63,11 @@ interface UserProfile {
   plan: "free" | "paid";
   updatedAt?: Date;
   subscriptionId?: string;
+  username?: string;
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [currentTab] = useState("Settings");
   const [currentView, setCurrentView] = useState<View>("main");
   const [user, setUser] = useState<User | null>(null);
@@ -78,19 +81,31 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.replace("/onboarding");
+        return;
+      }
+
       setUser(user);
-      if (user) {
-        // Fetch user profile from Firestore
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          setUserProfile(userDoc.data() as UserProfile);
-        }
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        setUserProfile(userDoc.data() as UserProfile);
+      }
+      const shopsRef = collection(db, "shops");
+      const q = query(shopsRef, where("creatorId", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const shopDoc = querySnapshot.docs[0].data();
+        setUserProfile((prev) => ({
+          ...prev,
+          username: shopDoc.username,
+        }));
       }
       setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!user) return;
@@ -121,10 +136,15 @@ export default function SettingsPage() {
         console.error("No shop found for the user");
         return;
       }
-      const doc = querySnapshot.docs[0];
-      await updateDoc(doc.ref, {
-        ...updates,
-      });
+      // assumption that user has unique shop names for each shop
+      for (const doc of querySnapshot.docs) {
+        const shopData = doc.data();
+        if (shopData.shopName === userProfile.shopName) {
+          await updateDoc(doc.ref, {
+            ...updates,
+          });
+        }
+      }
     } catch (error) {
       console.error("Error updating shop name in shop db:", error);
     }
@@ -184,8 +204,7 @@ export default function SettingsPage() {
           <span className="font-bold">[Placeholder]</span>
           <ChevronRight className="size-5 text-gray-400" />
         </button> */}
-
-        <SignoutButton />
+        <SignoutButton shopHandle={userProfile.username || "onboarding"}/>
       </div>
     </div>
   );
@@ -545,11 +564,15 @@ export default function SettingsPage() {
 
   const renderContent = () => {
     if (isLoading) {
-      return <div>Loading...</div>;
+      return (
+        <div className="flex justify-center">
+          <div className="size-6 animate-spin rounded-full border-b-2 border-gray-900" />
+        </div>
+      );
     }
 
     if (!user) {
-      return <div>Please sign in to view settings</div>;
+      return null;
     }
 
     switch (currentView) {
@@ -580,6 +603,7 @@ export default function SettingsPage() {
       <div className="flex-1 overflow-y-auto p-4">{renderContent()}</div> */}
 
       {/* Bottom Navigation */}
+      {user && (
       <div className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2">
         <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
           {navigation.map((item) => (
@@ -596,6 +620,7 @@ export default function SettingsPage() {
           ))}
         </nav>
       </div>
+      )}
     </div>
   );
 }

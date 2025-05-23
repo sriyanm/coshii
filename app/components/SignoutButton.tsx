@@ -1,8 +1,20 @@
 import { useSignOut } from "@/app/hooks/firebase";
 import { Button } from "./ui/button";
 
-export function SignoutButton() {
-  const signOut = useSignOut();
+type Props = {
+  shopHandle: string;
+};
 
-  return <Button onClick={() => signOut.mutate()}>Sign out</Button>;
+export function SignoutButton({ shopHandle }: Props) {
+  const signOut = useSignOut(shopHandle);
+
+  return (
+    <Button
+      onClick={() => {
+        signOut.mutate();
+      }}
+    >
+      Sign out
+    </Button>
+  );
 }
