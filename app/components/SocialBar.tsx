@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { CommentsPopup } from "./Comments";
 import { FaHeart, FaRegHeart } from "react-icons/fa"; // Import like icons
 import { MdIosShare, MdOutlineModeComment } from "react-icons/md"; // Import share and comment icons
+import { AnimatePresence } from "framer-motion";
 import {
   doc,
   setDoc,
@@ -186,17 +187,19 @@ export function SocialBar({
       </button>
 
       {/* Conditional rendering for the popup */}
-      {showComments && (
-        <div className="popup-overlay fixed inset-0 z-10 flex flex-col justify-end">
-          <CommentsPopup
-            onPost={handleCommentPost}
-            onClose={handleClosePopup}
-            productId={productId}
-            profilePic={profilePic}
-            buyerView={buyerView}
-          />
-        </div>
-      )}
+      <AnimatePresence>
+        {showComments && (
+          <div className="popup-overlay fixed inset-0 z-10 flex flex-col justify-end">
+            <CommentsPopup
+              onPost={handleCommentPost}
+              onClose={handleClosePopup}
+              productId={productId}
+              profilePic={profilePic}
+              buyerView={buyerView}
+            />
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

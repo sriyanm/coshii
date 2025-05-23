@@ -1,4 +1,7 @@
+"use client";
+
 import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import {
   collection,
   doc,
@@ -169,29 +172,68 @@ export function CommentsPopup({
     }
   };
 
-  const modalRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLDivElement | null>(null);
+  const motionRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number | null>(null);
+  const touchStartedInsideModal = useRef(false);
 
-  function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
-    touchStartY.current = e.touches[0].clientY;
-  }
+  function handleStart(e: React.TouchEvent | React.MouseEvent) {
+    let clientY: number | null = null;
+    let targetNode: Node | null = null;
 
-  function handleTouchMove(e: React.TouchEvent<HTMLDivElement>) {
-    if (touchStartY.current === null) return;
-    const touchCurrentY = e.touches[0].clientY;
-    const diff = touchCurrentY - touchStartY.current;
+    if ("touches" in e) {
+      // It's a TouchEvent
+      clientY = e.touches[0].clientY;
+      targetNode = e.target as Node;
+    } else {
+      // It's a MouseEvent
+      clientY = e.clientY;
+      targetNode = e.target as Node;
+    }
 
-    if (diff > 50) {
-      onClose();
-      touchStartY.current = null;
+    touchStartY.current = clientY;
+
+    if (
+      (inputRef.current && inputRef.current.contains(targetNode)) ||
+      (motionRef.current && motionRef.current.contains(targetNode))
+    ) {
+      touchStartedInsideModal.current = true;
+      console.log("Started inside modal");
+    } else {
+      touchStartedInsideModal.current = false;
+      console.log("Started outside modal");
     }
   }
 
   function handleBackdropClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+    const clickTarget = e.target as Node;
+
+    // Only close if the click started and ended outside the modal
+    if (
+      inputRef.current &&
+      !inputRef.current.contains(clickTarget) &&
+      !touchStartedInsideModal.current
+    ) {
       onClose();
+      console.log("close on click");
     }
   }
+
+  const handleDragEnd = (
+    _: unknown,
+    info: { offset: { y: number }; velocity: { y: number } },
+  ) => {
+    const direction = info.offset.y > 0 ? "down" : "up";
+    console.log(direction);
+
+    // If swiped down far enough, trigger close
+    if (info.offset.y > 50 && info.velocity.y > 20) {
+      onClose();
+      console.log("close on drag");
+    } else if (info.offset.y < -100) {
+      console.log("MOVED UP");
+    }
+  };
 
   const [viewportHeight, setViewportHeight] = useState<number | undefined>(
     undefined,
@@ -216,19 +258,29 @@ export function CommentsPopup({
     };
   }, []);
 
+  const START_OFFSET = 100; //Padding so that the comments modal stays at bottom
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
       onClick={handleBackdropClick}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
+      onTouchStart={handleStart}
+      onMouseDown={handleStart}
     >
-      <div
-        ref={modalRef}
+      <motion.div
+        ref={motionRef}
         style={{
-          height: viewportHeight ? `${viewportHeight * 0.6}px` : "60vh",
+          height: viewportHeight ? `${viewportHeight * 0.7}px` : "70vh",
         }}
-        className="animate-slideUp flex h-[60vh] w-screen max-w-md flex-col overflow-hidden rounded-t-lg bg-white/60 p-4 shadow-xl backdrop-blur-lg"
+        initial={{ y: "100%" }}
+        animate={{ y: START_OFFSET }}
+        exit={{ y: "100%" }}
+        transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+        drag="y"
+        dragConstraints={{ top: START_OFFSET, bottom: START_OFFSET }}
+        dragElastic={0.2}
+        onDragEnd={handleDragEnd}
+        className="mt-auto flex w-screen max-w-md flex-col overflow-hidden rounded-t-lg bg-white/60 p-4 shadow-xl backdrop-blur-lg"
       >
         {/* Dragging icon */}
         <div className="flex justify-center">
@@ -240,8 +292,8 @@ export function CommentsPopup({
           <h2 className="text-lg font-semibold text-gray-800">Comments</h2>
         </div>
 
-        {/* Scrollable Comments*/}
-        <div className="mt-4 flex-1 overflow-y-auto pr-1">
+        {/* Scrollable Comments */}
+        <div className="mb-16 mt-2 max-h-[calc(100%-110px)] overflow-y-auto pr-1">
           {loading ? (
             <p className="text-center text-gray-500">Loading...</p>
           ) : (
@@ -251,7 +303,7 @@ export function CommentsPopup({
                   <img
                     src={comment.profilePic}
                     alt={`${comment.owner}'s profile`}
-                    className="size-9 rounded-full object-cover"
+                    className="size-10 rounded-full object-cover"
                   />
                   <div>
                     <p className="font-semibold text-gray-800">
@@ -265,15 +317,23 @@ export function CommentsPopup({
           )}
         </div>
 
-        {!buyerView && (
-          <div className="relative mt-4">
+        {/* Spacer div to add extra space at bottom */}
+        <div style={{ height: "56px" }} className="flex pt-16"></div>
+      </motion.div>
+
+      {/* Input Bar */}
+      {!buyerView && (
+        <div
+          className="absolute bottom-0 w-full max-w-md px-4 pb-2"
+          ref={inputRef}
+        >
+          <div className="relative">
             <input
               type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Add a comment..."
               className="w-full rounded-full border border-gray-300 bg-white/80 px-4 py-2 pr-12 text-base backdrop-blur focus:outline-none"
-              style={{ fontSize: "16px" }}
             />
             <button
               onClick={() => {
@@ -299,8 +359,8 @@ export function CommentsPopup({
               </svg>
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
