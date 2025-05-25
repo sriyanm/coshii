@@ -13,6 +13,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/app/lib/client/firebase";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { cleanupUnusedCategoriesForShop } from "../lib/utils";
+import { useRouter } from "next/navigation";
 
 const navigation: NavigationItem[] = [
   { name: "Shop", icon: Store, href: "/" },
@@ -94,6 +95,7 @@ export default function InventoryPage() {
   const [user, setUser] = useState<User | null>(null);
   const [userPlan, setUserPlan] = useState("");
   const auth = getAuth();
+  const router = useRouter();
 
   const listedProducts = products.filter((p) => p.isListed);
   const unlistedProducts = products.filter((p) => !p.isListed);
@@ -104,6 +106,10 @@ export default function InventoryPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      if (!user) {
+        router.replace("/onboarding");
+        return;
+      }
     });
 
     return () => unsubscribe();
