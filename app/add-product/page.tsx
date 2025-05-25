@@ -6,7 +6,7 @@ import InventoryInput from "@/app/components/inventory-input";
 import MoneyInput, { MoneyInputValues } from "@/app/components/money-input";
 import { Button } from "@/app/components/ui/button";
 import { Textarea } from "@/app/components/ui/textarea";
-import { ArrowLeft, ArrowRight, ImagePlus, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, ImagePlus } from "lucide-react";
 import Link from "next/link";
 import {
   Dispatch,
@@ -133,6 +133,8 @@ function BottomNavigation({
   description,
   price,
   shipping,
+  addMoreMedia,
+  isEditMode,
 }: {
   previousPage: Page | null;
   nextPage: Page | null;
@@ -145,19 +147,35 @@ function BottomNavigation({
   description: string;
   price: number | null;
   shipping: number | null;
+  addMoreMedia: (e: React.MouseEvent) => void;
+  isEditMode: boolean;
 }) {
   const router = useRouter();
   return (
-    <div className="fixed bottom-5 left-1/2 flex w-full max-w-md -translate-x-1/2 justify-end space-x-2 px-2">
-      {!previousPage && (
+  <div className="fixed bottom-5 left-1/2 w-full max-w-md -translate-x-1/2 px-2 flex justify-between items-center">
+    {/* Plus Button on Bottom Left */}
+    <div>
+    {mediaPreviews.length > 0 && mediaPreviews.length < 5 && nextPage === Page.DESCRIPTION && !isEditMode ? (
+    <div
+      onClick={addMoreMedia}
+      className="size-12 rounded-full hover:bg-white hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center"
+    >
+      <ImagePlus className="size-8 text-black" />
+    </div>
+  ) : (
+    <div className="size-12 invisible" />
+  )}
+    </div>
+    {/* Back / Next / Post / Update Buttons on Bottom Right */}
+    <div className="flex space-x-2">
+      {!previousPage ? (
         <Button
           className="invisible text-lg text-black/50"
           variant="addProductSecondary"
         >
           <ArrowLeft className="mr-1 size-4 text-black/50" /> Back
         </Button>
-      )}
-      {previousPage && previousPage !== Page.PRICE && (
+      ) : previousPage !== Page.PRICE ? (
         <Button
           className="text-lg text-black/50"
           variant="addProductSecondary"
@@ -167,7 +185,7 @@ function BottomNavigation({
         >
           <ArrowLeft className="mr-1 size-4 text-black/50" /> Back
         </Button>
-      )}
+      ) : null}
       {nextPage && nextPage !== Page.SUCCESS ? (
         <div className="relative group">
           {/* Tooltip */}
@@ -182,7 +200,7 @@ function BottomNavigation({
             onClick={function () {
               setPage(nextPage);
             }}
-            disabled={(page === Page.MEDIA && mediaPreviews.length === 0) || (page === Page.DESCRIPTION && (name === "" || description === ""))}
+            disabled={(page === Page.MEDIA && mediaPreviews.length === 0) || (page === Page.MEDIA && isEditMode) || (page === Page.DESCRIPTION && (name === "" || description === ""))}
           >
             Next <ArrowRight className="ml-1 size-4" />
           </Button>
@@ -215,6 +233,7 @@ function BottomNavigation({
         </Button>
       ) : null}
     </div>
+  </div>
   );
 }
 
@@ -239,6 +258,9 @@ function MediaPicker({
   setMediaFiles,
   mediaPreviews,
   setMediaPreviews,
+  fileInputRef,
+  isEditMode,
+  setIsEditMode,
 }: {
   isUpdateProduct: boolean;
   updateProductId: string;
@@ -246,11 +268,13 @@ function MediaPicker({
   setMediaFiles: React.Dispatch<React.SetStateAction<File[]>>;
   mediaPreviews: MediaPreview[];
   setMediaPreviews: React.Dispatch<React.SetStateAction<MediaPreview[]>>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  isEditMode: boolean;
+  setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const [scrollSyncEnabled, setScrollSyncEnabled] = useState(true);
 
@@ -406,11 +430,6 @@ function MediaPicker({
     );
   };
 
-  const addMoreMedia = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    fileInputRef.current?.click();
-    console.log("Add more media");
-  };
 
   // Simple drag implementation
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -547,9 +566,6 @@ function MediaPicker({
       fetchProductDetails();
     }
   }, [isUpdateProduct, updateProductId]);
-
-  // Check if current image is the last one
-  const isLastImage = activeIndex === mediaPreviews.length - 1;
 
   // Add this touch handler function
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -805,20 +821,6 @@ function MediaPicker({
             </div>
           )}
         </div>
-
-        {/* Plus button in the sliver for the last image */}
-        {mediaPreviews.length > 0 && mediaPreviews.length < 5 && isLastImage && !isEditMode && (
-          <div className="absolute -right-4 top-1/2 z-10 -translate-y-1/2 pr-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6 rounded-full border-4 border-black/50 p-0"
-              onClick={addMoreMedia}
-            >
-              <Plus className="text-black" />
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Debug info */}
@@ -1279,6 +1281,15 @@ function AddProductContent() {
   const [isUpdateProduct, setIsUpdateProduct] = useState(false);
   const [updateProductId, setUpdateProductId] = useState<string>("");
   const [isTagDeleted, setIsTagDeleted] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const addMoreMedia = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    fileInputRef.current?.click();
+    console.log("Add more media");
+  };
+
   useEffect(() => {
     if (searchParams.get("step") === "Update") {
       setIsUpdateProduct(true);
@@ -1497,6 +1508,9 @@ function AddProductContent() {
         setMediaFiles={setMediaFiles}
         mediaPreviews={mediaPreviews}
         setMediaPreviews={setMediaPreviews}
+        fileInputRef={fileInputRef}
+        isEditMode={isEditMode}
+        setIsEditMode={setIsEditMode}
       />
     );
   } else if (page == Page.DESCRIPTION) {
@@ -1565,6 +1579,8 @@ function AddProductContent() {
         description={description}
         price={price}
         shipping={shipping}
+        addMoreMedia={addMoreMedia}
+        isEditMode={isEditMode}
       />
     </Container>
   );
