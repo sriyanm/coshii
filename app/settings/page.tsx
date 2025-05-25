@@ -565,8 +565,8 @@ export default function SettingsPage() {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="flex justify-center">
-          <div className="size-6 animate-spin rounded-full border-b-2 border-gray-900" />
+        <div className="flex h-screen items-center justify-center">
+          <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
         </div>
       );
     }

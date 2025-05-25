@@ -246,11 +246,7 @@ export default function InventoryPage() {
   }
 
   if (!user) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-gray-500">Please sign in to view your inventory</p>
-      </div>
-    );
+    return null;
   }
 
   return (
