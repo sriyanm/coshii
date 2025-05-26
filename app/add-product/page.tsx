@@ -22,6 +22,7 @@ import { Input } from "../components/ui/input";
 import { useSearchParams } from "next/navigation";
 import { Facebook, Share2 } from "lucide-react";
 import Image from "next/image";
+import { MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import {
   collection,
   query,
@@ -277,7 +278,8 @@ function MediaPicker({
   const [activeIndex, setActiveIndex] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
   const [scrollSyncEnabled, setScrollSyncEnabled] = useState(true);
-
+  const [muted, setMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   // Image editing state
   const [imageEdits, setImageEdits] = useState<
     { scale: number; x: number; y: number }[]
@@ -609,6 +611,13 @@ function MediaPicker({
     document.addEventListener("touchend", handleTouchEnd);
   };
 
+  const toggleMute = () => {
+    setMuted(!muted);
+    if (videoRef.current) {
+      videoRef.current.muted = !muted;
+    }
+  };
+
   return (
     <div className="flex flex-col">
       <input
@@ -679,14 +688,24 @@ function MediaPicker({
                           }}
                         >
                           <video
+                            ref={index === activeIndex ? videoRef : null}
                             src={url || "/placeholder.svg"}
                             autoPlay
                             loop
-                            muted
+                            muted={muted}
                             playsInline
                             className="inline-block size-full rounded-lg object-cover"
                           />
-                          <source src={url} type={`video/`} />
+                          <button
+                            onClick={toggleMute}
+                            className="absolute right-2 bottom-2 rounded-full bg-neutral-700/40 p-2 text-white shadow-md"
+                          >
+                            {muted ? (
+                              <MdVolumeOff className="text-2xl" />
+                            ) : (
+                              <MdVolumeUp className="text-2xl" />
+                            )}
+                          </button>
                         </div>
                       ) : isImage ? (
                         <div
