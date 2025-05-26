@@ -7,17 +7,36 @@ interface ProductCardProps {
   showInventory?: boolean;
 }
 
+function isVideo(file: string) {
+  return file.split("?")[0].toLowerCase().endsWith(".mp4") || file.split("?")[0].toLowerCase().endsWith(".mov");
+}
+
 export function ProductCard({ product, showInventory }: ProductCardProps) {
+  const media = product.images?.[0] || "/placeholder.svg";
+  const isVideoFile = isVideo(media);
+
   return (
     <div className="flex items-center justify-between p-4 hover:bg-muted/50">
       <div className="flex items-center gap-4">
-        <Image
-          src={product.images?.[0] || "/placeholder.svg"}
-          alt={product.name}
-          width={48}
-          height={48}
-          className="rounded-md object-cover"
-        />
+        {isVideoFile ? (
+          <video
+            src={media}
+            width={48}
+            height={48}
+            className="rounded-md object-cover"
+            autoPlay
+            muted
+            loop
+          />
+        ) : (
+          <Image
+            src={media}
+            alt={product.name}
+            width={48}
+            height={48}
+            className="rounded-md object-cover"
+          />
+        )}
         <div>
           <h3 className="font-medium">{product.name}</h3>
           <p className="text-muted-foreground">${product.price}</p>
