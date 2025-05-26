@@ -27,6 +27,7 @@ export function ProductCard({ product, showInventory }: ProductCardProps) {
             autoPlay
             muted
             loop
+            playsInline
           />
         ) : (
           <Image
