@@ -14,6 +14,7 @@ import { db } from "@/app/lib/client/firebase";
 import { auth } from "@/app/lib/client/firebase";
 import { Plus, Minus } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface NavigationItem {
   name: string;
@@ -50,6 +51,7 @@ export default function SearchPage() {
   const [searchTriggered, setSearchTriggered] = useState(false);
   const [showFollowers, setShowFollowers] = useState(true);
   const [showFollowing, setShowFollowing] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   // const [showMockButton, setShowMockButton] = useState(true);
   // const [showMockButton2, setShowMockButton2] = useState(true);
   // const generateMockShops = (count: number): ShopSearchResult[] => {
@@ -62,26 +64,21 @@ export default function SearchPage() {
   //   }));
   // };
 
+  const router = useRouter();
   useEffect(() => {
     let unsubscribed = false;
 
     const fetchFollowersAndFollowing = async () => {
-      try {
-        const currentUser = auth.currentUser;
+      auth.onAuthStateChanged(async (user) => {
+        if (unsubscribed) return;
 
-        if (!currentUser) {
-          // Wait for auth to initialize
-          auth.onAuthStateChanged(async (user) => {
-            if (user && !unsubscribed) {
-              await fetchData(user.uid);
-            }
-          });
-        } else {
-          await fetchData(currentUser.uid);
+        if (!user) {
+          router.replace("/onboarding");
+          return;
         }
-      } catch (error) {
-        console.error("Error fetching followers and following:", error);
-      }
+        setIsLoading(false);
+        await fetchData(user.uid);
+      });
     };
 
     const fetchData = async (currentShopId: string) => {
@@ -151,7 +148,7 @@ export default function SearchPage() {
     return () => {
       unsubscribed = true;
     };
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -211,6 +208,18 @@ export default function SearchPage() {
   };
 
   const renderSearchView = () => {
+    if (isLoading) {
+      return (
+        <div className="flex h-screen items-center justify-center">
+          <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
+        </div>
+      );
+    }
+
+    // if (!user) {
+    //   return null;
+    // }
+
     return (
       <div className="space-y-6">
         <div className="relative">
@@ -401,6 +410,7 @@ export default function SearchPage() {
           Load Mock Following
         </button>
       )} */}
+      {!isLoading && (
       <div className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2">
         <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
           {navigation.map((item) => (
@@ -417,6 +427,7 @@ export default function SearchPage() {
           ))}
         </nav>
       </div>
+      )}
     </div>
   );
 }
