@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { ChevronLeft, Pencil } from "lucide-react";
 import { Switch } from "./ui/switch";
 import { Button } from "./ui/button";
@@ -11,6 +10,7 @@ import Link from "next/link";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
 import { useProductMediaDelete } from "@/app/hooks/firebase";
+import { InventoryProductPage } from "../components/inventoryProductPage";
 
 interface ProductDetailsViewProps {
   product: Product;
@@ -27,6 +27,7 @@ export function ProductDetailsView({
 }: ProductDetailsViewProps) {
   const [isListed, setIsListed] = useState(product.isListed || false);
   const [inventory, setInventory] = useState(product.inventory || 0);
+  const [muted, setMuted] = useState(true);
   const { mutateAsync: deleteMedia } = useProductMediaDelete();
 
   // Scroll to top on load or product change
@@ -119,17 +120,20 @@ const handleRemoveProductMedia = async (mediaUrls: string[]) => {
         <button onClick={onBack} className="absolute left-4 top-4 z-10">
           <ChevronLeft className="size-6" />
         </button>
-        <div className="mt-5 flex items-center justify-end gap-2">
+        <div className="mt-5 flex items-center justify-end gap-2 pr-2">
           <span className="text-sm">{isListed ? "Listed" : "Unlisted"}</span>
           <Switch checked={isListed} onCheckedChange={handleIsListedChange} />
         </div>
-        <Image
-          src={product.images[0] || "/ajay-product.png"}
-          alt={product.name}
-          width={400}
-          height={400}
-          className="mx-auto mt-2"
-        />
+        {/* display all assets, videos unmute and mute option */}
+        <div className="mb-16 flex flex-col items-center space-y-6 pt-2">
+          <InventoryProductPage
+            media={product.images}
+            productName={product.name}
+            muted={muted}
+            setMuted={setMuted}
+            id={`product-${product.id}`}
+          />
+        </div>
       </div>
 
       <div className="space-y-6 p-4">
