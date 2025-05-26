@@ -1283,6 +1283,8 @@ function AddProductContent() {
   const [isTagDeleted, setIsTagDeleted] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   const addMoreMedia = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1304,10 +1306,21 @@ function AddProductContent() {
   const [ogTags, setOgTags] = useState<Tag[]>([]); // For backend updates
 
   useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        router.replace("/onboarding");
+      }
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [router]);
+
+  useEffect(() => {
     const fetchTagsFromShop = async () => {
       const user = auth.currentUser;
       if (!user) return;
-
+      setIsLoading(false);
       const shopsRef = collection(db, "shops");
       const q = query(shopsRef, where("creatorId", "==", user.uid));
       const snapshot = await getDocs(q);
@@ -1493,6 +1506,14 @@ function AddProductContent() {
       alert("Upload failed. Please try again.");
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
+      </div>
+    );
+  }
 
   let content: JSX.Element;
   let nextPage: Page | null = null;
