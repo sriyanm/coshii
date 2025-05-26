@@ -1209,7 +1209,7 @@ function PriceAndShipping({
   );
 }
 
-function SuccessPage({ productImage = "/placeholder.svg", name = "" }) {
+function SuccessPage({ productType = "", productUrl = "", name = "" }) {
   return (
     <div className="mx-auto flex h-screen w-full min-w-[50px] max-w-md flex-col items-start justify-start overflow-x-auto">
       <div className="mx-auto flex w-full flex-col items-center px-4 text-center">
@@ -1224,13 +1224,24 @@ function SuccessPage({ productImage = "/placeholder.svg", name = "" }) {
         </div>
 
         <div className="relative h-[30vh] w-full">
-          <Image
-            src={productImage}
-            alt="Product showcase"
-            fill
-            className="object-contain"
-            sizes="(max-width: 768px) 100vw, 50vw"
-          />
+          {productType === "video" ? (
+            <video
+              src={productUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 size-full object-contain rounded-lg"
+            />
+          ) : (
+            <Image
+              src={productUrl}
+              alt="Product showcase"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+          )}
         </div>
 
         <div className="mb-6">
@@ -1591,7 +1602,8 @@ function AddProductContent() {
     previousPage = Page.PRICE;
     content = (
       <SuccessPage
-        productImage={mediaPreviews[0].url ? mediaPreviews[0].url : "/placeholder.svg"}
+        productType={mediaPreviews[0].type}
+        productUrl={mediaPreviews[0].url || ""}
         name={name}
       />
     );
