@@ -20,7 +20,6 @@ import {
 } from "react";
 import { Input } from "../components/ui/input";
 import { useSearchParams } from "next/navigation";
-import { Facebook, Share2 } from "lucide-react";
 import Image from "next/image";
 import { MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import {
@@ -1223,7 +1222,7 @@ function SuccessPage({ productType = "", productUrl = "", name = "" }) {
           </p>
         </div>
 
-        <div className="relative h-[30vh] w-full">
+        <div className="relative h-[60vh] w-full mb-6">
           {productType === "video" ? (
             <video
               src={productUrl}
@@ -1231,43 +1230,19 @@ function SuccessPage({ productType = "", productUrl = "", name = "" }) {
               loop
               muted
               playsInline
-              className="absolute inset-0 size-full object-contain rounded-lg"
+              className="absolute inset-0 w-full h-full object-contain rounded-lg"
             />
           ) : (
             <Image
               src={productUrl}
               alt="Product showcase"
               fill
-              className="object-contain"
+              className="object-contain rounded-lg"
               sizes="(max-width: 768px) 100vw, 50vw"
             />
           )}
         </div>
 
-        <div className="mb-6">
-          <h2 className="mb-4 text-base font-semibold text-white">
-            Share your new item
-          </h2>
-          <div className="flex flex-wrap justify-center gap-4">
-            {[
-              { name: "Facebook", icon: <Facebook className="size-6" /> },
-              { name: "Reddit", icon: <Share2 className="size-6" /> },
-              { name: "Instagram", icon: <Share2 className="size-6" /> },
-              { name: "TikTok", icon: <Share2 className="size-6" /> },
-              { name: "Snapchat", icon: <Share2 className="size-6" /> },
-            ].map((platform) => (
-              <Button
-                key={platform.name}
-                variant="addProduct"
-                size="icon"
-                className="size-12 shrink-0 rounded-full bg-white/90 p-3"
-                aria-label={`Share on ${platform.name}`}
-              >
-                {platform.icon}
-              </Button>
-            ))}
-          </div>
-        </div>
 
         <div className="space-y-4">
           <Button
@@ -1276,13 +1251,6 @@ function SuccessPage({ productType = "", productUrl = "", name = "" }) {
             className="rounded-full bg-white px-8 py-2 text-lg font-semibold text-black shadow-md"
           >
             <Link href="/">View Shop</Link>
-          </Button>
-          <Button
-            asChild
-            variant="addProductSecondary"
-            className="w-full text-lg font-semibold text-[#703600]/50"
-          >
-            <Link href="/">Return Home</Link>
           </Button>
         </div>
       </div>
