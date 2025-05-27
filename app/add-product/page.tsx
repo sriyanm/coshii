@@ -406,12 +406,12 @@ function MediaPicker({
     console.log("Removed media at index:", index);
   };
 
-  const handleEditMedia = (index: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setActiveIndex(index);
-    setIsEditMode(true);
-    console.log("Edit mode activated for image", index);
-  };
+  // const handleEditMedia = (index: number, e: React.MouseEvent) => {
+  //   e.stopPropagation();
+  //   setActiveIndex(index);
+  //   setIsEditMode(true);
+  //   console.log("Edit mode activated for image", index);
+  // };
 
   const handleDoneEditing = () => {
     // Save the current edits
@@ -758,8 +758,9 @@ function MediaPicker({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute right-2 top-2 size-8 rounded-full bg-black/30 p-1.5 text-white hover:bg-black/50"
-                          onClick={(e) => handleEditMedia(index, e)}
+                          className="hidden absolute right-2 top-2 size-8 rounded-full bg-black/30 p-1.5 text-white hover:bg-black/50"
+                          onClick={() => {}}
+                          // onClick={(e) => handleEditMedia(index, e)}
                         >
                           <svg
                             width="24"
