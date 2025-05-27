@@ -1014,9 +1014,10 @@ function ProductDescription({
       <div className="mt-0 w-full max-w-[calc(100%-2rem)]">
         <Input
           placeholder="Item Name"
-          className="w-full border-0 bg-transparent px-0 py-2 text-xl font-bold text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+          className="w-full border-0 bg-transparent px-0 py-2 mb-2 text-xl font-bold text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          maxLength={60}
         />
 
         {/* Inline Tag Input */}
@@ -1026,6 +1027,7 @@ function ProductDescription({
             className="w-full border-0 bg-transparent px-0 py-1 text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
             value={newTagName}
             onChange={(e) => setNewTagName(e.target.value)}
+            maxLength={25}
             onKeyDown={(e) => {
               if (["Enter", "Tab", " "].includes(e.key)) {
                 e.preventDefault();
@@ -1103,9 +1105,10 @@ function ProductDescription({
       {/* Textarea for description */}
       <Textarea
         placeholder={"Write a short description of your product..."}
-        className="grow border-0 bg-transparent px-0 text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+        className="resize-none grow border-0 mb-20 bg-transparent px-0 text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
+        maxLength={300}
       />
 
       {/* AI suggestion button */}
