@@ -125,7 +125,7 @@ const handleRemoveProductMedia = async (mediaUrls: string[]) => {
           <Switch checked={isListed} onCheckedChange={handleIsListedChange} />
         </div>
         {/* display all assets, videos unmute and mute option */}
-        <div className="mb-16 flex flex-col items-center space-y-6 pt-2">
+        <div className="flex flex-col items-center space-y-6 pt-2">
           <InventoryProductPage
             media={product.images}
             productName={product.name}
