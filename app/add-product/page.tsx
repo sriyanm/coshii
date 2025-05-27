@@ -214,7 +214,7 @@ function BottomNavigation({
             onPost(isUpdateProduct);
             console.log("post!");
           }}
-          disabled={page === Page.PRICE && (price === null || shipping === null)}
+          disabled={page === Page.PRICE && (price === null)}
         >
           Post <ArrowRight className="ml-1 size-4" />
         </Button>
