@@ -550,17 +550,16 @@ export default function ProfilePage({
       {/* Bottom Navigation */}
       {!buyerView && (
         <div className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2">
-          <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
+          <nav className="flex h-16 items-center justify-between border-t bg-white px-4">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-1 ${
+                className={`flex flex-1 flex-col items-center justify-center gap-1 ${
                   currentTab === item.name ? "text-black" : "text-black/50"
                 }`}
               >
                 <item.icon />
-                <span className="text-xs">{item.name}</span>
               </Link>
             ))}
           </nav>

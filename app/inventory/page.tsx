@@ -164,9 +164,7 @@ export default function InventoryPage() {
 
           // Check if mediaUrls exists and has valid entries
           const mediaUrls =
-            data.mediaUrls && data.mediaUrls.length > 0
-              ? data.mediaUrls
-              : null;
+            data.mediaUrls && data.mediaUrls.length > 0 ? data.mediaUrls : null;
           console.log("Using mediaUrls:", mediaUrls);
 
           fetchedProducts.push({
@@ -174,9 +172,10 @@ export default function InventoryPage() {
             name: data.name || "",
             price: data.price || 0,
             // Make sure we use the full URL string without modifications
-            images: mediaUrls && mediaUrls.length > 0
-              ? mediaUrls.map((mediaUrl: string) => mediaUrl.toString())
-              : data.images || ["/placeholder.svg"],
+            images:
+              mediaUrls && mediaUrls.length > 0
+                ? mediaUrls.map((mediaUrl: string) => mediaUrl.toString())
+                : data.images || ["/placeholder.svg"],
             description: data.description || "",
             inventory: data.inventory || 0,
             isListed: data.isListed ?? true,
@@ -350,18 +349,19 @@ export default function InventoryPage() {
           </div>
         )}
       </div>
+
+      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2">
-        <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
+        <nav className="flex h-16 items-center justify-between border-t bg-white px-4">
           {navigation.map((item) => (
             <Link
               key={item.name}
               href={item.href}
-              className={`flex flex-col items-center justify-center gap-1 ${
+              className={`flex flex-1 flex-col items-center justify-center gap-1 ${
                 currentTab === item.name ? "text-black" : "text-black/50"
               }`}
             >
-              <item.icon /*className="h-6 w-6"*/ />
-              <span className="text-xs">{item.name}</span>
+              <item.icon />
             </Link>
           ))}
         </nav>

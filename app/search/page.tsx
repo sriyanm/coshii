@@ -267,8 +267,8 @@ export default function SearchPage() {
                       href={`/${shop.username}`}
                       className="block"
                     >
-                      <div className="flex items-center gap-4 cursor-pointer py-4 hover:bg-gray-50">
-                        <div className="relative h-10 w-10">
+                      <div className="flex cursor-pointer items-center gap-4 py-4 hover:bg-gray-50">
+                        <div className="relative size-10">
                           <Image
                             src={shop.profilePic || "/default-avatar.png"}
                             alt={`${shop.shopName} profile`}
@@ -278,7 +278,9 @@ export default function SearchPage() {
                         </div>
                         <div>
                           <div className="font-medium">{shop.shopName}</div>
-                          <div className="text-sm text-gray-500">@{shop.username}</div>
+                          <div className="text-sm text-gray-500">
+                            @{shop.username}
+                          </div>
                         </div>
                       </div>
                     </Link>
@@ -319,8 +321,8 @@ export default function SearchPage() {
                       href={`/${shop.username}`}
                       className="block"
                     >
-                      <div className="flex items-center gap-4 cursor-pointer py-4 hover:bg-gray-50">
-                        <div className="relative h-10 w-10">
+                      <div className="flex cursor-pointer items-center gap-4 py-4 hover:bg-gray-50">
+                        <div className="relative size-10">
                           <Image
                             src={shop.profilePic || "/default-avatar.png"}
                             alt={`${shop.shopName} profile`}
@@ -330,7 +332,9 @@ export default function SearchPage() {
                         </div>
                         <div>
                           <div className="font-medium">{shop.shopName}</div>
-                          <div className="text-sm text-gray-500">@{shop.username}</div>
+                          <div className="text-sm text-gray-500">
+                            @{shop.username}
+                          </div>
                         </div>
                       </div>
                     </Link>
@@ -356,20 +360,22 @@ export default function SearchPage() {
                     href={`/${shop.username}`}
                     className="block"
                   >
-                      <div className="flex items-center gap-4 cursor-pointer p-4 hover:bg-gray-50">
-                        <div className="relative h-10 w-10">
-                          <Image
-                            src={shop.profilePic || "/default-avatar.png"}
-                            alt={`${shop.shopName} profile`}
-                            fill
-                            className="rounded-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <div className="font-medium">{shop.shopName}</div>
-                          <div className="text-sm text-gray-500">@{shop.username}</div>
+                    <div className="flex cursor-pointer items-center gap-4 p-4 hover:bg-gray-50">
+                      <div className="relative size-10">
+                        <Image
+                          src={shop.profilePic || "/default-avatar.png"}
+                          alt={`${shop.shopName} profile`}
+                          fill
+                          className="rounded-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <div className="font-medium">{shop.shopName}</div>
+                        <div className="text-sm text-gray-500">
+                          @{shop.username}
                         </div>
                       </div>
+                    </div>
                   </Link>
                 ),
             )}
@@ -411,22 +417,21 @@ export default function SearchPage() {
         </button>
       )} */}
       {!isLoading && (
-      <div className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2">
-        <nav className="flex h-16 items-center justify-around border-t bg-white px-4">
-          {navigation.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex flex-col items-center justify-center gap-1 ${
-                currentTab === item.name ? "text-black" : "text-black/50"
-              }`}
-            >
-              <item.icon />
-              <span className="text-xs">{item.name}</span>
-            </Link>
-          ))}
-        </nav>
-      </div>
+        <div className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2">
+          <nav className="flex h-16 items-center justify-between border-t bg-white px-4">
+            {navigation.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`flex flex-1 flex-col items-center justify-center gap-1 ${
+                  currentTab === item.name ? "text-black" : "text-black/50"
+                }`}
+              >
+                <item.icon />
+              </Link>
+            ))}
+          </nav>
+        </div>
       )}
     </div>
   );
