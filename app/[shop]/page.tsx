@@ -11,7 +11,7 @@ import Link from "next/link";
 // import { TimestampString } from "@firebasegen/dataconnect";
 // import { StringValidation } from "zod";
 import { Product, Shop, CartItem } from "../types/index";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth";
 import {
   collection,
   query,
@@ -20,7 +20,7 @@ import {
   updateDoc,
   DocumentSnapshot,
 } from "firebase/firestore";
-import { db } from "@/app/lib/client/firebase";
+import { db, auth } from "@/app/lib/client/firebase";
 import { fetchProducts } from "../components/ProductServer";
 import { ErrorCoshiiCat } from "@/app/components/ErrorCoshiiCat";
 
@@ -102,6 +102,15 @@ export default function ProfilePage({
 
         const cleanedData = JSON.parse(JSON.stringify(updatedShopData));
         await updateDoc(docRef, cleanedData);
+
+        //Update firebase auth too
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          await updateProfile(currentUser, {
+            displayName: updatedShopData.shopName,
+            photoURL: updatedShopData.profilePic ?? undefined,
+          });
+        }
 
         // Only update local state if Firestore update succeeds
         setShopData(updatedShopData);

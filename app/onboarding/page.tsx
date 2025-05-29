@@ -10,7 +10,11 @@ import {
 } from "@/app/components/ui/input-otp";
 import { Label } from "@/app/components/ui/label";
 import { UseMutationResult } from "@tanstack/react-query";
-import { ConfirmationResult, UserCredential } from "firebase/auth";
+import {
+  ConfirmationResult,
+  UserCredential,
+  updateProfile,
+} from "firebase/auth";
 import Link from "next/link";
 import { Suspense, Dispatch, SetStateAction, useState, useEffect } from "react";
 import PhoneInput, {
@@ -648,7 +652,10 @@ function SocialMediaPage(
   );
 }
 
-function SignInPage(setPage: (nextPage: Page) => void, setShopHandle: Dispatch<SetStateAction<string>>) {
+function SignInPage(
+  setPage: (nextPage: Page) => void,
+  setShopHandle: Dispatch<SetStateAction<string>>,
+) {
   const setCreatedShopHandle = async (userId: string) => {
     const shopsRef = collection(db, "shops");
     const querySnapshot = await getDocs(shopsRef);
@@ -659,7 +666,7 @@ function SignInPage(setPage: (nextPage: Page) => void, setShopHandle: Dispatch<S
     if (shopDoc) {
       setShopHandle(shopDoc.data().username);
     }
-  }
+  };
   return (
     <>
       <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
@@ -870,6 +877,12 @@ function PhoneOtpPage(
           phoneNumber: phoneNumber,
         });
 
+        // Update Firebase Auth profile with shop name and profile picture
+        await updateProfile(auth.currentUser, {
+          displayName: shopName,
+          photoURL: profileURL ?? undefined,
+        });
+
         console.log("Shop created and user updated successfully");
         setPage(Page.FINISH);
       } else {
@@ -986,7 +999,7 @@ function ReroutePage(shopHandle: string) {
     <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
       <div>
         <h1 className="mb-6 mt-4 text-start text-xl font-bold text-gray-600">
-        You already have a shop, let&#39;s take you there now.
+          You already have a shop, let&#39;s take you there now.
         </h1>
       </div>
       <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4">

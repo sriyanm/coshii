@@ -27,7 +27,6 @@ interface CommentsPopupProps {
   onPost: () => void;
   onClose: () => void;
   productId: string;
-  profilePic: string;
   buyerView: boolean;
 }
 
@@ -64,7 +63,6 @@ const fetchComments = async (productId: string): Promise<Comment[]> => {
 const postComment = async (
   productId: string,
   commentText: string,
-  profilePic: string,
 ): Promise<Comment | null> => {
   try {
     const user = auth.currentUser;
@@ -74,7 +72,7 @@ const postComment = async (
       text: commentText,
       likes: 0,
       owner: user.displayName || user.email || "Anonymous",
-      profilePic: profilePic || "/tempImages/blank.jpg",
+      profilePic: user.photoURL || "/tempImages/blank.jpg",
       timestamp: new Date().toISOString(),
     };
 
@@ -111,7 +109,6 @@ export function CommentsPopup({
   onPost,
   onClose,
   productId,
-  profilePic,
   buyerView,
 }: CommentsPopupProps) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -148,11 +145,7 @@ export function CommentsPopup({
     if (newComment.trim()) {
       setLoading(true);
       try {
-        const newComments = await postComment(
-          productId,
-          newComment,
-          profilePic,
-        );
+        const newComments = await postComment(productId, newComment);
         if (newComments) {
           setComments([...comments, newComments]);
         }

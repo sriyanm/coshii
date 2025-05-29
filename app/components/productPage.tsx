@@ -256,7 +256,6 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
                 onLike={onLike}
                 onComment={onComment}
                 onShare={onShare}
-                profilePic={shopData.profilePic}
                 buyerView={buyerView}
                 likesCountInit={likesCount}
                 commentsCountInit={commentsCount}
