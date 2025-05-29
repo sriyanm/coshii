@@ -86,7 +86,7 @@ export const DMCreatorButton: React.FC<DMCreatorButtonProps> = ({
               <button
                 key={index}
                 onClick={() => handleSocialClick(link.url)}
-                className={`mr-1 rounded-full bg-white p-2 px-4 shadow transition-all duration-300 ease-in-out${
+                className={`mr-1 rounded-full bg-white p-2 px-4 shadow transition-all duration-300 ease-in-out ${
                   animateIn
                     ? "translate-x-0 opacity-100"
                     : animateOut
