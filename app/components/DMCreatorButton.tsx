@@ -1,8 +1,9 @@
 import React, { JSX, useState, useRef, useEffect } from "react";
 import { SiFacebook, SiX, SiInstagram } from "react-icons/si";
+import { Shop } from "../types";
 
 interface DMCreatorButtonProps {
-  socialLinks: { platform: string; url: string }[];
+  shopData: Shop;
 }
 
 const SOCIAL_ICONS: Record<string, JSX.Element> = {
@@ -12,7 +13,7 @@ const SOCIAL_ICONS: Record<string, JSX.Element> = {
 };
 
 export const DMCreatorButton: React.FC<DMCreatorButtonProps> = ({
-  socialLinks,
+  shopData,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,7 +78,7 @@ export const DMCreatorButton: React.FC<DMCreatorButtonProps> = ({
         </button>
       ) : (
         <div className="relative">
-          {socialLinks.map((link, index) => {
+          {shopData.socialLinks.map((link, index) => {
             const icon = SOCIAL_ICONS[link.platform];
             if (!icon) return null;
 

@@ -106,26 +106,36 @@ export default function EditShopModal({
       ? shopInfo.socialLinks
       : [];
 
-    const updatedSocialLinks = existingLinks.some(
-      (link) => link.platform === platform,
-    )
-      ? existingLinks.map((link) =>
-          link.platform === platform
-            ? {
-                ...link,
-                username: value,
-                url: `${urlPrefixes[platform]}${value || ""}`,
-              }
-            : link,
-        )
-      : [
-          ...existingLinks,
-          {
-            platform,
-            username: value,
-            url: `${urlPrefixes[platform]}${value || ""}`,
-          },
-        ];
+    let updatedSocialLinks;
+
+    if (value === "") {
+      // Remove the entry for the platform
+      updatedSocialLinks = existingLinks.filter(
+        (link) => link.platform !== platform,
+      );
+    } else {
+      const platformExists = existingLinks.some(
+        (link) => link.platform === platform,
+      );
+      updatedSocialLinks = platformExists
+        ? existingLinks.map((link) =>
+            link.platform === platform
+              ? {
+                  ...link,
+                  username: value,
+                  url: `${urlPrefixes[platform]}${value}`,
+                }
+              : link,
+          )
+        : [
+            ...existingLinks,
+            {
+              platform,
+              username: value,
+              url: `${urlPrefixes[platform]}${value}`,
+            },
+          ];
+    }
 
     setShopInfo((prev) => ({
       ...prev,
@@ -156,9 +166,9 @@ export default function EditShopModal({
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="mx-auto h-4/5 w-[90%] max-w-md overflow-y-auto rounded-lg bg-white shadow-lg sm:p-6">
+      <div className="mx-auto h-4/5 w-[90%] max-w-md overflow-y-auto rounded-lg bg-white shadow-lg">
         <form onSubmit={handleSubmit}>
-          {/* Header */}
+          {/* Header — No padding issues */}
           <div className="sticky top-0 z-50 flex items-center justify-between border-b bg-white p-4">
             <h1 className="flex-1 text-center text-xl font-bold">
               Edit shop info
@@ -172,127 +182,134 @@ export default function EditShopModal({
             </button>
           </div>
 
-          <div className="space-y-4 p-4">
-            {/* Profile Image */}
-            <div className="flex justify-center">
-              <input
-                type="file"
-                accept="image/*"
-                ref={profilePicInputRef}
-                className="hidden"
-                onChange={async (e) => {
-                  if (e.target.files?.[0]) {
-                    const uploadedUrl = await handleFileUpload(
-                      e.target.files[0],
-                    );
-                    if (uploadedUrl) {
-                      setShopInfo((prev) => ({
-                        ...prev,
-                        profilePic: uploadedUrl,
-                      }));
+          {/* Body*/}
+          <div className="space-y-4 p-4 sm:p-6">
+            <div className="space-y-4 p-4">
+              {/* Profile Image */}
+              <div className="flex justify-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={profilePicInputRef}
+                  className="hidden"
+                  onChange={async (e) => {
+                    if (e.target.files?.[0]) {
+                      const uploadedUrl = await handleFileUpload(
+                        e.target.files[0],
+                      );
+                      if (uploadedUrl) {
+                        setShopInfo((prev) => ({
+                          ...prev,
+                          profilePic: uploadedUrl,
+                        }));
+                      }
                     }
-                  }
-                }}
-              />
-
-              {/* Group wrapper required for hover to work */}
-              <div
-                className="group relative cursor-pointer"
-                onClick={() => profilePicInputRef.current?.click()}
-              >
-                <Image
-                  src={shopInfo.profilePic || "/placeholder.svg"}
-                  alt="Profile"
-                  width={100}
-                  height={100}
-                  className="mx-auto size-20 rounded-full object-cover"
+                  }}
                 />
 
-                {/* Pencil icon overlay */}
-                <div className="absolute bottom-1 right-1 flex size-6 items-center justify-center rounded-full bg-black bg-opacity-70 text-white opacity-0 transition-opacity group-hover:opacity-100">
-                  <Pencil size={14} />
+                {/* Group wrapper required for hover to work */}
+                <div
+                  className="group relative cursor-pointer"
+                  onClick={() => profilePicInputRef.current?.click()}
+                >
+                  <Image
+                    src={shopInfo.profilePic || "/placeholder.svg"}
+                    alt="Profile"
+                    width={100}
+                    height={100}
+                    className="mx-auto size-20 rounded-full object-cover"
+                  />
+
+                  {/* Pencil icon overlay */}
+                  <div className="absolute bottom-1 right-1 flex size-6 items-center justify-center rounded-full bg-black bg-opacity-70 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    <Pencil size={14} />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Form Fields */}
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm">Shop name:</label>
-                <Input
-                  name="shopName"
-                  value={shopInfo.shopName}
-                  onChange={handleInputChange}
-                  className="bg-gray-100"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm">Bio:</label>
-                <Textarea
-                  name="description"
-                  value={shopInfo.description}
-                  onChange={handleInputChange}
-                  className="min-h-[150px] bg-gray-100"
-                />
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <SiInstagram className="size-6" />
+              {/* Form Fields */}
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm">Shop name:</label>
                   <Input
-                    name="instagramUsername"
-                    value={instagramUsername} // Display Instagram username from socialLinks
-                    onChange={(e) => handleSocialUsernameChange(e, "Instagram")}
-                    placeholder="username"
-                    className="bg-gray-100"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <SiX className="size-6" />
-                  <Input
-                    name="XUsername"
-                    value={XUsername} // Display X username from socialLinks
-                    onChange={(e) => handleSocialUsernameChange(e, "X")}
-                    placeholder="username"
-                    className="bg-gray-100"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <SiFacebook className="size-6" />
-                  <Input
-                    name="facebookUsername"
-                    value={facebookUsername} // Display Instagram username from socialLinks
-                    onChange={(e) => handleSocialUsernameChange(e, "Facebook")}
-                    placeholder="username"
-                    className="bg-gray-100"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Mail className="size-6" />
-                  <Input
-                    name="email"
-                    type="email"
-                    value={shopInfo.email}
+                    name="shopName"
+                    value={shopInfo.shopName}
                     onChange={handleInputChange}
-                    placeholder="email address"
                     className="bg-gray-100"
                   />
                 </div>
-              </div>
-            </div>
 
-            {/* Confirm Button */}
-            <div className="flex items-center justify-center">
-              <Button
-                type="submit"
-                className="w-1/4 bg-gray-300 font-bold text-black hover:bg-gray-300"
-              >
-                Confirm
-              </Button>
+                <div>
+                  <label className="mb-1 block text-sm">Bio:</label>
+                  <Textarea
+                    name="description"
+                    value={shopInfo.description}
+                    onChange={handleInputChange}
+                    className="min-h-[150px] bg-gray-100"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <SiInstagram className="size-6" />
+                    <Input
+                      name="instagramUsername"
+                      value={instagramUsername} // Display Instagram username from socialLinks
+                      onChange={(e) =>
+                        handleSocialUsernameChange(e, "Instagram")
+                      }
+                      placeholder="username"
+                      className="bg-gray-100"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <SiX className="size-6" />
+                    <Input
+                      name="XUsername"
+                      value={XUsername} // Display X username from socialLinks
+                      onChange={(e) => handleSocialUsernameChange(e, "X")}
+                      placeholder="username"
+                      className="bg-gray-100"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <SiFacebook className="size-6" />
+                    <Input
+                      name="facebookUsername"
+                      value={facebookUsername} // Display Instagram username from socialLinks
+                      onChange={(e) =>
+                        handleSocialUsernameChange(e, "Facebook")
+                      }
+                      placeholder="username"
+                      className="bg-gray-100"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Mail className="size-6" />
+                    <Input
+                      name="email"
+                      type="email"
+                      value={shopInfo.email}
+                      onChange={handleInputChange}
+                      placeholder="email address"
+                      className="bg-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Confirm Button */}
+              <div className="flex items-center justify-center">
+                <Button
+                  type="submit"
+                  className="w-1/4 bg-gray-300 font-bold text-black hover:bg-gray-300"
+                >
+                  Confirm
+                </Button>
+              </div>
             </div>
           </div>
         </form>

@@ -3,6 +3,7 @@ import { SocialBar } from "./SocialBar";
 import { MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { DMCreatorButton } from "./DMCreatorButton";
 import Image from "next/image";
+import { Shop } from "../types";
 
 interface ProductPageProps {
   media: string[]; // Supports both images (.jpg, .png) and videos (.mp4)
@@ -14,9 +15,7 @@ interface ProductPageProps {
   onComment: () => void;
   onShare: () => void;
   buyerView: boolean;
-  profilePic: string;
-  isPremium: boolean;
-  socialLinks: { platform: string; url: string }[];
+  shopData: Shop;
   likesCount: number;
   commentsCount: number;
   muted: boolean;
@@ -36,9 +35,7 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
       onComment,
       onShare,
       buyerView,
-      isPremium,
-      socialLinks,
-      profilePic,
+      shopData,
       id,
       likesCount,
       commentsCount,
@@ -240,8 +237,8 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
 
               {/* Bottom-aligned Button */}
               <div>
-                {!isPremium ? (
-                  <DMCreatorButton socialLinks={socialLinks} />
+                {!shopData.isPremium ? (
+                  <DMCreatorButton shopData={shopData} />
                 ) : (
                   <button
                     onClick={onAddToCart}
@@ -259,7 +256,7 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
                 onLike={onLike}
                 onComment={onComment}
                 onShare={onShare}
-                profilePic={profilePic}
+                profilePic={shopData.profilePic}
                 buyerView={buyerView}
                 likesCountInit={likesCount}
                 commentsCountInit={commentsCount}
