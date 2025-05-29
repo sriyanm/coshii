@@ -134,6 +134,16 @@ export function CommentsPopup({
     loadComments();
   }, [productId]);
 
+  useEffect(() => {
+    // Disable scrolling on mount
+    document.body.style.overflow = "hidden";
+
+    // Re-enable scrolling on unmount
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   const handleAddComment = async () => {
     if (newComment.trim()) {
       setLoading(true);

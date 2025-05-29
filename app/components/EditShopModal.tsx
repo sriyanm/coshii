@@ -58,6 +58,20 @@ export default function EditShopModal({
     }
   }, [isOpen, shopData]);
 
+  // Disable scrolling on shop page
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    // Clean up just in case the modal unmounts before `isOpen` turns false
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
