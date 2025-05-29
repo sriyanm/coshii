@@ -400,9 +400,7 @@ export default function ProfilePage({
 
   // If invalid shop
   if (invalidShop) {
-    return (
-      <ErrorCoshiiCat />
-    );
+    return <ErrorCoshiiCat />;
   }
 
   return (
@@ -519,6 +517,7 @@ export default function ProfilePage({
                 buyerView={buyerView}
                 isPremium={shopData.isPremium}
                 profilePic={shopData.profilePic}
+                socialLinks={shopData.socialLinks}
                 likesCount={product.likesCount || 0}
                 commentsCount={product.commentsCount || 0}
                 muted={muted}

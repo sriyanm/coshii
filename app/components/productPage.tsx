@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, forwardRef } from "react";
 import { SocialBar } from "./SocialBar";
 import { MdVolumeOff, MdVolumeUp } from "react-icons/md";
+import { DMCreatorButton } from "./DMCreatorButton";
 import Image from "next/image";
 
 interface ProductPageProps {
@@ -15,6 +16,7 @@ interface ProductPageProps {
   buyerView: boolean;
   profilePic: string;
   isPremium: boolean;
+  socialLinks: { platform: string; url: string }[];
   likesCount: number;
   commentsCount: number;
   muted: boolean;
@@ -35,6 +37,7 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
       onShare,
       buyerView,
       isPremium,
+      socialLinks,
       profilePic,
       id,
       likesCount,
@@ -87,10 +90,6 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
         }
         setPlaying(!playing);
       }
-    };
-
-    const onDMCreator = () => {
-      console.log("Should DM Creator");
     };
 
     useEffect(() => {
@@ -242,12 +241,7 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
               {/* Bottom-aligned Button */}
               <div>
                 {!isPremium ? (
-                  <button
-                    onClick={onDMCreator}
-                    className="mt-2 w-11/12 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black shadow"
-                  >
-                    DM Creator
-                  </button>
+                  <DMCreatorButton socialLinks={socialLinks} />
                 ) : (
                   <button
                     onClick={onAddToCart}
