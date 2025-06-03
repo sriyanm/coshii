@@ -1382,6 +1382,13 @@ function AddProductContent() {
         }
       }
 
+      const shopsRef = collection(db, "shops");
+      const q = query(
+        shopsRef,
+        where("creatorId", "==", auth.currentUser.uid),
+      );
+      const snapshot = await getDocs(q);
+
       if (isUpdate) {
         // Update existing product
         // console.log("tags", selectedTags.map((tag) => tag.name));
@@ -1435,6 +1442,31 @@ function AddProductContent() {
           createdAt: new Date(),
           updatedAt: new Date(),
         });
+        // send notification
+        // TODO: chunk, check /search
+        // TODO: images look bad
+        if(snapshot.empty) return;
+        const shopData = snapshot.docs[0].data();
+        const followerIds = shopData.followers ? Object.keys(shopData.followers) : [];
+        for (let followerId of followerIds) {
+          followerId = followerId.split("|")[0];
+          console.log("Sending follow notif to", followerId);
+          try {
+            const notifsRef = collection(db, "notifications");
+            await addDoc(notifsRef, {
+              toUser: followerId,
+              fromUser: auth.currentUser?.uid,
+              type: "post",
+              content: name,
+              target: "",
+              timestamp: new Date().toISOString(),
+              thumbnail: uploadedUrls[0] || "",
+            });
+            console.log("Notif sent successfully");
+          } catch (error) {
+            console.error("Failed to send follow notif:", error);
+          }
+        }
       }
       // Check for new tags that are not in the original tags
       const oldTags = ogTags.map((tag) => tag.name);
@@ -1449,13 +1481,6 @@ function AddProductContent() {
       );
 
       if (newTags.length > 0) {
-        const shopsRef = collection(db, "shops");
-        const q = query(
-          shopsRef,
-          where("creatorId", "==", auth.currentUser.uid),
-        );
-        const snapshot = await getDocs(q);
-
         if (!snapshot.empty) {
           const shopDoc = snapshot.docs[0];
           const updatedCategories = ["All", ...oldTags, ...newTags];

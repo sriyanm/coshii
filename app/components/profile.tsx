@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
 import { ChevronDown } from "lucide-react";
+import { addDoc } from "firebase/firestore";
 
 // Subcomponent for Profile Header
 function ProfileHeader({
@@ -118,6 +119,25 @@ function ProfileHeader({
         await updateDoc(currDoc.ref, {
           [`following.${visitedShopId + "|" + shopData.username}`]: true,
         });
+        // send notification
+        if (visitedShopId !== auth.currentUser?.uid) {
+          try {
+            const notifsRef = collection(db, "notifications");
+            await addDoc(notifsRef, {
+              toUser: visitedShopId,
+              fromUser: auth.currentUser?.uid,
+              type: "follow",
+              content: "",
+              target: "",
+              timestamp: new Date().toISOString(),
+              thumbnail: "",
+            });
+  
+            console.log("Notif sent successfully");
+          } catch (error) {
+            console.error("Failed to send follow notif:", error);
+          }
+        }
       }
 
       console.log(

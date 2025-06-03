@@ -260,6 +260,8 @@ export const ProductPage = forwardRef<HTMLDivElement, ProductPageProps>(
                 likesCountInit={likesCount}
                 commentsCountInit={commentsCount}
                 productId={id.split("-")[1]}
+                productName={productName}
+                creatorId={shopData.creatorId}
               />
             </div>
           </div>

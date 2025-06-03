@@ -69,6 +69,7 @@ export interface Notification {
   target?: string;
   timestamp: string;
   thumbnail?: string;
+  shopHandle: string;
 }
 
 export type NotificationType = "like" | "comment" | "follow" | "post";

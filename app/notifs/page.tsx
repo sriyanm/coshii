@@ -16,7 +16,7 @@ import {
   MessageSquare,
   UserPlus,
 } from "lucide-react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "@/app/lib/client/firebase";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { Notification, NotificationType } from "../types";
@@ -71,6 +71,22 @@ export default function Notifs() {
   const [user, setUser] = useState<User | null>(null);
   const auth = getAuth();
 
+  function timeAgo(timestamp: string): string {
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffMs = now.getTime() - past.getTime();
+  
+    const seconds = Math.floor(diffMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours   = Math.floor(minutes / 60);
+    const days    = Math.floor(hours / 24);
+  
+    if (days > 0) return `${days}d`;
+    if (hours > 0) return `${hours}h`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${seconds}s`;
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
@@ -94,8 +110,8 @@ export default function Notifs() {
         const querySnapshot = await getDocs(q);
         const fetchedNotifs: Notification[] = [];
 
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
+        for (const notifDoc of querySnapshot.docs) {
+          const data = notifDoc.data();
           console.log("Notif data:", data);
 
           // Check if mediaUrls exists and has valid entries
@@ -105,17 +121,41 @@ export default function Notifs() {
           //     : null;
           // console.log("Using mediaUrl:", mediaUrl);
 
+          // fetch profilePic and shopHandle from shops db
+          const shopsRef = collection(db, "shops");
+          console.log("Fetching shop data for user:", data.fromUser);
+          const shopQuery = query(shopsRef, where("creatorId", "==", data.fromUser));
+
+          const shopQuerySnapshot = await getDocs(shopQuery);
+          if (shopQuerySnapshot.empty) {
+            console.log("No shop found for user:", data.fromUser);
+            continue; // Skip this notification if no shop found
+          }
+          const shopData = shopQuerySnapshot.docs[0].data();
+          const profilePic = shopData.profilePic;
+          const shopHandle = shopData.username;
+
+          const userRef = doc(db, "users", data.fromUser);
+          const userSnapshot = await getDoc(userRef);
+          if (!userSnapshot.exists()) {
+            console.log("No user data found for:", data.fromUser);
+            continue; // Skip this notification if no user data found
+          }
+          const userData = userSnapshot.exists() ? userSnapshot.data() : {};
+          const creatorName = userData.creatorName;
+
           fetchedNotifs.push({
-            id: doc.id,
+            id: notifDoc.id,
             type: data.type || "",
             user: {
-              name: data.fromUser || "",
-              avatar: "/placeholder.svg",
+              name: creatorName || "",
+              avatar: profilePic || "/placeholder.svg",
             },
             content: data.content || "",
             target: data.target || "",
             timestamp: data.timestamp || "",
             thumbnail: data.thumbnail || "",
+            shopHandle: shopHandle || "",
           });
 
           console.log(
@@ -126,8 +166,11 @@ export default function Notifs() {
             data.target,
             data.timestamp,
             data.thumbnail,
+            creatorName,
+            profilePic,
+            shopHandle
           );
-        });
+        }
 
         // TODO: Sort notifs by earliest to latest timestamp
         fetchedNotifs.sort((a, b) => {
@@ -213,7 +256,12 @@ export default function Notifs() {
 
         <div className="divide-y">
           {notifs.map((notification) => (
-            <div key={notification.id} className="flex gap-3 p-4">
+            <Link 
+              key={notification.id}
+              href={`/${notification.shopHandle}`}
+              className="block"
+            >
+            <div key={notification.id} className="flex gap-3 p-4 hover:bg-gray-50 rounded-md">
               <Image
                 src={notification.user.avatar || "/placeholder.svg"}
                 alt={notification.user.name}
@@ -240,10 +288,11 @@ export default function Notifs() {
                   </div>
                 </div>
                 <p className="text-sm text-gray-500">
-                  {notification.timestamp}
+                  {timeAgo(notification.timestamp)}
                 </p>
               </div>
             </div>
+            </Link>
           ))}
         </div>
       </div>

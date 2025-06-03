@@ -12,6 +12,7 @@ import {
   increment,
 } from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
+import { addDoc, collection } from "firebase/firestore";
 
 interface SocialBarProps {
   onLike: () => void; // Callback for when the Like button is clicked
@@ -21,6 +22,8 @@ interface SocialBarProps {
   likesCountInit: number;
   commentsCountInit: number;
   productId: string;
+  productName: string;
+  creatorId: string;
 }
 
 export function SocialBar({
@@ -31,6 +34,8 @@ export function SocialBar({
   likesCountInit,
   commentsCountInit,
   productId,
+  productName,
+  creatorId,
 }: SocialBarProps) {
   const [liked, setLiked] = useState(false); // State to track like status
   const [likesCount, setLikesCount] = useState(likesCountInit); // Track number of likes
@@ -90,6 +95,25 @@ export function SocialBar({
               await updateDoc(productRef, {
                 likesCount: 1,
               });
+            }
+          }
+          // send notification
+          if (creatorId !== auth.currentUser?.uid) {
+            try {
+              const notifsRef = collection(db, "notifications");
+              await addDoc(notifsRef, {
+                toUser: creatorId,
+                fromUser: auth.currentUser?.uid,
+                type: "like",
+                content: "",
+                target: productName,
+                timestamp: new Date().toISOString(),
+                thumbnail: "",
+              });
+
+              console.log("Notif sent successfully");
+            } catch (error) {
+              console.error("Failed to send like notif:", error);
             }
           }
         } else {
@@ -193,6 +217,8 @@ export function SocialBar({
               onClose={handleClosePopup}
               productId={productId}
               buyerView={buyerView}
+              productName={productName}
+              creatorId={creatorId}
             />
           </div>
         )}

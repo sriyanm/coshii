@@ -28,6 +28,8 @@ interface CommentsPopupProps {
   onClose: () => void;
   productId: string;
   buyerView: boolean;
+  productName: string;
+  creatorId: string;
 }
 
 // Fetching comments
@@ -110,6 +112,8 @@ export function CommentsPopup({
   onClose,
   productId,
   buyerView,
+  productName,
+  creatorId,
 }: CommentsPopupProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -156,21 +160,23 @@ export function CommentsPopup({
         setLoading(false);
       }
       // send notification
-      try {
-        const notifsRef = collection(db, "notifications");
-        await addDoc(notifsRef, {
-          toUser: "X6WJJyhYLJcMppEPgnUALnLhy1i1",
-          fromUser: auth.currentUser?.uid,
-          type: "comment",
-          content: newComment,
-          target: productId, // The product ID or relevant identifier
-          timestamp: new Date().toISOString(),
-          thumbnail: "",
-        });
+      if (creatorId !== auth.currentUser?.uid) {
+        try {
+          const notifsRef = collection(db, "notifications");
+          await addDoc(notifsRef, {
+            toUser: creatorId,
+            fromUser: auth.currentUser?.uid,
+            type: "comment",
+            content: newComment,
+            target: productName,
+            timestamp: new Date().toISOString(),
+            thumbnail: "",
+          });
 
-        console.log("Notif sent successfully");
-      } catch (error) {
-        console.error("Failed to post comment:", error);
+          console.log("Notif sent successfully");
+        } catch (error) {
+          console.error("Failed to send comment notif:", error);
+        }
       }
     }
   };
