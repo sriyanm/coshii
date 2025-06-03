@@ -1564,7 +1564,7 @@ function AddProductContent() {
   } else if (page == Page.DESCRIPTION) {
     previousPage = Page.MEDIA;
     nextPage = Page.PRICE;
-    backgroundImage = mediaPreviews[0].url ? `url(${mediaPreviews[0].url})` : ``;
+    backgroundImage = mediaPreviews[0].url && mediaPreviews[0].type === 'image' ? `url(${mediaPreviews[0].url})` : ``;
     content = (
       <ProductDescription
         name={name}
@@ -1584,7 +1584,7 @@ function AddProductContent() {
   } else if (page == Page.PRICE) {
     previousPage = Page.DESCRIPTION;
     nextPage = Page.SUCCESS;
-    backgroundImage = mediaPreviews[0].url ? `url(${mediaPreviews[0].url})` : ``;
+    backgroundImage = mediaPreviews[0].url && mediaPreviews[0].type === 'image' ? `url(${mediaPreviews[0].url})` : ``;
     content = (
       <PriceAndShipping
         setPrice={setPrice}
