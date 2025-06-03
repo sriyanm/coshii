@@ -933,8 +933,8 @@ function PhoneOtpPage(
             variant="onboarding"
             onClick={async function () {
               // Development bypass
-              console.log("OTP Verification bypassed. Code entered:", otp);
-              await createShopAndContinue();
+              // console.log("OTP Verification bypassed. Code entered:", otp);
+              // await createShopAndContinue();
 
               // Production code - commented out for development
               if (!signInMutation.isSuccess) {
@@ -951,11 +951,11 @@ function PhoneOtpPage(
             }}
             disabled={
               otp.length != 6
-              /* Production checks - commented out for development
+              // Production checks - commented out for development
             ||
             !signInMutation.isSuccess ||
             confirmationResultMutation.isPending
-            */
+            
             }
           >
             {getButtonText()}
