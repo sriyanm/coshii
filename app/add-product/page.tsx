@@ -1294,6 +1294,21 @@ function AddProductContent() {
     console.log("Add more media");
   };
 
+  // Handle browser back button, page reloads, and page leaves
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Standard message is often ignored by modern browsers, but this triggers the prompt
+      e.preventDefault();
+      e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+    };
+  
+    window.addEventListener("beforeunload", handleBeforeUnload);
+  
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
   useEffect(() => {
     if (searchParams.get("step") === "Update") {
       setIsUpdateProduct(true);
