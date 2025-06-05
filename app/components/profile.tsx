@@ -167,7 +167,7 @@ function ProfileHeader({
       {/* Login Button (also Top-Right) */}
       {buyerView && (
         <div className="absolute -right-5 top-6">
-          <Link href="/signin">
+          <Link href={`/signin?redirect=${encodeURIComponent(shopData.username)}`}>
             <HiOutlineUserCircle
               className="size-6 cursor-pointer font-bold text-gray-600 hover:text-gray-800"
               title="Sign in"

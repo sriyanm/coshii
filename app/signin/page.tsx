@@ -10,16 +10,25 @@ import { db } from "@/app/lib/client/firebase";
 import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
+import { useSearchParams } from "next/navigation";
 
 export default function SignInPage() {
   const { user, isLoading } = useFirebaseAuth();
   const router = useRouter();
   const [redirecting, setRedirecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const redirectHandle = searchParams.get("redirect");
 
   useEffect(() => {
     const fetchShopAndRedirect = async () => {
       if (!user || redirecting) return;
+
+      if (redirectHandle) {
+        setRedirecting(true);
+        router.push(`/${redirectHandle}`);
+        return;
+      }
 
       const q = query(
         collection(db, "shops"),
@@ -38,7 +47,7 @@ export default function SignInPage() {
     };
 
     fetchShopAndRedirect();
-  }, [user, router, redirecting]);
+  }, [user, router, redirecting, searchParams]);
 
   if (isLoading || redirecting) {
     return <div>Loading...</div>;
