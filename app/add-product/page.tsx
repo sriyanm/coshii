@@ -1214,8 +1214,8 @@ function PriceAndShipping({
 
 function SuccessPage({ productType = "", productUrl = "", name = "" }) {
   return (
-    <div className="mx-auto flex h-screen w-full min-w-[50px] max-w-md flex-col items-start justify-start overflow-x-auto">
-      <div className="mx-auto flex w-full flex-col items-center px-4 text-center">
+    <div className="mx-auto flex h-screen w-full min-w-[50px] max-w-md flex-col overflow-hidden">
+      <div className="flex flex-col items-center justify-between h-full px-4 text-center">
         <div className="mb-8 mt-12 space-y-2">
           <h1 className="text-xl font-bold text-white">
             You&apos;re on the market!
@@ -1247,8 +1247,7 @@ function SuccessPage({ productType = "", productUrl = "", name = "" }) {
           )}
         </div>
 
-
-        <div className="space-y-4">
+        <div className="mb-6">
           <Button
             asChild
             variant="onboarding"
