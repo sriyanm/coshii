@@ -67,7 +67,8 @@ import { Notification, NotificationType } from "../types";
 
 export default function Notifs() {
   const [notifs, setNotifs] = useState<Notification[]>([]);
-  // const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userLoading, setUserLoading] = useState(true); // New state to track user loading
   const [user, setUser] = useState<User | null>(null);
   const auth = getAuth();
 
@@ -90,6 +91,7 @@ export default function Notifs() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      setUserLoading(false);
     });
 
     return () => unsubscribe();
@@ -99,7 +101,7 @@ export default function Notifs() {
     const fetchNotifications = async () => {
       if (!user) {
         setNotifs([]);
-        // setIsLoading(false);
+        setIsLoading(false);
         return;
       }
 
@@ -112,7 +114,7 @@ export default function Notifs() {
 
         for (const notifDoc of querySnapshot.docs) {
           const data = notifDoc.data();
-          console.log("Notif data:", data);
+          // console.log("Notif data:", data);
 
           // Check if mediaUrls exists and has valid entries
           // const mediaUrl =
@@ -123,12 +125,12 @@ export default function Notifs() {
 
           // fetch profilePic and shopHandle from shops db
           const shopsRef = collection(db, "shops");
-          console.log("Fetching shop data for user:", data.fromUser);
+          // console.log("Fetching shop data for user:", data.fromUser);
           const shopQuery = query(shopsRef, where("creatorId", "==", data.fromUser));
 
           const shopQuerySnapshot = await getDocs(shopQuery);
           if (shopQuerySnapshot.empty) {
-            console.log("No shop found for user:", data.fromUser);
+            // console.log("No shop found for user:", data.fromUser);
             continue; // Skip this notification if no shop found
           }
           const shopData = shopQuerySnapshot.docs[0].data();
@@ -138,7 +140,7 @@ export default function Notifs() {
           const userRef = doc(db, "users", data.fromUser);
           const userSnapshot = await getDoc(userRef);
           if (!userSnapshot.exists()) {
-            console.log("No user data found for:", data.fromUser);
+            // console.log("No user data found for:", data.fromUser);
             continue; // Skip this notification if no user data found
           }
           const userData = userSnapshot.exists() ? userSnapshot.data() : {};
@@ -158,18 +160,18 @@ export default function Notifs() {
             shopHandle: shopHandle || "",
           });
 
-          console.log(
-            "Fetched notification:",
-            data.type,
-            data.fromUser,
-            data.content,
-            data.target,
-            data.timestamp,
-            data.thumbnail,
-            creatorName,
-            profilePic,
-            shopHandle
-          );
+          // console.log(
+          //   "Fetched notification:",
+          //   data.type,
+          //   data.fromUser,
+          //   data.content,
+          //   data.target,
+          //   data.timestamp,
+          //   data.thumbnail,
+          //   creatorName,
+          //   profilePic,
+          //   shopHandle
+          // );
         }
 
         // TODO: Sort notifs by earliest to latest timestamp
@@ -184,12 +186,14 @@ export default function Notifs() {
       } catch (error) {
         console.error("Error fetching notifs:", error);
       } finally {
-        // setIsLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchNotifications();
-  }, [user]);
+    if(!userLoading) {
+      fetchNotifications();
+    }
+  }, [user, userLoading]);
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
@@ -254,6 +258,11 @@ export default function Notifs() {
           </Link>
         </div>
 
+        {isLoading || userLoading ? (
+        <div className="flex flex-1 items-center justify-center">
+          <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
+        </div>
+        ) : (
         <div className="divide-y">
           {notifs.map((notification) => (
             <Link 
@@ -295,6 +304,7 @@ export default function Notifs() {
             </Link>
           ))}
         </div>
+        )}
       </div>
     </div>
   );
