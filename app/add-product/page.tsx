@@ -1294,7 +1294,7 @@ function AddProductContent() {
     console.log("Add more media");
   };
 
-  // Handle browser back button, page reloads, and page leaves
+  // Handle browser back button, page reloads, and page leaves - mobile does not support this
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       // Standard message is often ignored by modern browsers, but this triggers the prompt
@@ -1309,6 +1309,7 @@ function AddProductContent() {
     };
   }, []);
 
+  // Prevent pull-to-refresh on mobile devices
   useEffect(() => {
     let maybePreventPullToRefresh = false;
     let lastTouchY = 0;

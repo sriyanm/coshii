@@ -108,7 +108,7 @@ function OnboardingContent() {
     }
   }, [pageParam]);
 
-  // Handle browser back button, page reloads, and page leaves
+  // Handle browser back button, page reloads, and page leaves - mobile does not support this
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -119,6 +119,37 @@ function OnboardingContent() {
   
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
+  // Prevent pull-to-refresh on mobile devices
+  useEffect(() => {
+    let maybePreventPullToRefresh = false;
+    let lastTouchY = 0;
+  
+    const touchstartHandler = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      lastTouchY = e.touches[0].clientY;
+      maybePreventPullToRefresh = window.pageYOffset === 0;
+    };
+  
+    const touchmoveHandler = (e: TouchEvent) => {
+      const touchY = e.touches[0].clientY;
+      const touchYDelta = touchY - lastTouchY;
+      lastTouchY = touchY;
+  
+      if (maybePreventPullToRefresh) {
+        maybePreventPullToRefresh = false;
+        if (touchYDelta > 0) e.preventDefault();
+      }
+    };
+  
+    document.addEventListener('touchstart', touchstartHandler, { passive: false });
+    document.addEventListener('touchmove', touchmoveHandler, { passive: false });
+  
+    return () => {
+      document.removeEventListener('touchstart', touchstartHandler);
+      document.removeEventListener('touchmove', touchmoveHandler);
     };
   }, []);
 
