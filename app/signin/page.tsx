@@ -47,7 +47,7 @@ export default function SignInPage() {
     };
 
     fetchShopAndRedirect();
-  }, [user, router, redirecting, searchParams]);
+  }, [user, router, redirecting, redirectHandle]);
 
   if (isLoading || redirecting) {
     return <div>Loading...</div>;
