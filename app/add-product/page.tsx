@@ -1186,11 +1186,13 @@ function PriceAndShipping({
 
   return (
     <div className="mt-32 flex grow flex-col items-center justify-start">
+      <div className="w-full max-w-[600px] overflow-hidden">
       <MoneyInput
         className="text-8xl"
         values={priceInput}
         onValuesChange={setPriceInput}
       />
+      </div>
       <div className="flex flex-row gap-2">
         <div className="flex flex-col items-center justify-start gap-2">
           <h4 className="text-xl font-bold">Inventory:</h4>
