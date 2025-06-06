@@ -50,7 +50,11 @@ export default function SignInContent() {
   }, [user, router, redirecting, redirectHandle]);
 
   if (isLoading || redirecting) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
+      </div>
+    );
   }
 
   return (
