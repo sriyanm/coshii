@@ -23,10 +23,10 @@ export default function MoneyInput({
   const length = formatted.length;
 
   // Use a max length before scaling starts
-  const MAX_VISIBLE_CHARS = 4;
+  const MAX_VISIBLE_CHARS = 5;
   const scale =
     length > MAX_VISIBLE_CHARS
-      ? Math.max(0.85, MAX_VISIBLE_CHARS / length) // limit minimum scale
+      ? Math.max(0.75, MAX_VISIBLE_CHARS / length) // limit minimum scale
       : 1;
 
   return (
