@@ -1109,7 +1109,7 @@ function ProductDescription({
         className="resize-none grow border-0 mb-20 bg-transparent px-0 text-black/75 placeholder:text-black/50 focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        maxLength={300}
+        maxLength={600}
       />
 
       {/* AI suggestion button */}
