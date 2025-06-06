@@ -35,6 +35,8 @@ export default function MoneyInput({
         className
       )}
     >
+      <div className="relative w-full flex justify-center overflow-hidden">
+      <div className="relative flex items-baseline max-w-full">
       <div className="relative left-1/2 -translate-x-1/2 flex items-baseline gap-2 overflow-hidden">
         <span className="text-inherit">$</span>
         <div
@@ -60,6 +62,8 @@ export default function MoneyInput({
           />
         </div>
       </div>
+    </div>
+    </div>
     </div>
   );
 }
