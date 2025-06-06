@@ -1186,7 +1186,7 @@ function PriceAndShipping({
 
   return (
     <div className="mt-32 flex grow flex-col items-center justify-start">
-      <div className="w-full max-w-[600px] overflow-hidden">
+      <div className="w-full max-w-[min(600px,100vw)] overflow-hidden">
       <MoneyInput
         className="text-8xl"
         values={priceInput}
