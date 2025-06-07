@@ -336,6 +336,24 @@ function MediaPicker({
     }
   }, [mediaPreviews]);
 
+  useEffect(() => {
+    return () => {
+      mediaPreviews.forEach(preview => {
+        URL.revokeObjectURL(preview.url);
+      });
+    };
+  }, []);
+
+  useEffect(() => {
+    if (videoRef.current && mediaPreviews[activeIndex]?.type === 'video') {
+      const video = videoRef.current;
+      video.currentTime = 0;
+      video
+        .play()
+        .catch((err) => console.warn("Video play failed:", err));
+    }
+  }, [activeIndex, mediaPreviews]);
+
   const handleClick = () => {
     if (mediaPreviews.length === 0) {
       fileInputRef.current?.click();
