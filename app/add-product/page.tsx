@@ -349,6 +349,11 @@ function MediaPicker({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    if(files.length > 5)  {
+      alert("You can only upload up to 5 files for your product!");
+      return;
+    }
+
     const fileArray = Array.from(files);
     const tooLargeFiles = fileArray.filter(file => file.size > MAX_FILE_SIZE_BYTES);
     const validFiles = fileArray.filter(file => file.size <= MAX_FILE_SIZE_BYTES);
