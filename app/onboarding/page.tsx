@@ -37,6 +37,8 @@ import { GoogleSigninButton } from "@/app/components/GoogleSigninButton";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useProfilePictureUpload } from "@/app/hooks/firebase";
 import { X } from "lucide-react";
+import { onAuthStateChanged } from "firebase/auth";
+import { query, where } from "firebase/firestore";
 
 // import { set } from "zod";
 
@@ -87,6 +89,8 @@ function OnboardingContent() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   const signInMutation = useSignInWithPhoneNumber("recaptcha-element");
   const confirmationResultMutation = usePhoneNumberConfirmationResult();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -100,6 +104,34 @@ function OnboardingContent() {
   const searchParams = useSearchParams();
   const pageParam = searchParams.get("page");
   const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const q = query(collection(db, "shops"), where("creatorId", "==", user.uid));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          // User has not completed onboarding, stay on onboarding
+          // TODO: this is bad place to be. this means user exists (signed in) but has not completed onboarding, so did not verify otp to create shop
+          console.log("Bad. User signed in but has not completed onboarding.");
+          setLoading(false);
+          setAuthChecked(true); // Auth check complete
+        } else {
+          // User has completed onboarding, redirect to their shop
+          const shopDoc = querySnapshot.docs[0];
+          const shopData = shopDoc.data();
+          const shopHandle = shopData.username;
+          router.replace(`/${shopHandle}`);
+        }
+      } else {
+        // No user is authenticated, stay on onboarding
+        setLoading(false);
+        setAuthChecked(true); // Auth check complete
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     if (pageParam) {
@@ -183,6 +215,14 @@ function OnboardingContent() {
 
     checkHandle();
   }, [shopHandle]);
+
+  if (loading || !authChecked) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
+      </div>
+    );
+  }
 
   return (
     <>
