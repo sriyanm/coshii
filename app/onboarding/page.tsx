@@ -226,7 +226,7 @@ function OnboardingContent() {
 
   return (
     <>
-      {page === Page.INTRO && IntroPage(handlePageChange)}
+      {page === Page.INTRO && <IntroPage setPage={handlePageChange} />}
       {page === Page.CREATOR_NAME &&
         CreatorNamePage(handlePageChange, creatorName, setCreatorName)}
       {page === Page.SHOP_NAME_AND_HANDLE &&
@@ -282,12 +282,12 @@ function OnboardingContent() {
           profilePictureUpload,
         )}
       {page === Page.FINISH && OnboardingFinishPage(shopHandle)}
-      {page === Page.REROUTE && ReroutePage(shopHandle)}
+      {page === Page.REROUTE && <ReroutePage shopHandle={shopHandle} />}
     </>
   );
 }
 
-function IntroPage(setPage: (nextPage: Page) => void) {
+function IntroPage({ setPage }: { setPage: (nextPage: Page) => void }) {
   const router = useRouter();
   return (
     <div className="fixed inset-0 mx-auto flex h-screen max-w-md flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-[#FF5640] to-[#E6B4AD] p-8">
@@ -1082,7 +1082,7 @@ function OnboardingFinishPage(shopHandle: string) {
   );
 }
 
-function ReroutePage(shopHandle: string) {
+function ReroutePage({ shopHandle }: { shopHandle: string }) {
   const router = useRouter();
   return (
     <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
