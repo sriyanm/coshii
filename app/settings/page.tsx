@@ -51,13 +51,13 @@ type View =
   | "profile"
   | "subscription"
   | "editName"
-  | "editPhone"
+  // | "editPhone"
   // | "editEmail"
   | "editShopName";
 
 interface UserProfile {
   creatorName?: string;
-  phoneNumber?: string;
+  // phoneNumber?: string;
   email: string;
   shopName?: string;
   plan: "free" | "paid";
@@ -236,7 +236,7 @@ export default function SettingsPage() {
           <ChevronRight className="ml-auto size-5 text-gray-400" />
         </button>
 
-        <button
+        {/* <button
           onClick={() => setCurrentView("editPhone")}
           className="flex w-full items-center justify-between rounded-lg bg-gray-100 p-4"
         >
@@ -248,7 +248,7 @@ export default function SettingsPage() {
           </div>
 
           <ChevronRight className="ml-auto size-5 text-gray-400" />
-        </button>
+        </button> */}
 
         <button
           onClick={() => setCurrentView("editShopName")}
@@ -523,8 +523,8 @@ export default function SettingsPage() {
     switch (field) {
       case "Name":
         return "creatorName";
-      case "Phone":
-        return "phoneNumber";
+      // case "Phone":
+      //   return "phoneNumber";
       // case "Email":
       //   return "email";
       case "Shop Name":
@@ -584,8 +584,8 @@ export default function SettingsPage() {
         return renderSubscriptionView();
       case "editName":
         return renderEditView("Name", userProfile.creatorName || "");
-      case "editPhone":
-        return renderEditView("Phone", userProfile.phoneNumber || "");
+      // case "editPhone":
+      //   return renderEditView("Phone", userProfile.phoneNumber || "");
       // case "editEmail":
       //   return renderEditView("Email", userProfile.email);
       case "editShopName":

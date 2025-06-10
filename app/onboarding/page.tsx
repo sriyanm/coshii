@@ -3,27 +3,27 @@
 // import Coshii from "@/app/components/icons/coshii.svg";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/app/components/ui/input-otp";
+// import {
+//   InputOTP,
+//   InputOTPGroup,
+//   InputOTPSlot,
+// } from "@/app/components/ui/input-otp";
 import { Label } from "@/app/components/ui/label";
-import { UseMutationResult } from "@tanstack/react-query";
+// import { UseMutationResult } from "@tanstack/react-query";
 import {
-  ConfirmationResult,
-  UserCredential,
+  // ConfirmationResult,
+  // UserCredential,
   updateProfile,
 } from "firebase/auth";
 import Link from "next/link";
 import { Suspense, Dispatch, SetStateAction, useState, useEffect } from "react";
-import PhoneInput, {
-  isPossiblePhoneNumber,
-} from "react-phone-number-input/input";
-import {
-  usePhoneNumberConfirmationResult,
-  useSignInWithPhoneNumber,
-} from "../hooks/firebase";
+// import PhoneInput, {
+//   isPossiblePhoneNumber,
+// } from "react-phone-number-input/input";
+// import {
+//   usePhoneNumberConfirmationResult,
+//   useSignInWithPhoneNumber,
+// } from "../hooks/firebase";
 import { db, auth } from "@/app/lib/client/firebase";
 import {
   collection,
@@ -50,16 +50,16 @@ enum Page {
   SHOP_PFP,
   SOCIAL_MEDIA,
   SIGNIN,
-  PHONE,
-  OTP,
+  // PHONE,
+  // OTP,
   FINISH,
   REROUTE,
 }
 
-type ConfirmationResultMutationParams = {
-  confirmationResult: ConfirmationResult;
-  code: string;
-};
+// type ConfirmationResultMutationParams = {
+//   confirmationResult: ConfirmationResult;
+//   code: string;
+// };
 
 type SocialLink = {
   platform: string;
@@ -87,12 +87,12 @@ function OnboardingContent() {
   const [handleExists, setHandleExists] = useState(false);
   const [shopDescription, setShopDescription] = useState("");
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [otp, setOtp] = useState("");
+  // const [phoneNumber, setPhoneNumber] = useState("");
+  // const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
-  const signInMutation = useSignInWithPhoneNumber("recaptcha-element");
-  const confirmationResultMutation = usePhoneNumberConfirmationResult();
+  // const signInMutation = useSignInWithPhoneNumber("recaptcha-element");
+  // const confirmationResultMutation = usePhoneNumberConfirmationResult();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -250,8 +250,26 @@ function OnboardingContent() {
         )}
       {page === Page.SOCIAL_MEDIA &&
         SocialMediaPage(handlePageChange, socialLinks, setSocialLinks)}
-      {page === Page.SIGNIN && SignInPage(handlePageChange, setShopHandle)}
-      {page === Page.PHONE &&
+      {page === Page.SIGNIN && 
+        SignInPage(
+          handlePageChange, 
+          setShopHandle,
+          shopName,
+          shopDescription,
+          shopHandle,
+          creatorName,
+          socialLinks,
+          selectedFile,
+          setSelectedFile,
+          previewUrl,
+          setPreviewUrl,
+          isUploading,
+          setIsUploading,
+          profilePictureDownloadURL,
+          setProfilePictureDownloadURL,
+          profilePictureUpload,
+        )}
+      {/* {page === Page.PHONE &&
         PhoneNumberPage(
           handlePageChange,
           signInMutation,
@@ -280,7 +298,7 @@ function OnboardingContent() {
           profilePictureDownloadURL,
           setProfilePictureDownloadURL,
           profilePictureUpload,
-        )}
+        )} */}
       {page === Page.FINISH && OnboardingFinishPage(shopHandle)}
       {page === Page.REROUTE && <ReroutePage shopHandle={shopHandle} />}
     </>
@@ -744,144 +762,7 @@ function SocialMediaPage(
 function SignInPage(
   setPage: (nextPage: Page) => void,
   setShopHandle: Dispatch<SetStateAction<string>>,
-) {
-  const setCreatedShopHandle = async (userId: string) => {
-    const shopsRef = collection(db, "shops");
-    const querySnapshot = await getDocs(shopsRef);
-    const shopDoc = querySnapshot.docs.find((doc) => {
-      const data = doc.data();
-      return data.creatorId === userId;
-    });
-    if (shopDoc) {
-      setShopHandle(shopDoc.data().username);
-    }
-  };
-  return (
-    <>
-      <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
-        <div>
-          <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
-            Let&#39;s set up your account!
-          </h1>
-        </div>
-        <div className="mt-12">
-          <GoogleSigninButton
-            allowNewUser={true}
-            onSuccess={({ user, isNewUser }) => {
-              if (isNewUser) {
-                setPage(Page.PHONE);
-              } else {
-                const userId = user?.uid;
-                if (userId) {
-                  setCreatedShopHandle(userId);
-                }
-                setPage(Page.REROUTE);
-              }
-            }}
-          />
-        </div>
-        {/* <MagicLinkSigninForm /> */}
-      </div>
-    </>
-  );
-}
-
-function PhoneNumberPage(
-  setPage: (nextPage: Page) => void,
-  signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
-  phoneNumber: string,
-  setPhoneNumber: Dispatch<SetStateAction<string>>,
-) {
-  const getButtonText = () => {
-    if (signInMutation.isPending) {
-      return "Sending SMS...";
-    } else if (signInMutation.isError) {
-      return "Error! Try again";
-    } else {
-      return "Continue";
-    }
-  };
-
-  const handleContinue = async () => {
-    try {
-      // console.log("SMS Handler Called with phone number:", phoneNumber);
-      // Do NOT navigate before mutation. Navigate only on success.
-      signInMutation.mutate(phoneNumber, {
-        onSuccess: () => {
-          console.log("SMS sent successfully, navigating to OTP page.");
-          setPage(Page.OTP);
-        },
-        onError: (error) => {
-          console.error("Failed to send SMS sign-in code:", error);
-          // Optionally, provide user feedback here, e.g., via an alert or toast
-        },
-      });
-    } catch (error) {
-      // This catch block might not be necessary if errors are handled by mutation.onError
-      console.error("Error in handleContinue (PhoneNumberPage):", error);
-    }
-  };
-  return (
-    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
-      <div>
-        <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
-          Let&#39;s set up your account!
-        </h1>
-      </div>
-      {/* <div className="mt-4 rounded-full border border-gray-500 p-8">
-        <Coshii className="fill-gray-500" width={175} height={175} />
-      </div> */}
-      <div className="mb-5 mt-4 grid w-full max-w-sm items-center justify-center gap-1.5">
-        <Label htmlFor="shop-name" className="text-md text-left">
-          To verify its you, what is your phone number?
-        </Label>
-        <PhoneInput
-          id="phone-number"
-          country="US"
-          international={false}
-          placeholder="(656) 555-7536"
-          className="h-12 w-full p-4 text-xl"
-          onChange={function (phoneNumber) {
-            setPhoneNumber(phoneNumber || "");
-          }}
-          value={phoneNumber}
-          disabled={signInMutation.isPending}
-        />
-      </div>
-      <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4 text-center">
-        <div className="flex justify-center">
-          <Button
-            id="recaptcha-element"
-            className="w-full min-w-24 py-6 text-lg"
-            variant="onboarding"
-            onClick={handleContinue}
-            disabled={
-              signInMutation.isPending ||
-              !phoneNumber ||
-              !isPossiblePhoneNumber(phoneNumber)
-            }
-          >
-            {getButtonText()}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PhoneOtpPage(
-  setPage: (nextPage: Page) => void,
-  otp: string,
-  setOtp: Dispatch<SetStateAction<string>>,
-  signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
-  confirmationResultMutation: UseMutationResult<
-    UserCredential,
-    Error,
-    ConfirmationResultMutationParams,
-    void
-  >,
   shopName: string,
-  phoneNumber: string,
   shopDescription: string,
   shopHandle: string,
   creatorName: string = "",
@@ -896,13 +777,16 @@ function PhoneOtpPage(
   setProfilePictureDownloadURL: Dispatch<SetStateAction<string | null>>,
   profilePictureUpload: ReturnType<typeof useProfilePictureUpload>,
 ) {
-  const getButtonText = () => {
-    if (confirmationResultMutation.isPending) {
-      return "Confirming code...";
-    } else if (confirmationResultMutation.isError) {
-      return "Error! Try again";
+  const setCreatedShopHandle = async (userId: string) => {
+    const shopsRef = collection(db, "shops");
+    const querySnapshot = await getDocs(shopsRef);
+    const shopDoc = querySnapshot.docs.find((doc) => {
+      const data = doc.data();
+      return data.creatorId === userId;
+    });
+    if (shopDoc) {
+      setShopHandle(shopDoc.data().username);
     }
-    return "Continue";
   };
 
   const handleFileUpload = async (file: File): Promise<string | null> => {
@@ -957,13 +841,10 @@ function PhoneOtpPage(
 
         // Update user document with creator name, shop name, phone number
         const userDocRef = doc(db, "users", auth.currentUser.uid);
-        console.log(
-          "Updating phone number (temporarily b/c otp does not work) in user document",
-        );
         await updateDoc(userDocRef, {
           creatorName: creatorName,
           shopName: shopName,
-          phoneNumber: phoneNumber,
+          // phoneNumber: phoneNumber,
         });
 
         // Update Firebase Auth profile with shop name and profile picture
@@ -986,74 +867,303 @@ function PhoneOtpPage(
   };
 
   return (
-    <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center justify-between p-8">
-      <div className="flex flex-col items-center justify-between">
-        <h1 className="mt-4 text-center text-2xl text-black">
-          We&#39;ve sent a text message to {phoneNumber}
-        </h1>
-        <h2 className="mt-4 text-center text-gray-400">
-          What is your verification code?
-        </h2>
-        <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-          <InputOTPGroup>
-            <InputOTPSlot index={0} />
-            <InputOTPSlot index={1} />
-            <InputOTPSlot index={2} />
-            <InputOTPSlot index={3} />
-            <InputOTPSlot index={4} />
-            <InputOTPSlot index={5} />
-          </InputOTPGroup>
-        </InputOTP>
-      </div>
-      <div className="flex flex-col items-center justify-between">
-        <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
-          <Button
-            className="px-8 py-6 text-lg"
-            variant="onboardingSecondary"
-            disabled={confirmationResultMutation.isPending}
-            onClick={function () {
-              setPage(Page.PHONE);
-            }}
-          >
-            Back
-          </Button>
-          <Button
-            className="px-8 py-6 text-lg"
-            variant="onboarding"
-            onClick={async function () {
-              // Development bypass
-              // console.log("OTP Verification bypassed. Code entered:", otp);
-              // await createShopAndContinue();
-
-              // Production code - commented out for development
-              if (!signInMutation.isSuccess) {
-                throw Error("SMS sign-in code was not sent");
-              }
-              confirmationResultMutation.mutate(
-                { confirmationResult: signInMutation.data, code: otp },
-                {
-                  onSuccess: async () => {
-                    await createShopAndContinue();
-                  },
-                },
-              );
-            }}
-            disabled={
-              otp.length != 6
-              // Production checks - commented out for development
-            ||
-            !signInMutation.isSuccess ||
-            confirmationResultMutation.isPending
-            
-            }
-          >
-            {getButtonText()}
-          </Button>
+    <>
+      <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+        <div>
+          <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
+            Let&#39;s set up your account!
+          </h1>
         </div>
+        <div className="mt-12">
+          <GoogleSigninButton
+            allowNewUser={true}
+            onSuccess={ async ({ user, isNewUser }) => {
+              if (isNewUser) {
+                await createShopAndContinue();
+              } else {
+                const userId = user?.uid;
+                if (userId) {
+                  setCreatedShopHandle(userId);
+                }
+                setPage(Page.REROUTE);
+              }
+            }}
+          />
+        </div>
+        {/* <MagicLinkSigninForm /> */}
       </div>
-    </div>
+    </>
   );
 }
+
+// function PhoneNumberPage(
+//   setPage: (nextPage: Page) => void,
+//   signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
+//   phoneNumber: string,
+//   setPhoneNumber: Dispatch<SetStateAction<string>>,
+// ) {
+//   const getButtonText = () => {
+//     if (signInMutation.isPending) {
+//       return "Sending SMS...";
+//     } else if (signInMutation.isError) {
+//       return "Error! Try again";
+//     } else {
+//       return "Continue";
+//     }
+//   };
+
+//   const handleContinue = async () => {
+//     try {
+//       // console.log("SMS Handler Called with phone number:", phoneNumber);
+//       // Do NOT navigate before mutation. Navigate only on success.
+//       signInMutation.mutate(phoneNumber, {
+//         onSuccess: () => {
+//           console.log("SMS sent successfully, navigating to OTP page.");
+//           setPage(Page.OTP);
+//         },
+//         onError: (error) => {
+//           console.error("Failed to send SMS sign-in code:", error);
+//           // Optionally, provide user feedback here, e.g., via an alert or toast
+//         },
+//       });
+//     } catch (error) {
+//       // This catch block might not be necessary if errors are handled by mutation.onError
+//       console.error("Error in handleContinue (PhoneNumberPage):", error);
+//     }
+//   };
+//   return (
+//     <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center p-8">
+//       <div>
+//         <h1 className="mb-6 mt-4 text-center text-xl font-bold text-black">
+//           Let&#39;s set up your account!
+//         </h1>
+//       </div>
+//       {/* <div className="mt-4 rounded-full border border-gray-500 p-8">
+//         <Coshii className="fill-gray-500" width={175} height={175} />
+//       </div> */}
+//       <div className="mb-5 mt-4 grid w-full max-w-sm items-center justify-center gap-1.5">
+//         <Label htmlFor="shop-name" className="text-md text-left">
+//           To verify its you, what is your phone number?
+//         </Label>
+//         <PhoneInput
+//           id="phone-number"
+//           country="US"
+//           international={false}
+//           placeholder="(656) 555-7536"
+//           className="h-12 w-full p-4 text-xl"
+//           onChange={function (phoneNumber) {
+//             setPhoneNumber(phoneNumber || "");
+//           }}
+//           value={phoneNumber}
+//           disabled={signInMutation.isPending}
+//         />
+//       </div>
+//       <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4 text-center">
+//         <div className="flex justify-center">
+//           <Button
+//             id="recaptcha-element"
+//             className="w-full min-w-24 py-6 text-lg"
+//             variant="onboarding"
+//             onClick={handleContinue}
+//             disabled={
+//               signInMutation.isPending ||
+//               !phoneNumber ||
+//               !isPossiblePhoneNumber(phoneNumber)
+//             }
+//           >
+//             {getButtonText()}
+//           </Button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+// function PhoneOtpPage(
+//   setPage: (nextPage: Page) => void,
+//   otp: string,
+//   setOtp: Dispatch<SetStateAction<string>>,
+//   signInMutation: UseMutationResult<ConfirmationResult, Error, string, void>,
+//   confirmationResultMutation: UseMutationResult<
+//     UserCredential,
+//     Error,
+//     ConfirmationResultMutationParams,
+//     void
+//   >,
+//   shopName: string,
+//   phoneNumber: string,
+//   shopDescription: string,
+//   shopHandle: string,
+//   creatorName: string = "",
+//   socialLinks: SocialLink[] = [],
+//   selectedFile: File | null,
+//   setSelectedFile: Dispatch<SetStateAction<File | null>>,
+//   previewUrl: string | null,
+//   setPreviewUrl: Dispatch<SetStateAction<string | null>>,
+//   isUploading: boolean,
+//   setIsUploading: Dispatch<SetStateAction<boolean>>,
+//   profilePictureDownloadURL: string | null,
+//   setProfilePictureDownloadURL: Dispatch<SetStateAction<string | null>>,
+//   profilePictureUpload: ReturnType<typeof useProfilePictureUpload>,
+// ) {
+//   const getButtonText = () => {
+//     if (confirmationResultMutation.isPending) {
+//       return "Confirming code...";
+//     } else if (confirmationResultMutation.isError) {
+//       return "Error! Try again";
+//     }
+//     return "Continue";
+//   };
+
+//   const handleFileUpload = async (file: File): Promise<string | null> => {
+//     if (!auth.currentUser) {
+//       console.error("No authenticated user found");
+//       return null;
+//     }
+//     setIsUploading(true);
+//     console.log("Uploading file:", file);
+//     try {
+//       const profilePictureDownloadURL = await profilePictureUpload.mutateAsync({
+//         file: file,
+//         userId: auth.currentUser.uid,
+//       });
+
+//       setProfilePictureDownloadURL(profilePictureDownloadURL);
+//       console.log("Uploaded to:", profilePictureDownloadURL);
+//       return profilePictureDownloadURL;
+//     } catch (error) {
+//       console.error("Upload failed:", error);
+//       alert("Upload failed. Please try again.");
+//       return null;
+//     } finally {
+//       setIsUploading(false);
+//     }
+//   };
+
+//   const createShopAndContinue = async () => {
+//     try {
+//       if (auth.currentUser) {
+//         let profileURL = null;
+//         if (selectedFile) {
+//           profileURL = await handleFileUpload(selectedFile);
+//         }
+
+//         // Create shop document
+//         const shopRef = collection(db, "shops");
+//         await addDoc(shopRef, {
+//           categories: ["All"],
+//           createdAt: new Date(),
+//           creatorId: auth.currentUser.uid,
+//           description: shopDescription,
+//           email: auth.currentUser.email,
+//           isPremium: false,
+//           profilePic: profileURL,
+//           shopName: shopName,
+//           username: shopHandle,
+//           followers: {},
+//           following: {},
+//           socialLinks: socialLinks,
+//         });
+
+//         // Update user document with creator name, shop name, phone number
+//         const userDocRef = doc(db, "users", auth.currentUser.uid);
+//         console.log(
+//           "Updating phone number (temporarily b/c otp does not work) in user document",
+//         );
+//         await updateDoc(userDocRef, {
+//           creatorName: creatorName,
+//           shopName: shopName,
+//           phoneNumber: phoneNumber,
+//         });
+
+//         // Update Firebase Auth profile with shop name and profile picture
+//         await updateProfile(auth.currentUser, {
+//           displayName: shopName,
+//           photoURL: profileURL ?? undefined,
+//         });
+
+//         console.log("Shop created and user updated successfully");
+//         setPage(Page.FINISH);
+//       } else {
+//         console.error("No authenticated user found when creating shop");
+//         setPage(Page.FINISH);
+//       }
+//     } catch (error) {
+//       console.error("Error creating shop or updating user:", error);
+//       // Still continue to finish page even if shop creation fails
+//       setPage(Page.FINISH);
+//     }
+//   };
+
+//   return (
+//     <div className="fixed inset-0 mx-auto flex min-h-screen max-w-md flex-col items-center justify-between p-8">
+//       <div className="flex flex-col items-center justify-between">
+//         <h1 className="mt-4 text-center text-2xl text-black">
+//           We&#39;ve sent a text message to {phoneNumber}
+//         </h1>
+//         <h2 className="mt-4 text-center text-gray-400">
+//           What is your verification code?
+//         </h2>
+//         <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+//           <InputOTPGroup>
+//             <InputOTPSlot index={0} />
+//             <InputOTPSlot index={1} />
+//             <InputOTPSlot index={2} />
+//             <InputOTPSlot index={3} />
+//             <InputOTPSlot index={4} />
+//             <InputOTPSlot index={5} />
+//           </InputOTPGroup>
+//         </InputOTP>
+//       </div>
+//       <div className="flex flex-col items-center justify-between">
+//         <div className="fixed bottom-0 mx-auto w-full max-w-md py-4 text-center">
+//           <Button
+//             className="px-8 py-6 text-lg"
+//             variant="onboardingSecondary"
+//             disabled={confirmationResultMutation.isPending}
+//             onClick={function () {
+//               setPage(Page.PHONE);
+//             }}
+//           >
+//             Back
+//           </Button>
+//           <Button
+//             className="px-8 py-6 text-lg"
+//             variant="onboarding"
+//             onClick={async function () {
+//               // Development bypass
+//               // console.log("OTP Verification bypassed. Code entered:", otp);
+//               // await createShopAndContinue();
+
+//               // Production code - commented out for development
+//               if (!signInMutation.isSuccess) {
+//                 throw Error("SMS sign-in code was not sent");
+//               }
+//               confirmationResultMutation.mutate(
+//                 { confirmationResult: signInMutation.data, code: otp },
+//                 {
+//                   onSuccess: async () => {
+//                     await createShopAndContinue();
+//                   },
+//                 },
+//               );
+//             }}
+//             disabled={
+//               otp.length != 6
+//               // Production checks - commented out for development
+//             ||
+//             !signInMutation.isSuccess ||
+//             confirmationResultMutation.isPending
+            
+//             }
+//           >
+//             {getButtonText()}
+//           </Button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 function OnboardingFinishPage(shopHandle: string) {
   return (
