@@ -857,7 +857,7 @@ function MediaPicker({
               <div className="flex size-full cursor-pointer flex-col items-center justify-center rounded-lg bg-black/20 px-8 hover:bg-black/30">
                 <ImagePlus className="size-10 text-white/90" />
                 <p className="text-wrap text-center text-xl text-white/90">
-                  Add up to 60 seconds of video or photo
+                  Add up to 5 images / videos. Limit of 50 MB per asset.
                 </p>
               </div>
             </div>
