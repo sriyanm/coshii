@@ -37,7 +37,7 @@ export default function ProfilePage({
 }: {
   params: Promise<{ shop: string }>;
 }) {
-  const shopHandle = use(params).shop;
+  const shopHandle = use(params).shop.toLowerCase();
   const [currentTab, setCurrentTab] = useState("Shop");
   const [products, setProducts] = useState<Product[]>([]);
   const [isFetching, setIsFetching] = useState(false);

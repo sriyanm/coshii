@@ -445,7 +445,7 @@ function ShopNameAndHandlePage(
           id="shop-name"
           placeholder="@Srikar"
           onChange={(e) => {
-            setShopHandle(e.currentTarget.value.replace(/^@/, "")); // Remove leading @ if present
+            setShopHandle(e.currentTarget.value.replace(/^@/, "").toLowerCase());
           }}
           value={`@${shopHandle}`}
           className="h-12 w-full p-4 text-xl"
