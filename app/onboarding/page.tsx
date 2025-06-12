@@ -445,7 +445,16 @@ function ShopNameAndHandlePage(
           id="shop-name"
           placeholder="@Srikar"
           onChange={(e) => {
-            setShopHandle(e.currentTarget.value.replace(/^@/, "").toLowerCase());
+            const input = e.currentTarget.value;
+          
+            const cleaned = input
+              .replace(/^@/, "")            // remove leading @
+              .toLowerCase()
+              .replace(/\s+/g, "_")         // replace spaces with underscores
+              .replace(/[^a-z0-9_-]/g, "")  // keep only a-z, 0-9, _, -
+              .replace(/^-+|-+$/g, "");     // remove leading/trailing hyphens
+          
+            setShopHandle(cleaned);
           }}
           value={`@${shopHandle}`}
           className="h-12 w-full p-4 text-xl"
