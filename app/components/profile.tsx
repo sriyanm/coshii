@@ -235,7 +235,7 @@ function ProfileHeader({
               onClick={handleFollow}
               disabled={loadingFollowStatus}
             >
-              {loadingFollowStatus ? "" : "Follow"}
+              {loadingFollowStatus ? "Loading..." : "Follow"}
             </button>
           ) : (
             <div className="relative inline-block">
@@ -244,7 +244,7 @@ function ProfileHeader({
                 onClick={() => setShowUnfollowModal((prev) => !prev)}
                 disabled={loadingFollowStatus}
               >
-                {loadingFollowStatus ? "" : "Following"}
+                {loadingFollowStatus ? "Loading..." : "Following"}
                 <ChevronDown className="size-4" />
               </button>
 

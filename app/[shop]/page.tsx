@@ -41,6 +41,7 @@ export default function ProfilePage({
   const [currentTab, setCurrentTab] = useState("Shop");
   const [products, setProducts] = useState<Product[]>([]);
   const [isFetching, setIsFetching] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   // const [activeTab, setActiveTab] = useState("Shop"); // State for the active tab (Shop/Activity)
   const [selectedCategory, setSelectedCategory] = useState("All"); // State for selected category
   const [stickied, setStickied] = useState(false); //track if we have already scrolled to a sticky product
@@ -358,6 +359,8 @@ export default function ProfilePage({
   // Fetch shop data
   useEffect(() => {
     const fetchShopData = async () => {
+      setIsLoading(true);
+      try {
       const shopsRef = collection(db, "shops");
       const q = query(shopsRef, where("username", "==", shopHandle));
       const querySnapshot = await getDocs(q);
@@ -374,6 +377,11 @@ export default function ProfilePage({
       const shopData = shopDoc.data() as Shop;
 
       setShopData(shopData);
+    } catch (error) {
+      console.error("Error fetching shop data:", error);
+    } finally {
+      setIsLoading(false);
+    }
       // fetchProducts();
     };
     fetchShopData();
@@ -410,6 +418,14 @@ export default function ProfilePage({
   // If invalid shop
   if (invalidShop) {
     return <ErrorCoshiiCat />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
+      </div>
+    );
   }
 
   return (
