@@ -177,7 +177,7 @@ export default function Notifs() {
         // TODO: Sort notifs by earliest to latest timestamp
         fetchedNotifs.sort((a, b) => {
           if (a.timestamp && b.timestamp) {
-            return a.timestamp.localeCompare(b.timestamp);
+            return b.timestamp.localeCompare(a.timestamp);
           }
           return 0;
         });
