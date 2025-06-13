@@ -23,7 +23,7 @@ export function ProductCard({ product, showInventory }: ProductCardProps) {
             src={media}
             width={48}
             height={48}
-            className="rounded-md object-cover"
+            className="h-12 w-12 rounded-md object-cover shrink-0"
             autoPlay
             muted
             loop
@@ -35,7 +35,7 @@ export function ProductCard({ product, showInventory }: ProductCardProps) {
             alt={product.name}
             width={48}
             height={48}
-            className="rounded-md object-cover"
+            className="h-12 w-12 rounded-md object-cover shrink-0"
           />
         )}
         <div>

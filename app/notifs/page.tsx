@@ -248,6 +248,12 @@ export default function Notifs() {
     }
   };
 
+  function getMediaTypeFromUrl(url: string): 'image' | 'video' {
+    const extension = url.split('.').pop()?.split("?")[0].toLowerCase() || '';
+    const videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
+    return videoExtensions.includes(extension) ? 'video' : 'image';
+  }
+
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-white">
       <div className="flex-1">
@@ -276,7 +282,7 @@ export default function Notifs() {
                 alt={notification.user.name}
                 width={40}
                 height={40}
-                className="rounded-full"
+                className="h-10 w-10 rounded-full"
               />
               {getNotificationIcon(notification.type)}
               <div className="min-w-0 flex-1">
@@ -285,13 +291,25 @@ export default function Notifs() {
                     {getNotificationText(notification)}
                   </span>
                   <div className="flex items-center justify-between">
-                    {notification.thumbnail && (
+                    {notification.thumbnail && getMediaTypeFromUrl(notification.thumbnail) === 'image' && (
                       <Image
                         src={notification.thumbnail || "/placeholder.svg"}
                         alt={notification.content || ""}
                         width={48}
                         height={48}
-                        className="ml-28 rounded-md"
+                        className="ml-2 h-12 w-12 rounded-md object-cover shrink-0"
+                      />
+                    )}
+                    {notification.thumbnail && getMediaTypeFromUrl(notification.thumbnail) === 'video' && (
+                      <video
+                        src={notification.thumbnail || "/placeholder.svg"}
+                        width={48}
+                        height={48}
+                        className="ml-2 h-12 w-12 rounded-md object-cover shrink-0"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
                       />
                     )}
                   </div>
