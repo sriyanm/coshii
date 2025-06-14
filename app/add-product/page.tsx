@@ -1251,7 +1251,10 @@ function SuccessPage({ productType = "", productUrl = "", name = "" }) {
           </p>
         </div>
 
-        <div className="relative h-[50vh] w-full mb-6">
+        <div
+          className="relative mx-auto mb-8"
+          style={{ width: "60%", height: "353px" }} // scaled-down version of 85% & 500px
+        >
           {productType === "video" ? (
             <video
               src={productUrl}
@@ -1259,14 +1262,14 @@ function SuccessPage({ productType = "", productUrl = "", name = "" }) {
               loop
               muted
               playsInline
-              className="absolute inset-0 w-full h-full object-contain rounded-lg"
+              className="absolute inset-0 h-full w-full rounded-lg object-cover"
             />
           ) : (
             <Image
               src={productUrl}
               alt="Product showcase"
               fill
-              className="object-contain rounded-lg"
+              className="rounded-lg object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
             />
           )}
