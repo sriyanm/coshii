@@ -16,7 +16,8 @@ import {
   MessageSquare,
   UserPlus,
 } from "lucide-react";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, orderBy, 
+  limit, startAfter, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "@/app/lib/client/firebase";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { Notification, NotificationType } from "../types";
@@ -104,7 +105,7 @@ export default function Notifs() {
   }, [auth, router]);
 
   useEffect(() => {
-    const fetchNotifications = async () => {
+    const fetchAllNotifications = async () => {
       if (!user) {
         setNotifs([]);
         setIsLoading(false);
@@ -113,104 +114,96 @@ export default function Notifs() {
 
       try {
         const notifsRef = collection(db, "notifications");
-        const q = query(notifsRef, where("toUser", "==", user.uid));
+        let q = query(notifsRef, where("toUser", "==", user.uid), orderBy("timestamp", "desc"), limit(10));
 
-        const querySnapshot = await getDocs(q);
-        const fetchedNotifs: Notification[] = [];
-
-        for (const notifDoc of querySnapshot.docs) {
-          const data = notifDoc.data();
-          // console.log("Notif data:", data);
-
-          // Check if mediaUrls exists and has valid entries
-          // const mediaUrl =
-          //   data.mediaUrls && data.mediaUrls.length > 0
-          //     ? data.mediaUrls[0]
-          //     : null;
-          // console.log("Using mediaUrl:", mediaUrl);
-
-          // fetch profilePic and shopHandle from shops db
-          const shopsRef = collection(db, "shops");
-          // console.log("Fetching shop data for user:", data.fromUser);
-          const shopQuery = query(shopsRef, where("creatorId", "==", data.fromUser));
-
-          const shopQuerySnapshot = await getDocs(shopQuery);
-          if (shopQuerySnapshot.empty) {
-            // console.log("No shop found for user:", data.fromUser);
-            continue; // Skip this notification if no shop found
+        const allNotifs: Notification[] = [];
+        let lastDoc: QueryDocumentSnapshot | null = null;
+        let hasMore = true;
+  
+        while (hasMore) {
+          const snapshot = await getDocs(q);
+          if (snapshot.empty) break;
+  
+          for (const notifDoc of snapshot.docs) {
+            const data = notifDoc.data();
+  
+            // Fetch shop info
+            const shopQuery = query(collection(db, "shops"), where("creatorId", "==", data.fromUser));
+            const shopSnapshot = await getDocs(shopQuery);
+            if (shopSnapshot.empty) continue;
+  
+            const shopData = shopSnapshot.docs[0].data();
+            const profilePic = shopData.profilePic || "/placeholder.svg";
+            const shopHandle = shopData.username || "";
+  
+            // Fetch user info
+            const userRef = doc(db, "users", data.fromUser);
+            const userSnap = await getDoc(userRef);
+            if (!userSnap.exists()) continue;
+  
+            const userData = userSnap.data();
+            const creatorName = userData?.creatorName || "";
+  
+            allNotifs.push({
+              id: notifDoc.id,
+              type: data.type || "",
+              user: {
+                name: creatorName,
+                avatar: profilePic,
+              },
+              content: data.content || "",
+              target: data.target || "",
+              timestamp: data.timestamp || "",
+              thumbnail: data.thumbnail || "",
+              shopHandle,
+            });
           }
-          const shopData = shopQuerySnapshot.docs[0].data();
-          const profilePic = shopData.profilePic;
-          const shopHandle = shopData.username;
-
-          const userRef = doc(db, "users", data.fromUser);
-          const userSnapshot = await getDoc(userRef);
-          if (!userSnapshot.exists()) {
-            // console.log("No user data found for:", data.fromUser);
-            continue; // Skip this notification if no user data found
+  
+          lastDoc = snapshot.docs[snapshot.docs.length - 1];
+          if (snapshot.size < 10) {
+            hasMore = false;
+          } else {
+            // Prepare next page query using startAfter
+            q = query(
+              notifsRef,
+              where("toUser", "==", user.uid),
+              orderBy("timestamp", "desc"),
+              startAfter(lastDoc),
+              limit(10)
+            );
           }
-          const userData = userSnapshot.exists() ? userSnapshot.data() : {};
-          const creatorName = userData.creatorName;
-
-          fetchedNotifs.push({
-            id: notifDoc.id,
-            type: data.type || "",
-            user: {
-              name: creatorName || "",
-              avatar: profilePic || "/placeholder.svg",
-            },
-            content: data.content || "",
-            target: data.target || "",
-            timestamp: data.timestamp || "",
-            thumbnail: data.thumbnail || "",
-            shopHandle: shopHandle || "",
-          });
-
-          // console.log(
-          //   "Fetched notification:",
-          //   data.type,
-          //   data.fromUser,
-          //   data.content,
-          //   data.target,
-          //   data.timestamp,
-          //   data.thumbnail,
-          //   creatorName,
-          //   profilePic,
-          //   shopHandle
-          // );
         }
 
-        // TODO: Sort notifs by earliest to latest timestamp
-        fetchedNotifs.sort((a, b) => {
-          if (a.timestamp && b.timestamp) {
-            return b.timestamp.localeCompare(a.timestamp);
-          }
-          return 0;
-        });
-
-        setNotifs(fetchedNotifs);
+        // allNotifs.sort((a, b) => {
+        //   if (a.timestamp && b.timestamp) {
+        //     return b.timestamp.localeCompare(a.timestamp); // descending order
+        //   }
+        //   return 0;
+        // });
+  
+        setNotifs(allNotifs);
       } catch (error) {
-        console.error("Error fetching notifs:", error);
+        console.error("Error fetching notifications:", error);
       } finally {
         setIsLoading(false);
       }
     };
-
-    if(!userLoading) {
-      fetchNotifications();
+  
+    if (!userLoading) {
+      fetchAllNotifications();
     }
   }, [user, userLoading]);
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
       case "like":
-        return <Heart className="fill-orange-500 text-orange-500 size-4" />;
+        return <Heart className="fill-orange text-white size-6" />;
       case "comment":
-        return <MessageSquare className="text-orange-500 size-4" />;
+        return <MessageSquare className="fill-orange text-white size-6" />;
       case "follow":
-        return <UserPlus className="text-orange-500 size-4" />;
+        return <UserPlus className="fill-orange text-orange size-6" />
       default:
-        return <div className="size-4" />;
+        return <div className="size-6" />;
     }
   };
 
@@ -290,15 +283,22 @@ export default function Notifs() {
               href={`/${notification.shopHandle}`}
               className="block"
             >
-            <div key={notification.id} className="flex gap-3 p-4 hover:bg-gray-50 rounded-md">
-              <Image
-                src={notification.user.avatar || "/placeholder.svg"}
-                alt={notification.user.name}
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-full"
-              />
-              {getNotificationIcon(notification.type)}
+            <div className="flex gap-6 p-4 hover:bg-gray-50 rounded-md">
+              {/* Avatar + Icon Container */}
+              <div className="relative w-10 h-10">
+                <Image
+                  src={notification.user.avatar || "/placeholder.svg"}
+                  alt={notification.user.name}
+                  width={40}
+                  height={40}
+                  className="rounded-full w-10 h-10"
+                />
+                <div className="absolute -top-2 -right-3 rounded-full">
+                  {getNotificationIcon(notification.type)}
+                </div>
+              </div>
+
+              {/* Main Text + Thumbnail */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-2">
                   <span className="flex-1">
@@ -328,7 +328,7 @@ export default function Notifs() {
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs text-gray-500">
                   {timeAgo(notification.timestamp)}
                 </p>
               </div>

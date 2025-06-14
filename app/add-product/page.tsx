@@ -1516,8 +1516,6 @@ function AddProductContent() {
           updatedAt: new Date(),
         });
         // send notification
-        // TODO: chunk, check /search
-        // TODO: images look bad
         if(snapshot.empty) return;
         const shopData = snapshot.docs[0].data();
         const followerIds = shopData.followers ? Object.keys(shopData.followers) : [];

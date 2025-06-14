@@ -12,7 +12,7 @@ import {
   increment,
 } from "firebase/firestore";
 import { db, auth } from "@/app/lib/client/firebase";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, where, query, getDocs } from "firebase/firestore";
 
 interface SocialBarProps {
   onLike: () => void; // Callback for when the Like button is clicked
@@ -101,17 +101,31 @@ export function SocialBar({
           if (creatorId !== auth.currentUser?.uid) {
             try {
               const notifsRef = collection(db, "notifications");
-              await addDoc(notifsRef, {
-                toUser: creatorId,
-                fromUser: auth.currentUser?.uid,
-                type: "like",
-                content: "",
-                target: productName,
-                timestamp: new Date().toISOString(),
-                thumbnail: "",
-              });
+              // check for spamming
+              const q = query(notifsRef, 
+              where("fromUser", "==", auth.currentUser?.uid),
+              where("toUser", "==", creatorId),
+              where("target", "==", productName),
+              where("type", "==", "like"),
+              where("timestamp", ">", new Date(Date.now() - 5 * 60 * 1000).toISOString())); // Check if timestamp is within the last 5 minutes
+              const existingNotifSnap = await getDocs(q);
+              if (!existingNotifSnap.empty) {
+                console.log("To prevent spam, not sending like notif");
+              }
+              // Otherwise, add new notification
+              else {
+                await addDoc(notifsRef, {
+                  toUser: creatorId,
+                  fromUser: auth.currentUser?.uid,
+                  type: "like",
+                  content: "",
+                  target: productName,
+                  timestamp: new Date().toISOString(),
+                  thumbnail: "",
+                });
 
-              console.log("Notif sent successfully");
+                console.log("Notif sent successfully");
+              }
             } catch (error) {
               console.error("Failed to send like notif:", error);
             }

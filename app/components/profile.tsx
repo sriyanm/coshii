@@ -123,17 +123,30 @@ function ProfileHeader({
         if (visitedShopId !== auth.currentUser?.uid) {
           try {
             const notifsRef = collection(db, "notifications");
-            await addDoc(notifsRef, {
-              toUser: visitedShopId,
-              fromUser: auth.currentUser?.uid,
-              type: "follow",
-              content: "",
-              target: "",
-              timestamp: new Date().toISOString(),
-              thumbnail: "",
-            });
-  
-            console.log("Notif sent successfully");
+            // check for spamming
+            const q = query(notifsRef, 
+              where("fromUser", "==", auth.currentUser?.uid),
+              where("toUser", "==", visitedShopId),
+              where("type", "==", "follow"),
+              where("timestamp", ">", new Date(Date.now() - 5 * 60 * 1000).toISOString())); // Check if timestamp is within the last 5 minutes
+            const existingNotifSnap = await getDocs(q);
+            if (!existingNotifSnap.empty) {
+              console.log("To prevent spam, not sending follow notif");
+            }
+            // Otherwise, add new notification
+            else {
+              await addDoc(notifsRef, {
+                toUser: visitedShopId,
+                fromUser: auth.currentUser?.uid,
+                type: "follow",
+                content: "",
+                target: "",
+                timestamp: new Date().toISOString(),
+                thumbnail: "",
+              });
+    
+              console.log("Notif sent successfully");
+            }
           } catch (error) {
             console.error("Failed to send follow notif:", error);
           }
