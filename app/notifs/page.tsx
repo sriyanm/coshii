@@ -20,6 +20,7 @@ import { collection, query, where, getDocs, doc, getDoc } from "firebase/firesto
 import { db } from "@/app/lib/client/firebase";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { Notification, NotificationType } from "../types";
+import { useRouter } from "next/navigation";
 
 // const notifications: Notification[] = [
 //   {
@@ -71,6 +72,7 @@ export default function Notifs() {
   const [userLoading, setUserLoading] = useState(true); // New state to track user loading
   const [user, setUser] = useState<User | null>(null);
   const auth = getAuth();
+  const router = useRouter();
 
   function timeAgo(timestamp: string): string {
     const now = new Date();
@@ -90,12 +92,16 @@ export default function Notifs() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.replace("/onboarding");
+        return;
+      }
       setUser(user);
       setUserLoading(false);
     });
 
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth, router]);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -252,6 +258,14 @@ export default function Notifs() {
     const extension = url.split('.').pop()?.split("?")[0].toLowerCase() || '';
     const videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
     return videoExtensions.includes(extension) ? 'video' : 'image';
+  }
+
+  if (userLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
+      </div>
+    );
   }
 
   return (
