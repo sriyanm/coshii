@@ -215,7 +215,7 @@ export function useSignInWithGoogle({
       onSuccess?.(data);
     },
     onError: (error) => {
-      console.error("failed to sign in with Google:", error.message);
+      console.log("failed to sign in with Google:", error.message);
       onError?.(error);
     },
   });
