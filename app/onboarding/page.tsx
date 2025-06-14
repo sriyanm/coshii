@@ -81,6 +81,7 @@ export default function OnboardingPage() {
 
 function OnboardingContent() {
   const [page, setPage] = useState(Page.INTRO);
+  const [completedSteps, setCompletedSteps] = useState<Page[]>([Page.INTRO]);
   const [creatorName, setCreatorName] = useState("");
   const [shopName, setShopName] = useState("");
   const [shopHandle, setShopHandle] = useState("");
@@ -137,12 +138,18 @@ function OnboardingContent() {
     if (pageParam) {
       const pageEnum = parseInt(pageParam, 10);
       if (Object.values(Page).includes(pageEnum)) {
-        setPage(pageEnum as Page); // Set the current page using the enum
+        // Validate if the user has completed the required steps
+        if (completedSteps.includes(pageEnum)) {
+          setPage(pageEnum as Page);
+        } else {
+          // Redirect to the last completed step
+          router.replace(`/onboarding?page=${Math.max(...completedSteps)}`);
+        }
       }
     } else {
       setPage(Page.INTRO);
     }
-  }, [pageParam]);
+  }, [pageParam, completedSteps, router]);
 
   // Handle browser back button, page reloads, and page leaves - mobile does not support this
   useEffect(() => {
@@ -192,6 +199,10 @@ function OnboardingContent() {
   const handlePageChange = (nextPage: Page) => {
     const validPage = Object.values(Page).includes(nextPage);
     if (validPage) {
+      // Mark the current page as completed
+      if (!completedSteps.includes(nextPage)) {
+        setCompletedSteps((prev) => [...prev, nextPage]);
+      }
       router.push(`/onboarding?page=${nextPage}`);
     } else {
       router.replace("/onboarding");
