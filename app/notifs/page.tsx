@@ -113,8 +113,14 @@ export default function Notifs() {
       }
 
       try {
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+        const twoWeeksAgoISO = twoWeeksAgo.toISOString();
+
         const notifsRef = collection(db, "notifications");
-        let q = query(notifsRef, where("toUser", "==", user.uid), orderBy("timestamp", "desc"), limit(10));
+        let q = query(notifsRef, where("toUser", "==", user.uid), 
+        where("timestamp", ">=", twoWeeksAgoISO), orderBy("timestamp", "desc"), 
+        limit(10));
 
         const allNotifs: Notification[] = [];
         let lastDoc: QueryDocumentSnapshot | null = null;
@@ -167,6 +173,7 @@ export default function Notifs() {
             q = query(
               notifsRef,
               where("toUser", "==", user.uid),
+              where("timestamp", ">=", twoWeeksAgoISO),
               orderBy("timestamp", "desc"),
               startAfter(lastDoc),
               limit(10)
