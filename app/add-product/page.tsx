@@ -1502,7 +1502,7 @@ function AddProductContent() {
       }
       else {
         const productRef = collection(db, "products");
-        await addDoc(productRef, {
+        const docRef = await addDoc(productRef, {
           name,
           description,
           price,
@@ -1515,6 +1515,8 @@ function AddProductContent() {
           createdAt: new Date(),
           updatedAt: new Date(),
         });
+
+        const newProductId = docRef.id;
         // send notification
         if(snapshot.empty) return;
         const shopData = snapshot.docs[0].data();
@@ -1529,6 +1531,7 @@ function AddProductContent() {
               fromUser: auth.currentUser?.uid,
               type: "post",
               content: name,
+              productId: newProductId,
               target: "",
               timestamp: new Date().toISOString(),
               thumbnail: uploadedUrls[0] || "",

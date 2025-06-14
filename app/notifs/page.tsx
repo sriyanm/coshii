@@ -72,6 +72,7 @@ export default function Notifs() {
   const [isLoading, setIsLoading] = useState(true);
   const [userLoading, setUserLoading] = useState(true); // New state to track user loading
   const [user, setUser] = useState<User | null>(null);
+  const [ourShopHandle, setOurShopHandle] = useState<string | null>(null);
   const auth = getAuth();
   const router = useRouter();
 
@@ -99,6 +100,24 @@ export default function Notifs() {
       }
       setUser(user);
       setUserLoading(false);
+      // fetch shop data from user id creator id
+      const shopsRef = collection(db, "shops");
+      const q = query(shopsRef, where("creatorId", "==", user.uid));
+      const shopQuery = getDocs(q);
+      shopQuery
+        .then((snapshot) => {
+          if (snapshot.empty) {
+            console.error("No shop found for user:", user.uid);
+          } else {
+            const shopData = snapshot.docs[0].data();
+            const ourShopHandle = shopData.username;
+            setOurShopHandle(ourShopHandle);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching shop data:", error);
+        }
+      );
     });
 
     return () => unsubscribe();
@@ -162,6 +181,7 @@ export default function Notifs() {
               timestamp: data.timestamp || "",
               thumbnail: data.thumbnail || "",
               shopHandle,
+              productId: data.productId || "",
             });
           }
   
@@ -254,6 +274,21 @@ export default function Notifs() {
     }
   };
 
+  const getLink = (notification: Notification): string => {
+    switch (notification.type) {
+      case "like":
+        return `/${notification.shopHandle}`;
+      case "comment":
+        return `/${ourShopHandle}#product-${notification.productId || ""}`; 
+      case "follow":
+        return `/${notification.shopHandle}`;
+      case "post":
+        return `/${notification.shopHandle}#product-${notification.productId || ""}`;
+      default:
+        return `/${notification.shopHandle}`;
+    }
+  };
+
   function getMediaTypeFromUrl(url: string): 'image' | 'video' {
     const extension = url.split('.').pop()?.split("?")[0].toLowerCase() || '';
     const videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
@@ -284,10 +319,15 @@ export default function Notifs() {
         </div>
         ) : (
         <div className="divide-y">
+          {notifs.length === 0 && (
+            <div className="p-4 text-center text-gray-500">
+              No notifications yet!
+            </div>
+          )}
           {notifs.map((notification) => (
             <Link 
               key={notification.id}
-              href={`/${notification.shopHandle}`}
+              href={getLink(notification)}
               className="block"
             >
             <div className="flex gap-6 p-4 hover:bg-gray-50 rounded-md">

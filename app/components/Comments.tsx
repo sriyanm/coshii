@@ -169,6 +169,7 @@ export function CommentsPopup({
             type: "comment",
             content: newComment,
             target: productName,
+            productId: productId,
             timestamp: new Date().toISOString(),
             thumbnail: "",
           });

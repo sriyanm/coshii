@@ -70,6 +70,7 @@ export interface Notification {
   timestamp: string;
   thumbnail?: string;
   shopHandle: string;
+  productId?: string;
 }
 
 export type NotificationType = "like" | "comment" | "follow" | "post";
