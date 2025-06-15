@@ -39,6 +39,7 @@ import { useProfilePictureUpload } from "@/app/hooks/firebase";
 import { X } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
 import { query, where } from "firebase/firestore";
+import Image from "next/image";
 
 // import { set } from "zod";
 
@@ -587,7 +588,9 @@ function ShopPfpPage(
             className="mt-10 flex size-40 cursor-pointer items-center justify-center rounded-full border border-gray-300 bg-white text-gray-400 hover:bg-gray-200"
           >
             {previewUrl ? (
-              <img
+              <Image
+                width={100} // arbitrary, size-full will override
+                height={100}
                 src={previewUrl}
                 alt="Profile preview"
                 className="size-full rounded-full object-cover"
