@@ -132,7 +132,6 @@ function BottomNavigation({
   name,
   description,
   price,
-  shipping,
   addMoreMedia,
   isEditMode,
 }: {
@@ -146,7 +145,6 @@ function BottomNavigation({
   name: string;
   description: string;
   price: number | null;
-  shipping: number | null;
   addMoreMedia: (e: React.MouseEvent) => void;
   isEditMode: boolean;
 }) {
@@ -227,7 +225,7 @@ function BottomNavigation({
             console.log("update!");
             router.push("/inventory");
           }}
-          disabled={page === Page.PRICE && (price === null || shipping === null)}
+          disabled={page === Page.PRICE && (price === null)}
         >
           Update <ArrowRight className="ml-1 size-4" />
         </Button>
@@ -261,6 +259,8 @@ function MediaPicker({
   fileInputRef,
   isEditMode,
   setIsEditMode,
+  hasFetched,
+  setHasFetched,
 }: {
   isUpdateProduct: boolean;
   updateProductId: string;
@@ -271,6 +271,8 @@ function MediaPicker({
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   isEditMode: boolean;
   setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
+  hasFetched: boolean;
+  setHasFetched: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   // const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -570,7 +572,7 @@ function MediaPicker({
   }, [activeIndex, isEditMode, containerWidth]);
 
   useEffect(() => {
-    if (isUpdateProduct) {
+    if (isUpdateProduct && !hasFetched) {
       // fetch existing media
       const fetchProductDetails = async () => {
         const productRef = doc(db, "products", updateProductId);
@@ -585,11 +587,12 @@ function MediaPicker({
           );
           setMediaFiles(productData.mediaUrls || []);
           console.log("productData", productData);
+          setHasFetched(true);
         }
       };
       fetchProductDetails();
     }
-  }, [isUpdateProduct, updateProductId]);
+  }, [isUpdateProduct, updateProductId, hasFetched]);
 
   // Add this touch handler function
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -943,6 +946,8 @@ interface ProductDescriptionProps {
   isUpdateProduct: boolean;
   updateProductId: string;
   setIsTagDeleted: React.Dispatch<React.SetStateAction<boolean>>;
+  hasFetched: boolean;
+  setHasFetched: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 function ProductDescription({
@@ -957,7 +962,9 @@ function ProductDescription({
   ogTags,
   isUpdateProduct,
   updateProductId,
-  setIsTagDeleted
+  setIsTagDeleted,
+  hasFetched,
+  setHasFetched,
 }: ProductDescriptionProps) {
   const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [newTagName, setNewTagName] = useState("");
@@ -995,7 +1002,7 @@ function ProductDescription({
   }, [isTagsOpen]);
 
   useEffect(() => {
-    if (isUpdateProduct) {
+    if (isUpdateProduct && !hasFetched) {
       // fetch existing name, description, and tags from the database
       const fetchProductDetails = async () => {
         const productRef = doc(db, "products", updateProductId);
@@ -1018,11 +1025,12 @@ function ProductDescription({
           });
           
           setSelectedTags(tagsFromDb);
+          setHasFetched(true);
         }
       };
       fetchProductDetails();
     }
-  }, [isUpdateProduct, updateProductId]);
+  }, [isUpdateProduct, updateProductId, hasFetched]);
 
   // const toggleTag = (tag: Tag) => {
   //   setSelectedTags((prev) =>
@@ -1150,6 +1158,12 @@ interface PriceAndShippingProps {
   setInventory: (inventory: number) => void;
   isUpdateProduct: boolean;
   updateProductId: string;
+  hasFetched: boolean;
+  setHasFetched: React.Dispatch<React.SetStateAction<boolean>>;
+  priceInput: MoneyInputValues | null;
+  setPriceInput: (values: MoneyInputValues | null) => void;
+  shippingInput: MoneyInputValues | null;
+  setShippingInput: (values: MoneyInputValues | null) => void;
 }
 
 function PriceAndShipping({
@@ -1159,9 +1173,13 @@ function PriceAndShipping({
   setInventory,
   isUpdateProduct,
   updateProductId,
+  hasFetched,
+  setHasFetched,
+  priceInput,
+  setPriceInput,
+  shippingInput,
+  setShippingInput,
 }: PriceAndShippingProps) {
-  const [shippingInput, setShippingInput] = useState<MoneyInputValues | null>(null);
-  const [priceInput, setPriceInput] = useState<MoneyInputValues | null>(null);
 
   useEffect(() => {
     if (priceInput?.float !== undefined && priceInput.float !== null) {
@@ -1182,7 +1200,7 @@ function PriceAndShipping({
   }, [shippingInput?.float, setShipping]);
 
   useEffect(() => {
-    if (isUpdateProduct) {
+    if (isUpdateProduct && !hasFetched) {
       const fetchProductDetails = async () => {
         const productRef = doc(db, "products", updateProductId);
         const productDoc = await getDoc(productRef);
@@ -1201,11 +1219,12 @@ function PriceAndShipping({
           });
           setShipping(productData.shipping);
           setInventory(productData.inventory);
+          setHasFetched(true);
         }
       };
       fetchProductDetails();
     }
-  }, [isUpdateProduct, updateProductId]);
+  }, [isUpdateProduct, updateProductId, hasFetched, priceInput, shippingInput]);
 
   return (
     <div className="mt-32 flex grow flex-col items-center justify-start">
@@ -1314,6 +1333,10 @@ function AddProductContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [hasFetchedByPage, setHasFetchedByPage] = useState<{ [key: string]: boolean }>({});
+  const [shippingInput, setShippingInput] = useState<MoneyInputValues | null>(null);
+  const [priceInput, setPriceInput] = useState<MoneyInputValues | null>(null);
+  const pageKey = Page[page].toLowerCase();
 
   const addMoreMedia = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1615,7 +1638,7 @@ function AddProductContent() {
       </div>
     );
   }
-
+  
   let content: JSX.Element;
   let nextPage: Page | null = null;
   let previousPage: Page | null = null;
@@ -1633,6 +1656,14 @@ function AddProductContent() {
         fileInputRef={fileInputRef}
         isEditMode={isEditMode}
         setIsEditMode={setIsEditMode}
+        hasFetched={hasFetchedByPage[pageKey] || false}
+        setHasFetched={(value: SetStateAction<boolean>) => {
+          setHasFetchedByPage((prev) => {
+            const current = prev[pageKey] || false;
+            const resolved = typeof value === "function" ? value(current) : value;
+            return { ...prev, [pageKey]: resolved };
+          });
+        }}
       />
     );
   } else if (page == Page.DESCRIPTION) {
@@ -1653,6 +1684,14 @@ function AddProductContent() {
         isUpdateProduct={isUpdateProduct}
         updateProductId={updateProductId}
         setIsTagDeleted={setIsTagDeleted}
+        hasFetched={hasFetchedByPage[pageKey] || false}
+        setHasFetched={(value: SetStateAction<boolean>) => {
+          setHasFetchedByPage((prev) => {
+            const current = prev[pageKey] || false;
+            const resolved = typeof value === "function" ? value(current) : value;
+            return { ...prev, [pageKey]: resolved };
+          });
+        }}
       />
     );
   } else if (page == Page.PRICE) {
@@ -1667,6 +1706,18 @@ function AddProductContent() {
         setInventory={setInventory}
         isUpdateProduct={isUpdateProduct}
         updateProductId={updateProductId}
+        hasFetched={hasFetchedByPage[pageKey] || false}
+        setHasFetched={(value: SetStateAction<boolean>) => {
+          setHasFetchedByPage((prev) => {
+            const current = prev[pageKey] || false;
+            const resolved = typeof value === "function" ? value(current) : value;
+            return { ...prev, [pageKey]: resolved };
+          });
+        }}
+        priceInput={priceInput}
+        setPriceInput={setPriceInput}
+        shippingInput={shippingInput}
+        setShippingInput={setShippingInput}
       />
     );
   } else if (page == Page.SUCCESS) {
@@ -1701,7 +1752,6 @@ function AddProductContent() {
         name={name}
         description={description}
         price={price}
-        shipping={shipping}
         addMoreMedia={addMoreMedia}
         isEditMode={isEditMode}
       />
