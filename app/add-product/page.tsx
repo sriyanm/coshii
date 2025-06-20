@@ -530,7 +530,7 @@ function MediaPicker({
   };
 
   function getMediaTypeFromUrl(url: string): 'image' | 'video' {
-    const extension = url.split('.').pop()?.toLowerCase() || '';
+    const extension = url.split('.').pop()?.split("?")[0].toLowerCase() || '';
     const videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
     return videoExtensions.includes(extension) ? 'video' : 'image';
   }
