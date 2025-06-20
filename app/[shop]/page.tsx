@@ -56,6 +56,7 @@ export default function ProfilePage({
   const popupTimerRef = useRef<NodeJS.Timeout | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastProductRef = useRef<HTMLDivElement | null>(null);
+  const [derivedCategories, setDerivedCategories] = useState<string[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [itemCount, setItemCount] = useState<number>(0);
   const [lastVisibleProduct, setLastVisibleProduct] =
@@ -193,6 +194,19 @@ export default function ProfilePage({
   const CACHE_KEY = `cachedProducts-${shopData.creatorId}`;
   const CACHE_EXPIRATION_MS = 2 * 60 * 1000; // 2 minutes
 
+  const computeDerivedCategories = (productList: Product[]) => {
+    const visibleCategories = new Set<string>();
+    productList.forEach((product) => {
+      if (product.isListed) {
+        product.tags?.forEach((tag) => {
+          const cleanTag = tag?.trim();
+          if (cleanTag) visibleCategories.add(cleanTag);
+        });
+      }
+    });
+    return ["All", ...Array.from(visibleCategories)];
+  };
+
   const getProducts = async (
     sharedProductId: string | null = null,
     bottom: boolean = false,
@@ -213,6 +227,8 @@ export default function ProfilePage({
         ) {
           console.log("Using cached product data.", cachedProducts);
           setProducts(cachedProducts);
+          const categories = computeDerivedCategories(cachedProducts);
+          setDerivedCategories(categories);
           setIsFetching(false);
           return;
         }
@@ -231,12 +247,16 @@ export default function ProfilePage({
         lastVisibleProduct,
       );
       setProducts((prevProducts) => {
-        // Filter out any products in newProducts that are already in prevProducts (possibly due to sticky links)
         const filteredNewProducts = newProducts.filter(
           (newProduct) =>
             !prevProducts.some((product) => product.id === newProduct.id),
         );
-        return [...prevProducts, ...filteredNewProducts];
+        const combined = [...prevProducts, ...filteredNewProducts];
+      
+        const categories = computeDerivedCategories(combined);
+        setDerivedCategories(categories);
+      
+        return combined;
       });
       setLastVisibleProduct(newLastVisibleProduct);
       setDonePaginating(done);
@@ -508,7 +528,7 @@ export default function ProfilePage({
             {/* Categories Toggle */}
             <div className="shrink-0 px-4 py-0.5">
               <Toggle
-                options={shopData.categories}
+                options={derivedCategories.length > 1 ? derivedCategories : ["All"]}
                 selectedOption={selectedCategory}
                 onOptionSelect={setSelectedCategory}
                 underline={false}
