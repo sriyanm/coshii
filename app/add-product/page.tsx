@@ -1214,8 +1214,8 @@ function PriceAndShipping({
           setPrice(productData.price);
           setShippingInput({
             float: productData.shipping,
-            formatted: productData.shipping.toLocaleString(),
-            value: productData.shipping.toString(),
+            formatted: productData.shipping?.toLocaleString(),
+            value: productData.shipping?.toString(),
           });
           setShipping(productData.shipping);
           setInventory(productData.inventory);
