@@ -24,7 +24,7 @@ const buttonVariants = cva(
         onboarding:
           "rounded-full bg-[#F18A7C] text-white shadow-xl active:bg-white/90",
         onboardingSecondary:
-          "rounded-full bg-transparent text-gray-400 active:bg-white/20",
+          "rounded-full bg-transparent text-gray-600 active:bg-white/20",
         onboardingThird:
           "rounded-full bg-white text-red-500 shadow-xl active:bg-white/90",
         onboardingFourth:
