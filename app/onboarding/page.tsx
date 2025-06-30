@@ -519,8 +519,7 @@ function ShopBioPage(
       </div> */}
       <div className="mb-5 mt-4 grid w-full max-w-sm items-center justify-center gap-1.5">
         <Label htmlFor="shop-bio" className="text-md mb-6 text-left">
-          Write a short bio to describe what you sell, your vibe, or anything
-          else you want to into your shop to people.
+        Write a short bio to describe what you sell, your vibe, or anything else you want to share about your shop with people.
         </Label>
         <textarea
           id="bio"
