@@ -27,6 +27,8 @@ const buttonVariants = cva(
           "rounded-full bg-transparent text-gray-400 active:bg-white/20",
         onboardingThird:
           "rounded-full bg-white text-red-500 shadow-xl active:bg-white/90",
+        onboardingFourth:
+          "rounded-full bg-white text-red-500 active:bg-white/90",
         addProduct: "rounded-full bg-white/50 text-black active:bg-white/30",
         addProductSecondary:
           "rounded-full bg-transparent text-black/50 active:bg-white/10",

@@ -628,7 +628,7 @@ function ShopPfpPage(
       </div>
 
       <div className="fixed bottom-0 mx-auto w-full max-w-md px-10 py-4 text-center">
-        <div className="flex justify-center">
+        <div className="flex justify-center mb-2">
           <Button
             id="recaptcha-element"
             className="w-full min-w-24 py-6 text-lg"
@@ -637,6 +637,15 @@ function ShopPfpPage(
             disabled={!selectedFile}
           >
             {getButtonText()}
+          </Button>
+        </div>
+        <div className="flex justify-center">
+          <Button
+            className="w-full min-w-24 py-6 text-lg"
+            variant="onboardingFourth"
+            onClick={handleContinue}
+          >
+            Add later
           </Button>
         </div>
       </div>
