@@ -1256,7 +1256,17 @@ function PriceAndShipping({
   );
 }
 
-function SuccessPage({ productType = "", productUrl = "", name = "" }) {
+function SuccessPage({
+  productType = "",
+  productUrl = "",
+  name = "",
+  isAssetReady,
+}: {
+  productType: string;
+  productUrl: string;
+  name: string;
+  isAssetReady: boolean;
+}) {
   return (
     <div className="mx-auto flex h-screen w-full min-w-[50px] max-w-md flex-col items-start justify-start overflow-x-auto">
       <div className="mx-auto flex w-full flex-col items-center px-4 text-center">
@@ -1274,23 +1284,29 @@ function SuccessPage({ productType = "", productUrl = "", name = "" }) {
           className="relative mx-auto mb-8"
           style={{ width: "60%", height: "353px" }} // scaled-down version of 85% & 500px
         >
-          {productType === "video" ? (
-            <video
-              src={productUrl}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 h-full w-full rounded-lg object-cover"
-            />
+          {isAssetReady ? (
+            productType === "video" ? (
+              <video
+                src={productUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 h-full w-full rounded-lg object-cover"
+              />
+            ) : (
+              <Image
+                src={productUrl}
+                alt="Product showcase"
+                fill
+                className="rounded-lg object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            )
           ) : (
-            <Image
-              src={productUrl}
-              alt="Product showcase"
-              fill
-              className="rounded-lg object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="size-8 animate-spin rounded-full border-b-2 border-gray-900" />
+            </div>
           )}
         </div>
 
@@ -1458,23 +1474,43 @@ function AddProductContent() {
     return typeof value === "string";
   }
 
+  const [isAssetReady, setIsAssetReady] = useState(false);
+
   const handlePost = async (isUpdate: boolean) => {
     try {
+      setIsAssetReady(false); // Set asset as not ready initially
+
       if (!auth.currentUser) {
         console.error("No authenticated user found!");
         return;
       }
 
       const uploadedUrls: string[] = [];
+      let firstAssetUploaded = false; // Track if the first asset has been uploaded
+
       for (const file of mediaFiles) {
         if (isString(file) && file.startsWith("https://")) {
           // Already uploaded, keep it
           uploadedUrls.push(file);
           console.log("Already uploaded URL:", file);
+
+          // If this is the first asset, mark it as ready
+          if (!firstAssetUploaded) {
+            setIsAssetReady(true);
+            firstAssetUploaded = true;
+          }
         } else {
           const url = await handleFileUpload(file);
-          if (url) uploadedUrls.push(url);
-          console.log("Uploaded URL:", url);
+          if (url) {
+            uploadedUrls.push(url);
+            console.log("Uploaded URL:", url);
+
+            // If this is the first asset, mark it as ready
+            if (!firstAssetUploaded) {
+              setIsAssetReady(true);
+              firstAssetUploaded = true;
+            }
+          }
         }
       }
 
@@ -1596,7 +1632,6 @@ function AddProductContent() {
       console.log(`Cleared cache key: ${CACHE_KEY}`);
 
       console.log("Product created successfully");
-      setPage(Page.SUCCESS);
     } catch (error) {
       console.error("Error creating product:", error);
     }
@@ -1727,6 +1762,7 @@ function AddProductContent() {
         productType={mediaPreviews[0].type}
         productUrl={mediaPreviews[0].url || ""}
         name={name}
+        isAssetReady={isAssetReady} // Pass the loading state
       />
     );
   } else {
