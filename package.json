@@ -35,7 +35,7 @@
     "fuse.js": "^7.1.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.471.0",
-    "next": "15.1.4",
+    "next": "15.1.9",
     "react": "19.0.0",
     "react-currency-input-field": "^3.9.0",
     "react-dom": "19.0.0",
