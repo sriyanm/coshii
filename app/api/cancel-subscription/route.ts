@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
-
-if (!process.env.TEST_STRIPE_SECRET_KEY) {
-  throw new Error("TEST_STRIPE_SECRET_KEY is not defined");
-}
-
-const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY);
+import { getStripe } from "@/app/lib/server/stripe";
 
 export async function POST(request: Request) {
   try {
+    const stripe = getStripe();
     const { subscriptionId } = await request.json();
 
     // Ensure the subscriptionId is valid

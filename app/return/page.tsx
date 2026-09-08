@@ -1,12 +1,7 @@
-import Stripe from "stripe";
-
-if (!process.env.TEST_STRIPE_SECRET_KEY) {
-  throw new Error("TEST_STRIPE_SECRET_KEY is not defined");
-}
-
-const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY);
+import { getStripe } from "@/app/lib/server/stripe";
 
 async function getSession(sessionId: string) {
+  const stripe = getStripe();
   const session = await stripe.checkout.sessions.retrieve(sessionId);
   return session;
 }
