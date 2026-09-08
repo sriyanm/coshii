@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
-
-if (!process.env.TEST_STRIPE_SECRET_KEY) {
-  throw new Error("TEST_STRIPE_SECRET_KEY is not defined");
-}
-
-const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY);
+import { getStripe } from "@/app/lib/server/stripe";
 
 export async function POST() {
   try {
     console.log("start");
+
+    const stripe = getStripe();
 
     // Get previous page
     // const referer = req.headers.get('referer') || process.env.NEXT_PUBLIC_BASE_URL;

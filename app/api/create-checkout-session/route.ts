@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import { getStripe } from "@/app/lib/server/stripe";
 import { CartItem } from "../../types/index";
-
-if (!process.env.TEST_STRIPE_SECRET_KEY) {
-  throw new Error("TEST_STRIPE_SECRET_KEY is not defined");
-}
-
-const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY);
 
 export async function POST(req: Request) {
   try {
+    const stripe = getStripe();
+
     // Parse the request body
     const {
       cartItems,

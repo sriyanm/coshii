@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import Stripe from "stripe";
+import type Stripe from "stripe";
+import { getStripe } from "@/app/lib/server/stripe";
 // Ensure 'db' here is an instance of the Firebase Admin SDK's Firestore for server-side operations.
 // If it's the client-side SDK, webhook updates to Firestore will fail due to permission issues.
 // You may need a separate Firebase Admin initialization (e.g., in 'lib/firebase/admin.ts') for backend use.
@@ -18,13 +19,13 @@ import {
 
 //NOTE: in test mode run this for the webhook: stripe listen --forward-to localhost:3000/hooks/stripe
 
-const stripe = new Stripe(process.env.TEST_STRIPE_SECRET_KEY as string);
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const PREMIUM_PLAN_PRICE_ID =
   process.env.STRIPE_PREMIUM_PRICE_ID || "price_1R1YUqE4sAURr3tn7fFhEd2j"; // Ensure this is in your .env
 
 export async function POST(req: Request) {
+  const stripe = getStripe();
+
   // TODO Connect to backend - This will now connect to Firestore
   console.log("Connecting to the backend (Firestore)...");
 
